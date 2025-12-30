@@ -20,35 +20,43 @@ def search_web(query: str, max_results: int = 5) -> List[Dict]:
         - url: Result URL
         - content: Result content/snippet
     """
-    try:
-        # Get API key from environment
-        api_key = os.getenv("TAVILY_API_KEY")
-        if not api_key:
-            raise ValueError("TAVILY_API_KEY environment variable not set")
+    # Simple retry logic
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # Get API key from environment
+            api_key = os.getenv("TAVILY_API_KEY")
+            if not api_key:
+                raise ValueError("TAVILY_API_KEY environment variable not set")
 
-        # Initialize client
-        client = TavilyClient(api_key=api_key)
+            # Initialize client
+            client = TavilyClient(api_key=api_key)
 
-        # Perform search
-        response = client.search(
-            query=query,
-            max_results=max_results,
-            search_depth="basic",
-        )
+            # Perform search
+            response = client.search(
+                query=query,
+                max_results=max_results,
+                search_depth="basic",
+            )
 
-        # Extract results
-        results = []
-        for result in response.get("results", []):
-            results.append({
-                "title": result.get("title", ""),
-                "url": result.get("url", ""),
-                "content": result.get("content", ""),
-            })
+            # Extract results
+            results = []
+            for result in response.get("results", []):
+                results.append({
+                    "title": result.get("title", ""),
+                    "url": result.get("url", ""),
+                    "content": result.get("content", ""),
+                })
 
-        return results
+            return results
 
-    except Exception as e:
-        # Graceful error handling
-        print(f"⚠️  Search error: {e}")
-        return []
+        except Exception as e:
+            # Graceful error handling with retry
+            print(f"  ⚠️  Search error (attempt {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                import time
+                time.sleep(1)  # Brief backoff
+            else:
+                print(f"  ❌ All search attempts failed for query: {query[:50]}...")
+                return []
 

@@ -124,36 +124,38 @@ def lead_researcher_node(state: LeadResearcherState):
         print(f"   ⚠️  Retry attempt {retry_count}")
 
     # Optimized prompt for query analysis and task generation
+    from prompts import (
+        LEAD_RESEARCHER_INITIAL, 
+        LEAD_RESEARCHER_REFINE, 
+        LEAD_RESEARCHER_RETRY, 
+        LEAD_RESEARCHER_SYSTEM
+    )
+
     if iteration_count == 0:
-        prompt = (
-            f"Break this query into 2-3 parallel research tasks:\n\n"
-            f'Query: "{query}"'
-        )
+        prompt_content = LEAD_RESEARCHER_INITIAL.format(query=query)
     else:
         existing_findings = state.get("subagent_findings", [])
         findings_summary = "\n".join([
             f"- {f.get('task', 'Unknown')[:50]}: {f.get('summary', '')[:80]}"
             for f in existing_findings[:3]
         ])
-        prompt = (
-            f"Refine research strategy:\n\n"
-            f"Query: {query}\n\n"
-            f"Findings:\n{findings_summary}\n\n"
-            f"Generate 1-2 tasks to fill gaps."
+        prompt_content = LEAD_RESEARCHER_REFINE.format(
+            query=query, 
+            findings_summary=findings_summary
         )
 
     # Add feedback if retrying - Standard Pattern
     if last_error:
-        prompt += (
-            f"\n\nPrevious attempt failed validation:\n{last_error}\n\n"
-            f"Please ensure you return a valid JSON object matching the schema."
+        prompt_content = LEAD_RESEARCHER_RETRY.format(
+            previous_prompt=prompt_content,
+            error=last_error
         )
 
     # Invoke LLM
     structured_llm = get_lead_llm().with_structured_output(ResearchTasks, include_raw=True)
     response = structured_llm.invoke([
-        SystemMessage(content="You are a research planner. Respond in JSON."),
-        HumanMessage(content=prompt)
+        SystemMessage(content=LEAD_RESEARCHER_SYSTEM),
+        HumanMessage(content=prompt_content)
     ])
     
     # Use helper to process retry logic
@@ -191,6 +193,12 @@ def lead_researcher_node(state: LeadResearcherState):
 
 def subagent_node(state: SubagentState):
     """Subagent: Perform web search and analyze results"""
+    from prompts import (
+        SUBAGENT_ANALYSIS, 
+        SUBAGENT_RETRY, 
+        SUBAGENT_SYSTEM
+    )
+    
     tasks = state.get("subagent_tasks", [])
     if not tasks:
         return {}
@@ -219,19 +227,18 @@ def subagent_node(state: SubagentState):
         for i, r in enumerate(search_results)
     ])
 
-    analysis_prompt = (
-        f"Task: {task}\n\n"
-        f"Results:\n{sources_text}\n\n"
-        f"Summarize key findings in 2-3 sentences."
+    analysis_prompt_content = SUBAGENT_ANALYSIS.format(
+        task=task,
+        results=sources_text
     )
     
     # Internal retry loop for parallel subagent
     structured_llm = get_subagent_llm().with_structured_output(SubagentOutput, include_raw=True)
-    current_prompt = analysis_prompt
+    current_prompt = analysis_prompt_content
     
     for attempt in range(3):
         response = structured_llm.invoke([
-            SystemMessage(content="Research assistant. Summarize clearly. You must respond in JSON."),
+            SystemMessage(content=SUBAGENT_SYSTEM),
             HumanMessage(content=current_prompt),
         ])
         
@@ -257,10 +264,9 @@ def subagent_node(state: SubagentState):
         print(f"  ⚠️  Subagent validation failed (attempt {attempt+1}/3): {error}")
         
         if attempt < 2:
-            current_prompt = (
-                f"{analysis_prompt}\n\n"
-                f"Previous attempt failed: {error}\n"
-                f"Ensure you return a valid JSON object."
+            current_prompt = SUBAGENT_RETRY.format(
+                previous_prompt=analysis_prompt_content,
+                error=error
             )
 
     # Fallback if all retries fail
@@ -299,6 +305,12 @@ def assign_subagents(state: ResearchState):
 
 def synthesizer_node(state: SynthesizerState):
     """Synthesizer: Aggregate and synthesize all findings"""
+    from prompts import (
+        SYNTHESIZER_MAIN, 
+        SYNTHESIZER_RETRY, 
+        SYNTHESIZER_SYSTEM
+    )
+    
     findings = state.get("subagent_findings", [])
     query = state["query"]
     retry_count = state.get("retry_count", 0)
@@ -317,22 +329,21 @@ def synthesizer_node(state: SynthesizerState):
         for i, f in enumerate(findings)
     ])
 
-    prompt = (
-        f"Query: {query}\n\n"
-        f"Findings:\n{findings_text}\n\n"
-        f"Synthesize into comprehensive answer."
+    prompt_content = SYNTHESIZER_MAIN.format(
+        query=query,
+        findings=findings_text
     )
 
     if last_error:
-        prompt += (
-            f"\n\nPrevious attempt failed validation:\n{last_error}\n\n"
-            f"Please ensure you return a valid JSON object matching the schema."
+        prompt_content = SYNTHESIZER_RETRY.format(
+            previous_prompt=prompt_content,
+            error=last_error
         )
 
     structured_llm = get_lead_llm().with_structured_output(SynthesisResult, include_raw=True)
     response = structured_llm.invoke([
-        SystemMessage(content="Synthesis expert. Combine insights effectively. You must respond in JSON."),
-        HumanMessage(content=prompt),
+        SystemMessage(content=SYNTHESIZER_SYSTEM),
+        HumanMessage(content=prompt_content),
     ])
 
     # Use helper to process retry logic
