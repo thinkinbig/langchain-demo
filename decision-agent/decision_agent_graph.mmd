@@ -1,0 +1,32 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	input_parser(input_parser)
+	validator(validator)
+	processor(processor)
+	complex_processor(complex_processor)
+	quality_checker(quality_checker)
+	refiner(refiner)
+	formatter(formatter)
+	error_handler(error_handler)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> input_parser;
+	complex_processor --> quality_checker;
+	input_parser --> validator;
+	processor --> quality_checker;
+	quality_checker -.-> error_handler;
+	quality_checker -.-> formatter;
+	quality_checker -.-> refiner;
+	refiner --> formatter;
+	validator -.-> complex_processor;
+	validator -.-> error_handler;
+	validator -.-> processor;
+	error_handler --> __end__;
+	formatter --> __end__;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

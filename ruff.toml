@@ -1,0 +1,15 @@
+# ruff.toml
+line-length = 88
+
+[lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort (imports)
+    "B",  # flake8-bugbear
+]
+ignore = []
+
+[format]
+quote-style = "double"

@@ -1,0 +1,3 @@
+"""
+Evaluator-Optimizer pattern implementation.
+"""

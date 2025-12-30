@@ -1,0 +1,14 @@
+[project]
+name = "langchain-agent"
+version = "0.1.0"
+description = "LangChain agent with multiple patterns"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain>=1.2.0",
+    "langchain-community>=0.4.1",
+    "langchain-openai>=1.1.6",
+    "langgraph>=1.0.5",
+    "langgraph-cli>=0.4.11",
+    "python-dotenv>=1.2.1",
+]
