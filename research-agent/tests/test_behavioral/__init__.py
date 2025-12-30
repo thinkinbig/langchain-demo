@@ -1,0 +1,2 @@
+"""Behavioral pattern tests"""
+
