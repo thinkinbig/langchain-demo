@@ -1,5 +1,57 @@
 """Helper functions for more robust test assertions"""
 
+from unittest.mock import MagicMock
+
+
+def configure_structured_output_mock(mock_getter_fn, schema_responses: dict):
+    """
+    Configure a mock LLM getter function to properly handle with_structured_output calls.
+    
+    Args:
+        mock_getter_fn: The mocked getter function (e.g., mock for get_lead_llm)
+        schema_responses: Dict mapping schema class to the parsed result
+            Example: {ResearchTasks: ResearchTasks(tasks=["task1", "task2"])}
+    """
+    def create_structured_output_mock(schema_class, **kwargs):
+        mock_structured = MagicMock()
+        parsed = schema_responses.get(schema_class, MagicMock())
+        mock_structured.invoke.return_value = {
+            "parsed": parsed,
+            "parsing_error": None,
+            "raw": MagicMock()
+        }
+        return mock_structured
+    
+    # The mock_getter_fn.return_value is the mock LLM returned when the getter is called
+    mock_llm = MagicMock()
+    mock_llm.with_structured_output.side_effect = create_structured_output_mock
+    mock_getter_fn.return_value = mock_llm
+
+
+def _get_attr_or_key(obj, key, default=None):
+    """Get attribute or key from object (handles both Pydantic models and dicts)"""
+    if hasattr(obj, key):
+        return getattr(obj, key)
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return default
+
+
+def _to_dict(obj):
+    """Convert Pydantic model to dict if needed"""
+    if hasattr(obj, "model_dump"):
+        return obj.model_dump()
+    if hasattr(obj, "dict"):
+        return obj.dict()
+    if isinstance(obj, dict):
+        return obj
+    return obj
+
+
+def get_state_value(state, key, default=None):
+    """Get value from state (handles both Pydantic models and dicts)"""
+    return _get_attr_or_key(state, key, default)
+
 
 def assert_has_required_fields(state: dict, required_fields: list):
     """Assert that state has all required fields"""
@@ -24,11 +76,11 @@ def assert_content_relevance(content: str, query: str, min_keyword_matches: int 
     )
 
 
-def assert_complete_workflow(state: dict):
+def assert_complete_workflow(state):
     """Assert that the workflow completed successfully"""
-    # Check that we have a final report
-    assert "final_report" in state, "Should have final_report"
-    assert len(state.get("final_report", "")) > 0, "final_report should not be empty"
+    # DictCompatibleModel supports dict-style access
+    final_report = state.get("final_report", "")
+    assert final_report, "final_report should not be empty"
 
     # Check that we have citations
     citations = state.get("citations", [])
@@ -36,7 +88,8 @@ def assert_complete_workflow(state: dict):
 
     # Check that citations have required structure
     for citation in citations:
-        assert "title" in citation or "url" in citation, (
+        # Citations support dict-style access via DictCompatibleModel
+        assert citation.get("title") or citation.get("url"), (
             "Citations should have at least title or url"
         )
 
@@ -47,10 +100,10 @@ def assert_findings_structure(findings: list):
         return  # Empty findings might be valid in some cases
 
     for finding in findings:
-        # Findings should have some structure
-        assert isinstance(finding, dict), "Findings should be dictionaries"
+        # Findings can be Pydantic models or dicts
+        finding_dict = _to_dict(finding) if not isinstance(finding, dict) else finding
         # At minimum, should have task or summary
-        assert "task" in finding or "summary" in finding, (
+        assert "task" in finding_dict or "summary" in finding_dict, (
             "Findings should have task or summary"
         )
 

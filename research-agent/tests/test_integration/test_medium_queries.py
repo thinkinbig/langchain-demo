@@ -19,14 +19,13 @@ class TestMediumQueries:
 
     def test_compare_python_rust(self, app, initial_state):
         """Test: Compare Python and Rust for web development"""
-        state = initial_state.copy()
-        state["query"] = "Compare Python and Rust for web development"
+        state = {**initial_state, "query": "Compare Python and Rust for web development"}
 
         final_state = app.invoke(state)
 
         # End-state evaluation
-        assert "final_report" in final_state
-        assert len(final_state["final_report"]) > 0
+        final_report = final_state.get("final_report", "")
+        assert len(final_report) > 0
 
         # Should have multiple findings (multiple subagents)
         findings = final_state.get("subagent_findings", [])
@@ -45,14 +44,16 @@ class TestMediumQueries:
 
     def test_pros_cons_microservices(self, app, initial_state):
         """Test: Research pros and cons of microservices"""
-        state = initial_state.copy()
-        state["query"] = "Research the pros and cons of microservices architecture"
+        state = {
+            **initial_state,
+            "query": "Research the pros and cons of microservices architecture",
+        }
 
         final_state = app.invoke(state)
 
         # End-state evaluation
-        assert "final_report" in final_state
-        assert len(final_state["final_report"]) > 0
+        final_report = final_state.get("final_report", "")
+        assert len(final_report) > 0
 
         # Should have multiple findings
         findings = final_state.get("subagent_findings", [])
@@ -63,14 +64,13 @@ class TestMediumQueries:
 
     def test_rest_vs_graphql(self, app, initial_state):
         """Test: Analyze differences between REST and GraphQL"""
-        state = initial_state.copy()
-        state["query"] = "Analyze the differences between REST and GraphQL APIs"
+        state = {**initial_state, "query": "Analyze the differences between REST and GraphQL APIs"}
 
         final_state = app.invoke(state)
 
         # End-state evaluation
-        assert "final_report" in final_state
-        assert len(final_state["final_report"]) > 0
+        final_report = final_state.get("final_report", "")
+        assert len(final_report) > 0
 
         # Should have multiple findings
         findings = final_state.get("subagent_findings", [])

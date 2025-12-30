@@ -21,8 +21,7 @@ class TestParallelExecution:
 
     def test_parallel_subagents(self, app, initial_state):
         """Test that multiple subagents execute in parallel"""
-        state = initial_state.copy()
-        state["query"] = "Compare Python, Rust, and Go programming languages"
+        state = {**initial_state, "query": "Compare Python, Rust, and Go programming languages"}
 
         start_time = time.time()
         final_state = app.invoke(state)
@@ -43,8 +42,10 @@ class TestParallelExecution:
 
     def test_fan_out_works(self, app, initial_state):
         """Test that fan-out to subagents works correctly"""
-        state = initial_state.copy()
-        state["query"] = "Research the pros and cons of microservices architecture"
+        state = {
+            **initial_state,
+            "query": "Research the pros and cons of microservices architecture",
+        }
 
         final_state = app.invoke(state)
 

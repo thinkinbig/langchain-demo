@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 # Load environment variables for integration tests
 load_dotenv()
 
-from test_helpers import (  # noqa: E402
+from tests.test_helpers import (  # noqa: E402
     assert_complete_workflow,
     assert_content_relevance,
     assert_iteration_reasonable,
@@ -24,9 +24,8 @@ class TestSimpleQueries:
 
     def test_what_is_langgraph(self, app, initial_state):
         """Test: What is LangGraph?"""
-        state = initial_state.copy()
-        query = "What is LangGraph?"
-        state["query"] = query
+        state = {**initial_state, "query": "What is LangGraph?"}
+        query = state["query"]
 
         final_state = app.invoke(state)
 
@@ -43,9 +42,8 @@ class TestSimpleQueries:
 
     def test_who_created_python(self, app, initial_state):
         """Test: Who created Python?"""
-        state = initial_state.copy()
-        query = "Who created Python?"
-        state["query"] = query
+        state = {**initial_state, "query": "Who created Python?"}
+        query = state["query"]
 
         final_state = app.invoke(state)
 
@@ -61,9 +59,8 @@ class TestSimpleQueries:
 
     def test_capital_of_france(self, app, initial_state):
         """Test: What is the capital of France?"""
-        state = initial_state.copy()
-        query = "What is the capital of France?"
-        state["query"] = query
+        state = {**initial_state, "query": "What is the capital of France?"}
+        query = state["query"]
 
         final_state = app.invoke(state)
 

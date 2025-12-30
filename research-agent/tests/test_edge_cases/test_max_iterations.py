@@ -3,6 +3,8 @@
 from unittest.mock import patch
 
 import pytest
+from tests.test_helpers import configure_structured_output_mock
+from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
 
 @pytest.mark.edge_case
@@ -10,41 +12,34 @@ class TestMaxIterations:
     """Test iteration limit enforcement"""
 
     @patch("tools.search_web")
-    @patch("graph.llm")
+    @patch("graph.get_lead_llm")
+    @patch("graph.get_subagent_llm")
     def test_iteration_limit_enforced(
         self,
-        mock_llm,
+        mock_subagent_llm,
+        mock_lead_llm,
         mock_search,
         app,
         initial_state,
         mock_search_results,
-        mock_lead_researcher_response,
-        mock_subagent_llm_response,
-        mock_synthesizer_response,
-    ):  # noqa: PLR0913
+    ):
         """Test that iteration limit (3) is enforced"""
         # Mock search
         mock_search.return_value = mock_search_results
 
-        # Mock LLM responses
-        call_count = 0
-        def llm_side_effect(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                # Lead researcher response
-                return mock_lead_researcher_response
-            elif call_count <= 4:
-                # Subagent responses
-                return mock_subagent_llm_response
-            else:
-                # Synthesizer responses
-                return mock_synthesizer_response
+        # Configure structured output mocks
+        configure_structured_output_mock(mock_lead_llm, {
+            ResearchTasks: ResearchTasks(tasks=["Research complex topic", "Deep analysis"]),
+            SynthesisResult: SynthesisResult(
+                summary="Comprehensive summary of the complex query findings. "
+                "This covers all aspects of the topic in detail."
+            )
+        })
+        configure_structured_output_mock(mock_subagent_llm, {
+            SubagentOutput: SubagentOutput(summary="Detailed findings from search results.")
+        })
 
-        mock_llm.invoke.side_effect = llm_side_effect
-
-        state = initial_state.copy()
-        state["query"] = "Very complex query needing many iterations"
+        state = {**initial_state, "query": "Very complex query needing many iterations"}
 
         final_state = app.invoke(state)
 
@@ -54,49 +49,46 @@ class TestMaxIterations:
         assert iteration_count <= 3, msg
 
         # Should have final report even at limit
-        assert "final_report" in final_state
+        final_report = final_state.get("final_report", "")
+        assert final_report is not None
 
     @patch("tools.search_web")
-    @patch("graph.llm")
+    @patch("graph.get_lead_llm")
+    @patch("graph.get_subagent_llm")
     def test_loop_termination(
         self,
-        mock_llm,
+        mock_subagent_llm,
+        mock_lead_llm,
         mock_search,
         app,
         initial_state,
         mock_search_results,
-        mock_lead_researcher_response,
-        mock_subagent_llm_response,
-        mock_synthesizer_response,
     ):
         """Test that loop terminates correctly"""
         # Mock search
         mock_search.return_value = mock_search_results
 
-        # Mock LLM responses
-        call_count = 0
-        def llm_side_effect(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return mock_lead_researcher_response
-            elif call_count <= 3:
-                return mock_subagent_llm_response
-            else:
-                return mock_synthesizer_response
+        # Configure structured output mocks
+        configure_structured_output_mock(mock_lead_llm, {
+            ResearchTasks: ResearchTasks(tasks=["Research query topic"]),
+            SynthesisResult: SynthesisResult(
+                summary="Complete summary of all findings for loop termination test. "
+                "This provides detailed insights into the topic."
+            )
+        })
+        configure_structured_output_mock(mock_subagent_llm, {
+            SubagentOutput: SubagentOutput(summary="Summary from search results for termination test.")
+        })
 
-        mock_llm.invoke.side_effect = llm_side_effect
-
-        state = initial_state.copy()
-        state["query"] = "Test query for loop termination"
+        state = {**initial_state, "query": "Test query for loop termination"}
 
         final_state = app.invoke(state)
 
         # Should eventually terminate (not loop forever)
-        assert "final_report" in final_state
+        final_report = final_state.get("final_report", "")
+        assert final_report is not None
 
         # Should have needs_more_research set correctly
         # At termination, should be False
         # (unless we're at max iterations, in which case it might be True but we still terminate)
         _ = final_state.get("needs_more_research", False)  # Check it exists
-

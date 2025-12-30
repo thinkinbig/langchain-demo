@@ -20,14 +20,16 @@ class TestComplexQueries:
 
     def test_quantum_computing_research(self, app, initial_state):
         """Test: Research history, current state, and future of quantum computing"""
-        state = initial_state.copy()
-        state["query"] = "Research the history, current state, and future of quantum computing"
+        state = {
+            **initial_state,
+            "query": "Research the history, current state, and future of quantum computing",
+        }
 
         final_state = app.invoke(state)
 
         # End-state evaluation
-        assert "final_report" in final_state
-        assert len(final_state["final_report"]) > 0
+        final_report = final_state.get("final_report", "")
+        assert len(final_report) > 0
 
         # Complex query should have multiple findings
         findings = final_state.get("subagent_findings", [])
@@ -46,14 +48,16 @@ class TestComplexQueries:
 
     def test_cloud_providers_comparison(self, app, initial_state):
         """Test: Compare top cloud providers"""
-        state = initial_state.copy()
-        state["query"] = "Compare the top 5 cloud providers across pricing, features, and reliability"
+        state = {
+            **initial_state,
+            "query": "Compare the top 5 cloud providers across pricing, features, and reliability",
+        }
 
         final_state = app.invoke(state)
 
         # End-state evaluation
-        assert "final_report" in final_state
-        assert len(final_state["final_report"]) > 0
+        final_report = final_state.get("final_report", "")
+        assert len(final_report) > 0
 
         # Should have multiple findings
         findings = final_state.get("subagent_findings", [])

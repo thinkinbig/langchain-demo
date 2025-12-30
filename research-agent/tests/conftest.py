@@ -1,5 +1,6 @@
 """Pytest fixtures and shared utilities"""
 
+import os
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -31,8 +32,10 @@ from schemas import ResearchState  # noqa: E402
 @pytest.fixture
 def initial_state() -> ResearchState:
     """Standard initial state for tests"""
+    # LangGraph accepts dict and converts to Pydantic model automatically
+    # But we can also return dict directly - LangGraph handles the conversion
     return {
-        "query": "",
+        "query": "test query",
         "research_plan": "",
         "subagent_tasks": [],
         "subagent_findings": [],
@@ -41,6 +44,8 @@ def initial_state() -> ResearchState:
         "synthesized_results": "",
         "citations": [],
         "final_report": "",
+        "error": None,
+        "retry_count": 0,
     }
 
 
@@ -93,16 +98,49 @@ def mock_llm_response():
 @pytest.fixture
 def mock_app_with_mocks(mock_search_results, mock_llm_response):
     """App with mocked LLM and search - for non-integration tests"""
+    from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
     # Create app
     from graph import app
 
-    # Mock LLM
-    with patch("graph.llm") as mock_llm:
-        mock_llm.invoke.return_value = mock_llm_response
-        mock_llm.with_structured_output.return_value.invoke.return_value = {
-            "steps": ["Task 1", "Task 2"]
+    # Helper to create structured output mock based on schema
+    def create_structured_output_mock(schema_class, **kwargs):
+        """Create a mock that returns the proper include_raw=True format"""
+        mock_structured = MagicMock()
+        
+        if schema_class == ResearchTasks:
+            parsed = ResearchTasks(tasks=["Research Task 1", "Research Task 2"])
+        elif schema_class == SynthesisResult:
+            parsed = SynthesisResult(
+                summary="Mock synthesized results combining all findings. "
+                "This is a comprehensive summary that integrates multiple research "
+                "findings into a coherent answer. It covers all aspects of the query "
+                "and provides detailed insights based on the collected information."
+            )
+        elif schema_class == SubagentOutput:
+            parsed = SubagentOutput(summary="Mock summary of findings from search results.")
+        else:
+            parsed = MagicMock()
+        
+        mock_structured.invoke.return_value = {
+            "parsed": parsed,
+            "parsing_error": None,
+            "raw": MagicMock()
         }
+        return mock_structured
+
+    # Create mock LLM objects
+    mock_lead_llm = MagicMock()
+    mock_lead_llm.invoke.return_value = mock_llm_response
+    mock_lead_llm.with_structured_output.side_effect = create_structured_output_mock
+
+    mock_subagent_llm = MagicMock()
+    mock_subagent_llm.invoke.return_value = mock_llm_response
+    mock_subagent_llm.with_structured_output.side_effect = create_structured_output_mock
+
+    # Mock the getter functions to return our mock LLMs
+    with patch("graph.get_lead_llm", return_value=mock_lead_llm), \
+         patch("graph.get_subagent_llm", return_value=mock_subagent_llm):
 
         # Mock search
         with patch("tools.search_web") as mock_search:

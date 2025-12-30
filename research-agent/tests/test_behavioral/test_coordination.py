@@ -7,13 +7,15 @@ single-agent systems, including a rapid growth in coordination complexity."
 from unittest.mock import patch
 
 import pytest
-from test_helpers import (
+from tests.test_helpers import (
     assert_complete_workflow,
     assert_content_relevance,
     assert_findings_structure,
     assert_synthesis_quality,
     assert_tasks_related_to_query,
+    configure_structured_output_mock,
 )  # noqa: E402
+from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
 
 @pytest.mark.behavioral
@@ -21,39 +23,35 @@ class TestCoordination:
     """Test coordination between agents"""
 
     @patch("tools.search_web")
-    @patch("graph.llm")
+    @patch("graph.get_lead_llm")
+    @patch("graph.get_subagent_llm")
     def test_task_coverage(
         self,
-        mock_llm,
+        mock_subagent_llm,
+        mock_lead_llm,
         mock_search,
         app,
         initial_state,
         mock_search_results,
-        mock_lead_researcher_response,
-        mock_subagent_llm_response,
-        mock_synthesizer_response,
     ):
         """Test that tasks cover the query adequately"""
         # Mock search
         mock_search.return_value = mock_search_results
 
-        # Mock LLM - first call returns tasks, subsequent calls return summaries
-        call_count = 0
-        def llm_side_effect(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return mock_lead_researcher_response
-            elif call_count <= 3:
-                return mock_subagent_llm_response
-            else:
-                return mock_synthesizer_response
+        # Configure structured output mocks
+        configure_structured_output_mock(mock_lead_llm, {
+            ResearchTasks: ResearchTasks(tasks=["Research Python features", "Research Rust features"]),
+            SynthesisResult: SynthesisResult(
+                summary="Mock synthesized results combining Python and Rust findings. "
+                "This is a comprehensive summary."
+            )
+        })
+        configure_structured_output_mock(mock_subagent_llm, {
+            SubagentOutput: SubagentOutput(summary="Mock summary of findings from search results.")
+        })
 
-        mock_llm.invoke.side_effect = llm_side_effect
-
-        state = initial_state.copy()
-        query = "Compare Python and Rust for web development"
-        state["query"] = query
+        state = {**initial_state, "query": "Compare Python and Rust for web development"}
+        query = state["query"]
 
         final_state = app.invoke(state)
 
@@ -65,39 +63,32 @@ class TestCoordination:
         assert_tasks_related_to_query(tasks, query)
 
     @patch("tools.search_web")
-    @patch("graph.llm")
+    @patch("graph.get_lead_llm")
+    @patch("graph.get_subagent_llm")
     def test_findings_completeness(
         self,
-        mock_llm,
+        mock_subagent_llm,
+        mock_lead_llm,
         mock_search,
         app,
         initial_state,
         mock_search_results,
-        mock_lead_researcher_response,
-        mock_subagent_llm_response,
-        mock_synthesizer_response,
     ):
         """Test that findings cover the query"""
         # Mock search
         mock_search.return_value = mock_search_results
 
-        # Mock LLM - handle multiple calls correctly
-        # Call order: LeadResearcher -> Subagent1 -> Subagent2 -> Synthesizer
-        call_count = 0
-        def llm_side_effect(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            # First call: LeadResearcher generates tasks
-            if call_count == 1:
-                return mock_lead_researcher_response
-            # Next 2 calls: Subagents analyze results
-            elif call_count <= 3:
-                return mock_subagent_llm_response
-            # Final call: Synthesizer combines findings
-            else:
-                return mock_synthesizer_response
-
-        mock_llm.invoke.side_effect = llm_side_effect
+        # Configure structured output mocks
+        configure_structured_output_mock(mock_lead_llm, {
+            ResearchTasks: ResearchTasks(tasks=["Research microservices pros", "Research microservices cons"]),
+            SynthesisResult: SynthesisResult(
+                summary="Mock synthesized results about microservices pros and cons. "
+                "This is a comprehensive summary covering all aspects."
+            )
+        })
+        configure_structured_output_mock(mock_subagent_llm, {
+            SubagentOutput: SubagentOutput(summary="Mock summary of microservices findings from search results.")
+        })
 
         state = initial_state.copy()
         query = "Research pros and cons of microservices"
@@ -115,35 +106,32 @@ class TestCoordination:
         assert_synthesis_quality(synthesis, query)
 
     @patch("tools.search_web")
-    @patch("graph.llm")
+    @patch("graph.get_lead_llm")
+    @patch("graph.get_subagent_llm")
     def test_citation_quality(
         self,
-        mock_llm,
+        mock_subagent_llm,
+        mock_lead_llm,
         mock_search,
         app,
         initial_state,
         mock_search_results,
-        mock_lead_researcher_response,
-        mock_subagent_llm_response,
-        mock_synthesizer_response,
     ):
         """Test that citations are properly extracted"""
         # Mock search
         mock_search.return_value = mock_search_results
 
-        # Mock LLM
-        call_count = 0
-        def llm_side_effect(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                return mock_lead_researcher_response
-            elif call_count <= 3:
-                return mock_subagent_llm_response
-            else:
-                return mock_synthesizer_response
-
-        mock_llm.invoke.side_effect = llm_side_effect
+        # Configure structured output mocks
+        configure_structured_output_mock(mock_lead_llm, {
+            ResearchTasks: ResearchTasks(tasks=["Research LangGraph features"]),
+            SynthesisResult: SynthesisResult(
+                summary="LangGraph is a library for building stateful, multi-actor applications with LLMs. "
+                "It provides graph-based workflow orchestration."
+            )
+        })
+        configure_structured_output_mock(mock_subagent_llm, {
+            SubagentOutput: SubagentOutput(summary="LangGraph provides graph-based orchestration for LLM applications.")
+        })
 
         state = initial_state.copy()
         query = "What is LangGraph?"
@@ -157,4 +145,3 @@ class TestCoordination:
         # Final report should be relevant to query
         report = final_state.get("final_report", "")
         assert_content_relevance(report, query, min_keyword_matches=1)
-
