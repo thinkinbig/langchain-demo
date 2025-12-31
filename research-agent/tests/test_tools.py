@@ -1,7 +1,8 @@
 
-import pytest
 from unittest.mock import MagicMock, patch
+
 from tools import search_web
+
 
 def test_search_web_success():
     """Test successful search"""
@@ -11,7 +12,7 @@ def test_search_web_success():
             {"title": "T1", "url": "U1", "content": "C1"}
         ]
     }
-    
+
     with patch("tools.TavilyClient", return_value=mock_client):
         with patch("os.getenv", return_value="fake-key"):
             results = search_web("query")
@@ -30,7 +31,7 @@ def test_search_web_retry_success():
             ]
         }
     ]
-    
+
     with patch("tools.TavilyClient", return_value=mock_client):
         with patch("os.getenv", return_value="fake-key"):
             with patch("time.sleep") as mock_sleep: # Speed up test
@@ -43,10 +44,10 @@ def test_search_web_all_retries_fail():
     """Test search fails after all retries"""
     mock_client = MagicMock()
     mock_client.search.side_effect = Exception("Persistent error")
-    
+
     with patch("tools.TavilyClient", return_value=mock_client):
         with patch("os.getenv", return_value="fake-key"):
-            with patch("time.sleep"): 
+            with patch("time.sleep"):
                 results = search_web("query")
                 assert results == []
                 assert mock_client.search.call_count == 3

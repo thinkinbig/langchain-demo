@@ -40,6 +40,11 @@ class TestSimpleQueries:
         iteration_count = final_state.get("iteration_count", 0)
         assert_iteration_reasonable(iteration_count, max_iterations=5)
 
+        # V2 Check: Even simple queries should use structured Task objects
+        tasks = final_state.get("subagent_tasks", [])
+        if tasks:
+            assert hasattr(tasks[0], 'id'), "Tasks should be structured"
+
     def test_who_created_python(self, app, initial_state):
         """Test: Who created Python?"""
         state = {**initial_state, "query": "Who created Python?"}
