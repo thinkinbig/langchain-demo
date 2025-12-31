@@ -1,117 +1,154 @@
 """
 Evaluation script for Deep Research Agent.
 Runs a set of "Golden Questions" and saves the results for review.
+Now supports LangSmith evaluation tracking.
 """
 
-import os
-import time
-import json
-from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, List
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from langchain_core.messages import HumanMessage
-from graph import app
+from graph import app  # noqa: E402
+from langsmith import Client, evaluate  # noqa: E402
+from langsmith.schemas import Example, Run  # noqa: E402
 
 # =============================================================================
 # Golden Dataset
 # =============================================================================
 
+DATASET_NAME = "Deep Research Agent Checkpoints"
 GOLDEN_DATASET = [
     {
         "id": "tech_business_01",
         "category": "Tech/Business",
-        "query": "Who is the primary supplier of the LiDAR sensors for the Xiaomi SU7, and how did their stock price react on the week of the car's official launch in 2024?"
+        "query": (
+            "Who is the primary supplier of the LiDAR sensors for the "
+            "Xiaomi SU7, and how did their stock price react on the week "
+            "of the car's official launch in 2024?"
+        ),
+        "expected_findings": [
+            "Identifying Hesai as supplier",
+            "Stock price trend of Hesai during launch week"
+        ]
     },
     {
         "id": "health_science_01",
         "category": "Health/Science",
-        "query": "Compare the weight loss efficacy of Semaglutide vs Tirzepatide in non-diabetic adults based on Phase 3 trials published between 2022-2024. Focus on % body weight reduction."
+        "query": (
+            "Compare the weight loss efficacy of Semaglutide vs Tirzepatide "
+            "in non-diabetic adults based on Phase 3 trials published "
+            "between 2022-2024. Focus on % body weight reduction."
+        ),
+        "expected_findings": [
+            "Semaglutide ~15%",
+            "Tirzepatide ~20%",
+            "Comparison favors Tirzepatide"
+        ]
     },
     {
         "id": "policy_regulation_01",
         "category": "Policy/Regulation",
-        "query": "What are the key differences between the EU AI Act and the US Executive Order on AI regarding 'General Purpose AI' models?"
+        "query": (
+            "What are the key differences between the EU AI Act and the "
+            "US Executive Order on AI regarding 'General Purpose AI' models?"
+        ),
+        "expected_findings": [
+            "EU AI Act: Risk-based, binding",
+            "US EO: Report-based, safety focus"
+        ]
     }
 ]
+
+# =============================================================================
+# LangSmith Setup
+# =============================================================================
+
+client = Client()
+
+def ensure_dataset():
+    """Create dataset in LangSmith if it doesn't exist."""
+    if client.has_dataset(dataset_name=DATASET_NAME):
+        print(f"✅ Dataset '{DATASET_NAME}' exists.")
+        return
+
+    print(f"Creates dataset '{DATASET_NAME}'...")
+    dataset = client.create_dataset(dataset_name=DATASET_NAME,
+    description=(
+        "Golden questions for Deep Research Agent"
+    )
+    )
+
+    for item in GOLDEN_DATASET:
+        client.create_example(
+            inputs={"query": item["query"]},
+            outputs={"expected_findings": item.get("expected_findings")},
+            metadata={"category": item["category"], "id": item["id"]},
+            dataset_id=dataset.id,
+        )
+    print("✅ Dataset populated.")
 
 # =============================================================================
 # Evaluation Logic
 # =============================================================================
 
-def run_evaluation(question: Dict) -> Dict:
-    """Run a single question through the agent."""
-    print(f"\n🚀 Starting Evaluation: {question['id']}")
-    print(f"   Query: {question['query']}")
-    
-    start_time = time.time()
+def predict(inputs: dict) -> dict:
+    """Run the agent on a single input (LangSmith interface)."""
     try:
-        # Invoke agent
-        initial_state = {"query": question["query"]}
-        result = app.invoke(initial_state)
-        
-        duration = time.time() - start_time
-        
-        final_report = result.get("final_report", "No report generated.")
+        result = app.invoke({"query": inputs["query"]})
         citations = result.get("citations", [])
-        
         return {
-            "id": question["id"],
-            "query": question["query"],
-            "status": "success",
-            "duration_seconds": round(duration, 2),
-            "final_report": final_report,
+            "final_report": result.get("final_report", ""),
             "citations_count": len(citations),
             "citations": [c.dict() for c in citations]
         }
-        
     except Exception as e:
-        print(f"❌ Error in {question['id']}: {e}")
-        return {
-            "id": question["id"],
-            "query": question["query"],
-            "status": "error",
-            "error": str(e)
-        }
+        return {"error": str(e)}
+
+def correctness_evaluator(run: Run, example: Example) -> dict:
+    """Simple evaluator to check if a report was generated."""
+    outputs = run.outputs or {}
+    report = outputs.get("final_report", "")
+    citations = outputs.get("citations_count", 0)
+
+    score = 0.0
+    reasoning = []
+
+    # Basic Checks
+    if report and len(report) > 100:
+        score += 0.5
+        reasoning.append("Generated a substantial report.")
+    else:
+        reasoning.append("Report missing or too short.")
+
+    if citations >= 5:
+        score += 0.5
+        reasoning.append("Includes >5 citations.")
+    else:
+        reasoning.append("Insufficient citations.")
+
+    return {"key": "basic_quality", "score": score, "comment": "; ".join(reasoning)}
+
 
 def main():
-    """Run all evaluations and save report."""
-    results = []
-    
-    # Run sequentially to avoid rate limits/context window issues
-    for q in GOLDEN_DATASET:
-        res = run_evaluation(q)
-        results.append(res)
-        print(f"✅ Finished {q['id']} in {res.get('duration_seconds', 'N/A')}s")
-        
-    # Save results to Markdown
-    output_file = "evaluation_report.md"
-    with open(output_file, "w") as f:
-        f.write("# Deep Research Agent Evaluation Report\n\n")
-        f.write(f"**Date:** {time.strftime('%Y-%m-%d %H:%M:%S')}\n\n")
-        
-        for res in results:
-            f.write(f"## {res['id']}\n")
-            f.write(f"**Query:** {res['query']}\n")
-            f.write(f"**Status:** {res['status']}\n")
-            if res['status'] == 'success':
-                f.write(f"**Duration:** {res['duration_seconds']}s\n")
-                f.write(f"**Citations:** {res['citations_count']}\n\n")
-                f.write("### Final Report\n\n")
-                
-                # Indent headers in the report to nest correctly (Level 1 -> Level 3)
-                report_content = res['final_report']
-                # Increase header level by 2
-                report_content = report_content.replace("# ", "### ").replace("## ", "#### ").replace("### ", "##### ")
-                
-                f.write(report_content)
-                f.write("\n\n---\n\n")
-            else:
-                f.write(f"**Error:** {res.get('error')}\n\n")
-    
-    print(f"\n📄 Evaluation report saved to {output_file}")
+    """Run LangSmith evaluation."""
+    ensure_dataset()
+
+    print(f"\n🚀 Starting LangSmith Evaluation on '{DATASET_NAME}'...")
+
+    experiment_results = evaluate(
+        predict,
+        data=DATASET_NAME,
+        evaluators=[correctness_evaluator],
+        experiment_prefix="deep-research-v2",
+        max_concurrency=1,  # Sequential to avoid rate limits
+    )
+
+    print("\n✅ Evaluation complete. View results in LangSmith.")
+    print(experiment_results)
+
+    # Legacy: Generate local report for user convenience
+    # We can reconstruct it from the experiment results if needed,
+    # but for now, rely on LangSmith UI for detailed view.
 
 if __name__ == "__main__":
     main()

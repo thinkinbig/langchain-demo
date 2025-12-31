@@ -5,8 +5,9 @@ from unittest.mock import MagicMock
 
 def configure_structured_output_mock(mock_getter_fn, schema_responses: dict):
     """
-    Configure a mock LLM getter function to properly handle with_structured_output calls.
-    
+    Configure a mock LLM getter function to properly handle
+    with_structured_output calls.
+
     Args:
         mock_getter_fn: The mocked getter function (e.g., mock for get_lead_llm)
         schema_responses: Dict mapping schema class to the parsed result
@@ -21,7 +22,7 @@ def configure_structured_output_mock(mock_getter_fn, schema_responses: dict):
             "raw": MagicMock()
         }
         return mock_structured
-    
+
     # The mock_getter_fn.return_value is the mock LLM returned when the getter is called
     mock_llm = MagicMock()
     mock_llm.with_structured_output.side_effect = create_structured_output_mock
@@ -117,7 +118,9 @@ def assert_synthesis_quality(synthesis: str, query: str):
 
     # Synthesis should be more than just a few words
     words = synthesis.split()
-    assert len(words) > 5, "Synthesis should have meaningful content (more than 5 words)"
+    assert len(words) > 5, (
+        "Synthesis should have meaningful content (more than 5 words)"
+    )
 
 
 def assert_iteration_reasonable(iteration_count: int, max_iterations: int = 10):
