@@ -12,13 +12,14 @@ from langchain_core.messages import BaseMessage
 
 class LocalFileTracer(BaseCallbackHandler):
     """Callback handler that logs LLM interactions to a local file"""
-    
+
     def __init__(self, log_dir: str = "logs"):
         self.log_dir = Path(log_dir)
         self.log_dir.mkdir(exist_ok=True)
         self.current_run_id = None
-        self.session_file = self.log_dir / f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jsonl"
-        
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        self.session_file = self.log_dir / f"session_{timestamp}.jsonl"
+
     def _log(self, event_type: str, data: Dict[str, Any]):
         """Append a log entry to the session file"""
         entry = {
@@ -28,7 +29,7 @@ class LocalFileTracer(BaseCallbackHandler):
         }
         with open(self.session_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
-    
+
     def on_llm_start(
         self,
         serialized: Dict[str, Any],
@@ -41,7 +42,7 @@ class LocalFileTracer(BaseCallbackHandler):
             "prompts": prompts,
             "run_id": str(kwargs.get("run_id", "")),
         })
-    
+
     def on_chat_model_start(
         self,
         serialized: Dict[str, Any],
@@ -55,27 +56,35 @@ class LocalFileTracer(BaseCallbackHandler):
             for msg in msg_list:
                 formatted_messages.append({
                     "role": msg.__class__.__name__.replace("Message", ""),
-                    "content": msg.content[:500] if len(msg.content) > 500 else msg.content
+                    "content": (
+                        msg.content[:500]
+                        if len(msg.content) > 500
+                        else msg.content
+                    )
                 })
-        
+
         self._log("chat_model_start", {
             "model": serialized.get("kwargs", {}).get("model", "unknown"),
             "messages": formatted_messages,
             "run_id": str(kwargs.get("run_id", "")),
         })
-    
+
     def on_llm_end(self, response, **kwargs: Any) -> None:
         """Log LLM response"""
         try:
-            output = response.generations[0][0].text if response.generations else str(response)
+            output = (
+                response.generations[0][0].text
+                if response.generations
+                else str(response)
+            )
         except Exception:
             output = str(response)
-        
+
         self._log("llm_end", {
             "output": output[:1000] if len(output) > 1000 else output,
             "run_id": str(kwargs.get("run_id", "")),
         })
-    
+
     def on_llm_error(self, error: Exception, **kwargs: Any) -> None:
         """Log LLM errors"""
         self._log("llm_error", {

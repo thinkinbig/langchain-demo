@@ -1,9 +1,8 @@
 """Multi-agent research system graph"""
 
-import json
-import re
 from typing import Literal
 
+import tools
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 from langgraph.graph import END, START, StateGraph
@@ -21,7 +20,6 @@ from schemas import (
     SynthesisResult,
     SynthesizerState,
 )
-import tools
 
 # LLM Configuration - Lazy Loading Pattern
 # LLMs are initialized on first use, not at module import time
@@ -69,21 +67,22 @@ def get_subagent_llm():
 def process_structured_response(response, state, fallback_func=None):
     """
     Standardized validation and state update for retry loop.
-    
+
     Args:
         response: Output from .with_structured_output(..., include_raw=True)
         state: Current state dict
-        fallback_func: Optional callable to generate fallback state if max retries reached
-    
+        fallback_func: Optional callable to generate fallback state
+            if max retries reached
+
     Returns:
         dict: State update
     """
     retry_count = state.get("retry_count", 0)
     parsing_error = response.get("parsing_error")
-    
+
     if parsing_error:
         print(f"  ❌ Validation failed: {parsing_error}")
-        
+
         # Check max retries (e.g., 3 attempts total: 0, 1, 2)
         if retry_count >= 2:
             print(f"  ❌ Max retries ({retry_count + 1}) reached")
@@ -92,18 +91,19 @@ def process_structured_response(response, state, fallback_func=None):
                 fallback_update = fallback_func(state)
                 # Ensure fallback clears the error state
                 return {**fallback_update, "error": None, "retry_count": 0}
-            
+
             # If no fallback, just propagate the error or decide to end
             return {"error": str(parsing_error), "retry_count": retry_count + 1}
-        
+
         # Route back for retry
         return {
             "error": str(parsing_error),
             "retry_count": retry_count + 1
         }
-    
+
     # Success
-    return None  # Signal to caller that retrieval was successful, caller handles "parsed"
+    # Signal to caller that retrieval was successful, caller handles "parsed"
+    return None
 
 
 def should_retry(state: ResearchState) -> bool:
@@ -125,10 +125,10 @@ def lead_researcher_node(state: LeadResearcherState):
 
     # Optimized prompt for query analysis and task generation
     from prompts import (
-        LEAD_RESEARCHER_INITIAL, 
-        LEAD_RESEARCHER_REFINE, 
-        LEAD_RESEARCHER_RETRY, 
-        LEAD_RESEARCHER_SYSTEM
+        LEAD_RESEARCHER_INITIAL,
+        LEAD_RESEARCHER_REFINE,
+        LEAD_RESEARCHER_RETRY,
+        LEAD_RESEARCHER_SYSTEM,
     )
 
     if iteration_count == 0:
@@ -140,7 +140,7 @@ def lead_researcher_node(state: LeadResearcherState):
             for f in existing_findings[:3]
         ])
         prompt_content = LEAD_RESEARCHER_REFINE.format(
-            query=query, 
+            query=query,
             findings_summary=findings_summary
         )
 
@@ -152,17 +152,31 @@ def lead_researcher_node(state: LeadResearcherState):
         )
 
     # Invoke LLM
-    structured_llm = get_lead_llm().with_structured_output(ResearchTasks, include_raw=True)
+    structured_llm = get_lead_llm().with_structured_output(
+        ResearchTasks, include_raw=True
+    )
     response = structured_llm.invoke([
         SystemMessage(content=LEAD_RESEARCHER_SYSTEM),
         HumanMessage(content=prompt_content)
     ])
-    
+
     # Use helper to process retry logic
     def fallback(s):
+        from schemas import ResearchTask
         return {
             "research_plan": f"Research plan for: {s['query']} (Fallback)",
-            "subagent_tasks": [f"Research: {s['query']}", f"Info: {s['query']}"],
+            "subagent_tasks": [
+                ResearchTask(
+                    id="task_1",
+                    description=f"Research: {s['query']}",
+                    rationale="Fallback"
+                ),
+                ResearchTask(
+                    id="task_2",
+                    description=f"Info: {s['query']}",
+                    rationale="Fallback"
+                )
+            ],
             "iteration_count": s.get("iteration_count", 0) + 1
         }
 
@@ -176,11 +190,11 @@ def lead_researcher_node(state: LeadResearcherState):
     # Success case
     parsed_result = response["parsed"]
     tasks = parsed_result.tasks
-    
+
     plan = f"Research plan for: {query}\nTasks: {len(tasks)} sub-tasks"
     print(f"  ✅ Created {len(tasks)} sub-tasks")
     for i, task in enumerate(tasks, 1):
-        print(f"     {i}. {str(task)[:60]}...")
+        print(f"     {i}. {task.description[:60]}... (ID: {task.id})")
 
     return {
         "research_plan": plan,
@@ -193,29 +207,30 @@ def lead_researcher_node(state: LeadResearcherState):
 
 def subagent_node(state: SubagentState):
     """Subagent: Perform web search and analyze results"""
-    from prompts import (
-        SUBAGENT_ANALYSIS, 
-        SUBAGENT_RETRY, 
-        SUBAGENT_SYSTEM
-    )
-    
+    from prompts import SUBAGENT_ANALYSIS, SUBAGENT_RETRY, SUBAGENT_SYSTEM
+
     tasks = state.get("subagent_tasks", [])
     if not tasks:
         return {}
 
     # Get the first task (each worker gets one task via Send)
-    task = tasks[0]
-    task = str(task)
+    rs_task = tasks[0]
+    # Handle both object and legacy string (just in case)
+    task_description = (
+        rs_task.description
+        if hasattr(rs_task, "description")
+        else str(rs_task)
+    )
 
-    print(f"\n🔎 [Subagent] Researching: {task[:60]}...")
+    print(f"\n🔎 [Subagent] Researching: {task_description[:60]}...")
 
     # Perform web search
-    search_results = tools.search_web(task, max_results=5)
+    search_results = tools.search_web(task_description, max_results=5)
 
     if not search_results:
         print("  ⚠️  No search results found")
         finding = Finding(
-            task=task,
+            task=task_description,
             summary="No information found",
             sources=[],
         )
@@ -227,21 +242,37 @@ def subagent_node(state: SubagentState):
         for i, r in enumerate(search_results)
     ])
 
+    # Deep Research: Scrape the top result for full context
+    full_content = ""
+    if search_results:
+        top_url = search_results[0]["url"]
+        print(f"  📖 [Deep Research] Reading full content from: {top_url[:60]}...")
+        full_text = tools.scrape_web_page(top_url)
+        if full_text and not full_text.startswith("Error"):
+            full_content = (
+                f"\n\n--- FULL CONTENT FROM {top_url} ---\n"
+                f"{full_text[:3000]}\n--- END FULL CONTENT ---\n"
+            )
+        else:
+            full_content = f"\n(Failed to read full content: {full_text})"
+
     analysis_prompt_content = SUBAGENT_ANALYSIS.format(
-        task=task,
-        results=sources_text
+        task=task_description,
+        results=sources_text + full_content
     )
-    
+
     # Internal retry loop for parallel subagent
-    structured_llm = get_subagent_llm().with_structured_output(SubagentOutput, include_raw=True)
+    structured_llm = get_subagent_llm().with_structured_output(
+        SubagentOutput, include_raw=True
+    )
     current_prompt = analysis_prompt_content
-    
+
     for attempt in range(3):
         response = structured_llm.invoke([
             SystemMessage(content=SUBAGENT_SYSTEM),
             HumanMessage(content=current_prompt),
         ])
-        
+
         if not response.get("parsing_error"):
             # Success
             output = response["parsed"]
@@ -251,18 +282,23 @@ def subagent_node(state: SubagentState):
                  for r in search_results
             ]
             finding = Finding(
-                task=task,
+                task=task_description,
                 summary=output.summary,
+                content=(
+                    full_text
+                    if full_text and not full_text.startswith("Error")
+                    else ""
+                ),
                 sources=sources_list
             )
-            
+
             print(f"  ✅ Found {len(sources_list)} sources, summary created")
             return {"subagent_findings": [finding]}
-            
+
         # Failure
         error = response["parsing_error"]
         print(f"  ⚠️  Subagent validation failed (attempt {attempt+1}/3): {error}")
-        
+
         if attempt < 2:
             current_prompt = SUBAGENT_RETRY.format(
                 previous_prompt=analysis_prompt_content,
@@ -272,7 +308,7 @@ def subagent_node(state: SubagentState):
     # Fallback if all retries fail
     print("  ❌ All subagent retries failed, using raw fallback")
     finding = Finding(
-        task=task,
+        task=task_description,
         summary="Failed to generate structured summary.",
         sources=[{"title": r["title"], "url": r["url"]} for r in search_results]
     )
@@ -283,20 +319,18 @@ def assign_subagents(state: ResearchState):
     """Fan-out: Assign each task to a subagent OR retry"""
     # Check for retry condition
     if should_retry(state):
-        print(f"  ↺ Routing back to lead_researcher for retry...")
+        print("  ↺ Routing back to lead_researcher for retry...")
         return "lead_researcher"
 
     tasks = state.get("subagent_tasks", [])
     print(f"\n🔀 [Fan-out] Distributing {len(tasks)} tasks to subagents...")
 
-    # Ensure all tasks are strings before sending
+    # Send task objects directly
     return [
         Send(
             "subagent",
             {
-                "subagent_tasks": [
-                    str(task) if not isinstance(task, str) else task
-                ]
+                "subagent_tasks": [task]
             },
         )
         for task in tasks
@@ -305,12 +339,8 @@ def assign_subagents(state: ResearchState):
 
 def synthesizer_node(state: SynthesizerState):
     """Synthesizer: Aggregate and synthesize all findings"""
-    from prompts import (
-        SYNTHESIZER_MAIN, 
-        SYNTHESIZER_RETRY, 
-        SYNTHESIZER_SYSTEM
-    )
-    
+    from prompts import SYNTHESIZER_MAIN, SYNTHESIZER_RETRY, SYNTHESIZER_SYSTEM
+
     findings = state.get("subagent_findings", [])
     query = state["query"]
     retry_count = state.get("retry_count", 0)
@@ -340,7 +370,9 @@ def synthesizer_node(state: SynthesizerState):
             error=last_error
         )
 
-    structured_llm = get_lead_llm().with_structured_output(SynthesisResult, include_raw=True)
+    structured_llm = get_lead_llm().with_structured_output(
+        SynthesisResult, include_raw=True
+    )
     response = structured_llm.invoke([
         SystemMessage(content=SYNTHESIZER_SYSTEM),
         HumanMessage(content=prompt_content),
@@ -349,9 +381,11 @@ def synthesizer_node(state: SynthesizerState):
     # Use helper to process retry logic
     def fallback(s):
         return {
-            "synthesized_results": "Failed to synthesize findings into structured format."
+            "synthesized_results": (
+                "Failed to synthesize findings into structured format."
+            )
         }
-    
+
     retry_state = process_structured_response(response, state, fallback)
     if retry_state:
         # Check if we are clearing the state (success/fallback) or looping (error)
@@ -456,6 +490,63 @@ def citation_agent_node(state: CitationAgentState):
     }
 
 
+def verifier_node(state: ResearchState):
+    """Verifier: Cross-check synthesized report against source evidence"""
+    from prompts import VERIFIER_MAIN, VERIFIER_SYSTEM
+    from schemas import VerificationResult
+
+    report = state.get("synthesized_results", "")
+    findings = state.get("subagent_findings", [])
+
+    if not report or not findings:
+        return {"final_report": report}
+
+    print("\n🕵️  [Verifier] Cross-checking report against source evidence...")
+
+    # Aggregate evidence from Finding.content
+    evidence_pieces = []
+    for f in findings:
+        if f.content:
+            evidence_pieces.append(
+                f"Task: {f.task}\nReference Content:\n{f.content[:2000]}..."
+            )
+
+    if not evidence_pieces:
+        print("  ⚠️  No full source text available for verification. Skipping.")
+        return {}
+
+    evidence_text = "\n\n".join(evidence_pieces)
+
+    # Invoke Verifier LLM
+    prompt_content = VERIFIER_MAIN.format(
+        report=report,
+        evidence=evidence_text
+    )
+
+    # Use lead LLM (stronger model) for verification
+    structured_llm = get_lead_llm().with_structured_output(VerificationResult)
+
+    try:
+        response = structured_llm.invoke([
+            SystemMessage(content=VERIFIER_SYSTEM),
+            HumanMessage(content=prompt_content)
+        ])
+
+        if response.is_valid:
+            print("  ✅ Report verified: Structure and facts appear accurate.")
+            return {}  # No change
+        else:
+            corrections_count = len(response.corrections)
+            print(f"  ⚠️  Issues found. {corrections_count} corrections applied.")
+            return {
+                "synthesized_results": response.corrected_report
+            }
+
+    except Exception as e:
+        print(f"  ❌ Verification failed: {e}")
+        return {}
+
+
 def route_decision(
     state: ResearchState,
 ) -> Literal["lead_researcher", "citation_agent"]:
@@ -468,7 +559,7 @@ def route_decision(
 def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"]:
     """Route synthesizer retry or success"""
     if should_retry(state):
-        print(f"  ↺ Routing back to synthesizer for retry...")
+        print("  ↺ Routing back to synthesizer for retry...")
         return "synthesizer"
     return "decision"
 
@@ -481,6 +572,7 @@ workflow.add_node("lead_researcher", lead_researcher_node)
 workflow.add_node("subagent", subagent_node)
 workflow.add_node("synthesizer", synthesizer_node)
 workflow.add_node("decision", decision_node)
+workflow.add_node("verifier", verifier_node)
 workflow.add_node("citation_agent", citation_agent_node)
 
 # Add edges
@@ -501,9 +593,10 @@ workflow.add_conditional_edges(
     route_decision,
     {
         "lead_researcher": "lead_researcher",
-        "citation_agent": "citation_agent",
+        "citation_agent": "verifier",
     },
 )
+workflow.add_edge("verifier", "citation_agent")
 workflow.add_edge("citation_agent", END)
 
 # Compile app

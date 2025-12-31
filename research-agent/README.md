@@ -47,7 +47,7 @@ This will:
 To test performance against a baseline dataset:
  
 ```bash
-python research-agent/tests/evaluate_langsmith.py
+python research-agent/tests/evaluate_agent.py
 ```
  
 ## Key Metrics & Targets
@@ -108,6 +108,10 @@ See [QUANTIFIED_REQUIREMENTS.md](./QUANTIFIED_REQUIREMENTS.md) for complete metr
     - Attribution formatting
     - Final report generation
  
+5.  **FACT Verifier Node (V2)**
+    - Cross-references final report claims against deep-scraped source text.
+    - Reduces hallucinations by ensuring evidence entailment.
+
 ## Implementation Status
  
 ### Phase 1: Core Orchestration (Completed)
@@ -127,11 +131,17 @@ See [QUANTIFIED_REQUIREMENTS.md](./QUANTIFIED_REQUIREMENTS.md) for complete metr
 - [x] Citation extraction
 - [x] Report formatting
  
-### Phase 4: Optimization (In Progress)
+### Phase 4: Optimization (Completed)
 - [x] Cost Control & Budgeting
 - [x] Search Retry Logic
 - [x] Evaluation Script
-- [ ] Comprehensive Unit Tests
+- [x] Comprehensive Unit Tests
+
+### Phase 5: Deep Research V2 (Completed)
+- [x] **Context Engineering**: Integrated Anthropic-style high-context agent prompts.
+- [x] **Causal Chains**: Implemented `ResearchTask` objects with dependencies.
+- [x] **Deep Navigation**: Subagents scrape and read full page content.
+- [x] **FACT Verification**: Added `verifier_node` to fact-check reports against source text.
 
 ## Dependencies
 

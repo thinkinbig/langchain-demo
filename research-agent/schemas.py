@@ -22,9 +22,17 @@ class Finding(DictCompatibleModel):
     """Individual finding from a subagent"""
     task: str = Field(..., description="The research task")
     summary: str = Field(..., min_length=1, description="Summary of findings")
+    content: str = Field(default="", description="Full source content for verification")
     sources: List[dict] = Field(
         default_factory=list, description="Source URLs and titles"
     )
+
+
+class VerificationResult(DictCompatibleModel):
+    """Result of the verification process"""
+    is_valid: bool = Field(..., description="Whether the report is factual")
+    corrected_report: str = Field(..., description="The verified and corrected report")
+    corrections: List[str] = Field(default_factory=list, description="List of corrections made")
 
 
 class SubagentOutput(DictCompatibleModel):
@@ -33,9 +41,20 @@ class SubagentOutput(DictCompatibleModel):
 
 
 
+
+class ResearchTask(DictCompatibleModel):
+    """Detailed research task"""
+    id: str = Field(..., description="Unique task ID (e.g., T1)")
+    description: str = Field(..., description="Detailed task description")
+    rationale: str = Field(default="", description="Why this task is necessary")
+    dependencies: List[str] = Field(
+        default_factory=list, description="IDs of tasks that must complete first (optional)"
+    )
+
+
 class ResearchTasks(DictCompatibleModel):
     """List of research tasks"""
-    tasks: List[str] = Field(..., min_length=1, description="List of research tasks")
+    tasks: List[ResearchTask] = Field(..., min_length=1, description="List of research tasks")
 
 
 class SynthesisResult(DictCompatibleModel):
@@ -54,7 +73,8 @@ class ResearchState(DictCompatibleModel):
 
     query: str = Field(..., min_length=1, description="Original user query")
     research_plan: str = Field(default="", description="Research plan")
-    subagent_tasks: List[str] = Field(
+
+    subagent_tasks: List[ResearchTask] = Field(
         default_factory=list, description="Tasks for subagents"
     )
 
@@ -78,7 +98,7 @@ class ResearchState(DictCompatibleModel):
         default_factory=list, description="Citations"
     )
     final_report: str = Field(default="", description="Final report")
-    
+
     # Retry state
     error: str | None = Field(default=None, description="Error message from validation")
     retry_count: int = Field(default=0, description="Retry attempt count")
@@ -100,7 +120,7 @@ class ResearchState(DictCompatibleModel):
 # Auxiliary Pydantic models for type safety
 class SubagentState(DictCompatibleModel):
     """Minimal state for subagent workers"""
-    subagent_tasks: List[str] = Field(..., min_length=1)
+    subagent_tasks: List[ResearchTask] = Field(..., min_length=1)
 
     model_config = ConfigDict(extra="allow")
 
