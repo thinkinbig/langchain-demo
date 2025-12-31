@@ -4,6 +4,12 @@ Runs a set of "Golden Questions" and saves the results for review.
 Now supports LangSmith evaluation tracking.
 """
 
+import os
+import sys
+
+# Add project root/research-agent to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from dotenv import load_dotenv
 
 load_dotenv()

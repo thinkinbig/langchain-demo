@@ -30,11 +30,17 @@ query into parallel subtasks.
 {query}
 </query>
 
+<scratchpad>
+{scratchpad}
+</scratchpad>
+
 <instructions>
-1. Break this query into 2-3 distinct research tasks.
-2. Each task should focus on a specific aspect (e.g., "Financials",
+1. Review your scratchpad notes.
+2. Break this query into 2-3 distinct research tasks.
+3. Each task should focus on a specific aspect (e.g., "Financials",
    "Competitor Analysis", "Technology Stack").
-3. Ensure tasks are independent enough to run in parallel.
+4. Ensure tasks are independent enough to run in parallel.
+5. Update your scratchpad with any new thoughts or tracking info.
 </instructions>
 
 <format_example>
@@ -74,11 +80,16 @@ The following research has already been completed:
 {findings_summary}
 </context>
 
+<scratchpad>
+{scratchpad}
+</scratchpad>
+
 <instructions>
-1. Analyze the findings above. Are there gaps?
+1. Review your scratchpad notes and the findings above. Are there gaps?
 2. If the user's query is fully answered, generate an empty task list.
 3. If information is missing, generate 1-2 new targeted tasks.
 4. Do NOT repeat completed tasks.
+5. Update your scratchpad with progress notes.
 </instructions>
 """
 )
@@ -102,10 +113,11 @@ Please correct the JSON structure and try again.
 # Subagent Prompts (Worker)
 # =============================================================================
 
-SUBAGENT_SYSTEM = """You are a Research Analyst.
+SUBAGENT_SYSTEM = """You are a Research Analyst with access to a Python Environment.
 Your goal is to synthesize search results into a concise, fact-based summary.
-You must ignore irrelevant information and focus on the specific task.
-Respond in JSON.
+You have two tools:
+1. `python_repl`: Use this to perform calculations, filter data, or count items if needed.
+2. `submit_findings`: Use this to submit your final summary when you are done.
 """
 
 SUBAGENT_ANALYSIS = ChatPromptTemplate.from_template(
@@ -120,9 +132,11 @@ The following search results were retrieved:
 
 <instructions>
 1. Analyze the search results relevant to the task.
-2. Extract key statistics, dates, and entities.
-3. Synthesize a 2-3 sentence summary.
-4. If the results are irrelevant, state "No relevant information found".
+2. If you need to calculate averages, count items, or filter lists, use `python_repl`.
+   (Example: "Calculate the average risk score from the data")
+3. Extract key statistics, dates, and entities.
+4. Synthesize a 2-3 sentence summary.
+5. Call `submit_findings` with your final summary.
 </instructions>
 """
 )

@@ -109,6 +109,16 @@ def get_tracer() -> LocalFileTracer:
 
 def get_callbacks() -> List[BaseCallbackHandler]:
     """Get callbacks list for LLM calls"""
+    # 1. Check for LangSmith Tracing (Standard)
+    if os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true":
+        # LangChain automatically attaches tracing if this env var is set.
+        # We don't need to manually add a handler, but we can print a
+        # specific message if needed.
+        # However, for hybrid debugging, we might want local logs too.
+        pass
+
+    # 2. Check for Local File Tracing (Custom)
     if os.getenv("ENABLE_TRACING", "false").lower() == "true":
         return [get_tracer()]
+
     return []

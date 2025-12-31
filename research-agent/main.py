@@ -10,9 +10,13 @@ from schemas import ResearchState  # noqa: E402
 
 def main():
     """Run research agent on a query"""
-    query = (
-        "What are the key differences between Python and Rust programming languages?"
-    )
+    import sys
+    if len(sys.argv) > 1:
+        query = sys.argv[1]
+    else:
+        query = (
+            "What are the key differences between Python and Rust programming languages?"
+        )
 
     print("=" * 80)
     print("MULTI-AGENT RESEARCH SYSTEM")

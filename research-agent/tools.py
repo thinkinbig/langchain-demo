@@ -1,6 +1,9 @@
 """Web search and scraping tools"""
 
+import ast
+import contextlib
 import os
+from io import StringIO
 from typing import Dict, List
 
 import requests
@@ -10,17 +13,7 @@ from tavily import TavilyClient
 
 def search_web(query: str, max_results: int = 5) -> List[Dict]:
     """
-    Simple web search using Tavily API.
-
-    Args:
-        query: Search query string
-        max_results: Maximum number of results to return (default: 5)
-
-    Returns:
-        List of search results, each containing:
-        - title: Result title
-        - url: Result URL
-        - content: Result content/snippet
+    Simple web search using Tavily API. Returns a list of results.
     """
     # Simple retry logic
     max_retries = 3
@@ -66,12 +59,6 @@ def search_web(query: str, max_results: int = 5) -> List[Dict]:
 def scrape_web_page(url: str) -> str:
     """
     Scrape text content from a web page.
-
-    Args:
-        url: URL to scrape
-
-    Returns:
-        str: Extracted text content, or error message
     """
     try:
         headers = {
@@ -104,3 +91,55 @@ def scrape_web_page(url: str) -> str:
 
     except Exception as e:
         return f"Error scraping {url}: {str(e)}"
+
+
+def python_repl(code: str) -> str:
+    """
+    Execute Python code and return the output (stdout).
+    Useful for analysis, filtering data, or calculations.
+
+    WARNING: This executes code locally. Use with caution.
+    """
+    # Create a string buffer to capture stdout
+    io_buffer = StringIO()
+
+    try:
+        # Shared environment for exec and eval
+        env = {"__builtins__": __builtins__}
+
+        # Parse the code to check if the last node is an expression
+        tree = ast.parse(code)
+        last_node = tree.body[-1] if tree.body else None
+
+        # If last node is an expression, we want to print its result
+        if isinstance(last_node, ast.Expr):
+            # Remove the last node from the tree
+            tree.body.pop()
+            # Compile and exec the rest
+            if tree.body:
+                exec(compile(tree, filename="<ast>", mode="exec"), env)
+
+            # Eval the last expression and print it
+            last_expr = compile(
+                ast.Expression(last_node.value),
+                filename="<ast>",
+                mode="eval",
+            )
+            with contextlib.redirect_stdout(io_buffer):
+                result = eval(last_expr, env)
+                if result is not None:
+                    print(result)
+        else:
+            # Just exec everything
+            with contextlib.redirect_stdout(io_buffer):
+                exec(code, env)
+
+        output = io_buffer.getvalue()
+        if not output:
+             return "(No output)"
+        return output.strip()
+
+    except Exception as e:
+        return f"Error executing code: {e}"
+    finally:
+        io_buffer.close()

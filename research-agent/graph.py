@@ -2,9 +2,11 @@
 
 from typing import Literal
 
+import context_manager
 import tools
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from schemas import (
@@ -15,7 +17,6 @@ from schemas import (
     LeadResearcherState,
     ResearchState,
     ResearchTasks,
-    SubagentOutput,
     SubagentState,
     SynthesisResult,
     SynthesizerState,
@@ -132,7 +133,10 @@ def lead_researcher_node(state: LeadResearcherState):
     )
 
     if iteration_count == 0:
-        prompt_content = LEAD_RESEARCHER_INITIAL.format(query=query)
+        prompt_content = LEAD_RESEARCHER_INITIAL.format(
+            query=query,
+            scratchpad=state.get("scratchpad", "")
+        )
     else:
         existing_findings = state.get("subagent_findings", [])
         findings_summary = "\n".join([
@@ -141,7 +145,8 @@ def lead_researcher_node(state: LeadResearcherState):
         ])
         prompt_content = LEAD_RESEARCHER_REFINE.format(
             query=query,
-            findings_summary=findings_summary
+            findings_summary=findings_summary,
+            scratchpad=state.get("scratchpad", "")
         )
 
     # Add feedback if retrying - Standard Pattern
@@ -155,8 +160,14 @@ def lead_researcher_node(state: LeadResearcherState):
     structured_llm = get_lead_llm().with_structured_output(
         ResearchTasks, include_raw=True
     )
+    # Invoke LLM with System Prompt + Knowledge Base (Cached)
+    system_prompt = context_manager.get_system_context(
+        LEAD_RESEARCHER_SYSTEM,
+        include_knowledge=True
+    )
+
     response = structured_llm.invoke([
-        SystemMessage(content=LEAD_RESEARCHER_SYSTEM),
+        SystemMessage(content=system_prompt),
         HumanMessage(content=prompt_content)
     ])
 
@@ -177,7 +188,8 @@ def lead_researcher_node(state: LeadResearcherState):
                     rationale="Fallback"
                 )
             ],
-            "iteration_count": s.get("iteration_count", 0) + 1
+            "iteration_count": s.get("iteration_count", 0) + 1,
+            "scratchpad": s.get("scratchpad", "Fallback due to error")
         }
 
     retry_state = process_structured_response(response, state, fallback)
@@ -202,12 +214,13 @@ def lead_researcher_node(state: LeadResearcherState):
         "iteration_count": iteration_count + 1,
         "error": None,
         "retry_count": 0,
+        "scratchpad": parsed_result.scratchpad
     }
 
 
 def subagent_node(state: SubagentState):
     """Subagent: Perform web search and analyze results"""
-    from prompts import SUBAGENT_ANALYSIS, SUBAGENT_RETRY, SUBAGENT_SYSTEM
+    from prompts import SUBAGENT_ANALYSIS, SUBAGENT_SYSTEM
 
     tasks = state.get("subagent_tasks", [])
     if not tasks:
@@ -262,54 +275,108 @@ def subagent_node(state: SubagentState):
     )
 
     # Internal retry loop for parallel subagent
-    structured_llm = get_subagent_llm().with_structured_output(
-        SubagentOutput, include_raw=True
+    # CODE AGENT PATTERN: Bind REPL and Output Schema as tools
+    # We use a mini-loop here to allow tool use (code execution) ->
+    # observation -> final answer
+
+    # Get system prompt with knowledge base
+    system_prompt = context_manager.get_system_context(
+        SUBAGENT_SYSTEM,
+        include_knowledge=True
     )
+
     current_prompt = analysis_prompt_content
 
-    for attempt in range(3):
-        response = structured_llm.invoke([
-            SystemMessage(content=SUBAGENT_SYSTEM),
-            HumanMessage(content=current_prompt),
-        ])
+    # 1. Define tools
+    from langchain_core.messages import trim_messages
+    from langchain_core.tools import tool
 
-        if not response.get("parsing_error"):
-            # Success
-            output = response["parsed"]
-            # Ensure sources are preserved from search
-            sources_list = [
-                 {"title": r["title"], "url": r["url"]}
-                 for r in search_results
-            ]
-            finding = Finding(
-                task=task_description,
-                summary=output.summary,
-                content=(
-                    full_text
-                    if full_text and not full_text.startswith("Error")
-                    else ""
-                ),
-                sources=sources_list
-            )
+    @tool
+    def submit_findings(summary: str):
+        """Submit the final synthesized findings."""
+        return summary
 
-            print(f"  ✅ Found {len(sources_list)} sources, summary created")
-            return {"subagent_findings": [finding]}
+    tool_list = [tools.python_repl, submit_findings]
 
-        # Failure
-        error = response["parsing_error"]
-        print(f"  ⚠️  Subagent validation failed (attempt {attempt+1}/3): {error}")
+    # 2. Bind tools
+    formatted_llm = get_subagent_llm().bind_tools(tool_list)
 
-        if attempt < 2:
-            current_prompt = SUBAGENT_RETRY.format(
-                previous_prompt=analysis_prompt_content,
-                error=error
-            )
+    # 3. Agent Loop (Limit steps to prevent infinite loops)
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=current_prompt),
+    ]
 
-    # Fallback if all retries fail
-    print("  ❌ All subagent retries failed, using raw fallback")
+    for step in range(5): # Max 5 steps of code execution
+        response = formatted_llm.invoke(messages)
+        messages.append(response)
+
+        # Check for tool calls
+        if response.tool_calls:
+            for tool_call in response.tool_calls:
+                t_name = tool_call["name"]
+                t_args = tool_call["args"]
+                t_id = tool_call["id"]
+
+                print(f"    🛠️ [CodeAgent] Call: {t_name}")
+
+                # Handle Final Answer
+                if t_name == "submit_findings":
+                    # Map back to Finding object
+                    sources_list = [
+                         {"title": r["title"], "url": r["url"]}
+                         for r in search_results
+                    ]
+                    finding = Finding(
+                        task=task_description,
+                        summary=t_args.get("summary", ""),
+                        content=(
+                            full_text
+                            if full_text and not full_text.startswith("Error")
+                            else ""
+                        ),
+                        sources=sources_list
+                    )
+                    print("  ✅ CodeAgent finished via tool.")
+                    return {"subagent_findings": [finding]}
+
+                # Handle Python REPL
+                elif t_name == "python_repl":
+                    code_out = tools.python_repl(t_args.get("code", ""))
+                    print(f"      result: {code_out[:100]}...")
+                    # Append tool result
+                    from langchain_core.messages import ToolMessage
+                    messages.append(ToolMessage(
+                        tool_call_id=t_id,
+                        content=str(code_out)
+                    ))
+
+
+
+        else:
+            # No tool call? Force legacy behavior or return error
+            # If the model chats without calling a tool, we might need to nudge it
+            if step == 4:
+                print("  ⚠️  CodeAgent loop exhausted without submission.")
+                break
+
+        # COMPRESSION: Trim messages if they get too long
+        # Keep System Prompt (start_on="human") + last few messages
+        # Char count as proxy for token count
+        messages = trim_messages(
+            messages,
+            max_tokens=4096,
+            strategy="last",
+            token_counter=lambda msgs: sum(len(m.content) for m in msgs),
+            include_system=True,
+            start_on="human"
+        )
+
+    # Fallback if loop ends without 'submit_findings'
+    print("  ❌ CodeAgent failed to submit findings properly.")
     finding = Finding(
         task=task_description,
-        summary="Failed to generate structured summary.",
+        summary="Agent failed to produce structured output after code execution.",
         sources=[{"title": r["title"], "url": r["url"]} for r in search_results]
     )
     return {"subagent_findings": [finding]}
@@ -326,11 +393,16 @@ def assign_subagents(state: ResearchState):
     print(f"\n🔀 [Fan-out] Distributing {len(tasks)} tasks to subagents...")
 
     # Send task objects directly
+    # Send task objects directly
+    # CONTEXT ISOLATION: We create a minimal state for the subagent
+    # It receives ONLY the query and its specific task.
+    # It does NOT receive the full history or other agent findings.
     return [
         Send(
             "subagent",
             {
-                "subagent_tasks": [task]
+                "subagent_tasks": [task],
+                "query": state["query"]  # Pass query for context
             },
         )
         for task in tasks
@@ -600,5 +672,8 @@ workflow.add_edge("verifier", "citation_agent")
 workflow.add_edge("citation_agent", END)
 
 # Compile app
-app = workflow.compile()
+# Compile app with persistence (MemorySaver)
+# This enables "Short-Term Memory" (thread-scoped)
+checkpointer = MemorySaver()
+app = workflow.compile(checkpointer=checkpointer)
 

@@ -31,13 +31,19 @@ class Finding(DictCompatibleModel):
 class VerificationResult(DictCompatibleModel):
     """Result of the verification process"""
     is_valid: bool = Field(..., description="Whether the report is factual")
-    corrected_report: str = Field(..., description="The verified and corrected report")
-    corrections: List[str] = Field(default_factory=list, description="List of corrections made")
+    corrected_report: str = Field(
+        ..., description="The verified and corrected report"
+    )
+    corrections: List[str] = Field(
+        default_factory=list, description="List of corrections made"
+    )
 
 
 class SubagentOutput(DictCompatibleModel):
     """Output from subagent LLM validaton"""
-    summary: str = Field(..., min_length=1, description="Summary of findings from search results")
+    summary: str = Field(
+        ..., min_length=1, description="Summary of findings from search results"
+    )
 
 
 
@@ -48,13 +54,19 @@ class ResearchTask(DictCompatibleModel):
     description: str = Field(..., description="Detailed task description")
     rationale: str = Field(default="", description="Why this task is necessary")
     dependencies: List[str] = Field(
-        default_factory=list, description="IDs of tasks that must complete first (optional)"
+        default_factory=list,
+        description="IDs of tasks that must complete first (optional)"
     )
 
 
 class ResearchTasks(DictCompatibleModel):
     """List of research tasks"""
-    tasks: List[ResearchTask] = Field(..., min_length=1, description="List of research tasks")
+    tasks: List[ResearchTask] = Field(
+        ..., min_length=1, description="List of research tasks"
+    )
+    scratchpad: str = Field(
+        default="", description="Updated scratchpad/notes for the agent"
+    )
 
 
 class SynthesisResult(DictCompatibleModel):
@@ -73,6 +85,9 @@ class ResearchState(DictCompatibleModel):
 
     query: str = Field(..., min_length=1, description="Original user query")
     research_plan: str = Field(default="", description="Research plan")
+    scratchpad: str = Field(
+        default="", description="Internal working memory/notes for the agent"
+    )
 
     subagent_tasks: List[ResearchTask] = Field(
         default_factory=list, description="Tasks for subagents"
@@ -129,6 +144,7 @@ class LeadResearcherState(DictCompatibleModel):
     """State needed by lead researcher"""
     query: str = Field(..., min_length=1)
     iteration_count: int = Field(default=0, ge=0)
+    scratchpad: str = Field(default="")
     subagent_findings: List[Finding] = Field(default_factory=list)
 
     model_config = ConfigDict(extra="allow")
