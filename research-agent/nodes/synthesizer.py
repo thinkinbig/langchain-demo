@@ -2,7 +2,7 @@
 
 from graph_helpers import process_structured_response
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_lead_llm
+from llm.factory import get_synthesizer_llm
 from memory_helpers import extract_findings_metadata
 from prompts import SYNTHESIZER_MAIN, SYNTHESIZER_RETRY, SYNTHESIZER_SYSTEM
 from schemas import SynthesisResult, SynthesizerState
@@ -87,7 +87,7 @@ def synthesizer_node(state: SynthesizerState):
             error=last_error
         )
 
-    structured_llm = get_lead_llm().with_structured_output(
+    structured_llm = get_synthesizer_llm().with_structured_output(
         SynthesisResult, include_raw=True
     )
     response = structured_llm.invoke([

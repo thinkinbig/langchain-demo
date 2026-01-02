@@ -26,6 +26,7 @@ class QueryBudget:
     current_subagents: int = 0
     current_iterations: int = 0
     current_search_calls: int = 0
+    current_cost: float = 0.0
 
     _lock: threading.Lock = field(default_factory=threading.Lock,
     init=False, repr=False)
@@ -282,6 +283,11 @@ def track_query_cost(query_budget: QueryBudget, component: str,
     if not can_consume:
         raise CostLimitExceeded(f"Total tokens: {message}")
 
+    # Accumulate cost (Thread-safe assignment would be better but this is MVP)
+    # We use the lock in consume, ideally we'd have a method for this.
+    # For now, we accept slight race condition risk on reporting.
+    query_budget.current_cost += total_cost
+
     return total_cost
 
 
@@ -293,9 +299,13 @@ class CostTrackingCallback(BaseCallbackHandler):
 
     def __init__(self, budget: QueryBudget):
         self.budget = budget
-        # Default costs (can be overridden or passed in if needed)
-        self.input_cost_per_1k = 0.002
-        self.output_cost_per_1k = 0.002
+        # Pricing Map (per 1k tokens)
+        # Based on rough public pricing (adjust as needed)
+        self.DATA_COST_MAP = {
+            "qwen-plus": {"input": 0.0004, "output": 0.0012},  # $0.4 / $1.2 per 1M
+            "qwen-turbo": {"input": 0.0002, "output": 0.0006}, # $0.2 / $0.6 per 1M
+            "default": {"input": 0.002, "output": 0.002}       # Legacy high fallback
+        }
 
     def on_llm_end(self, response: Any, **kwargs: Any) -> None:
         """Track usage when LLM finishes"""
@@ -304,6 +314,16 @@ class CostTrackingCallback(BaseCallbackHandler):
             # For OpenAI/LangChain standard:
             if hasattr(response, 'llm_output') and response.llm_output:
                 token_usage = response.llm_output.get("token_usage", {})
+                model_name = response.llm_output.get("model_name", "default")
+
+                # Normalize model name slightly
+                if "qwen-plus" in model_name:
+                    cost_config = self.DATA_COST_MAP["qwen-plus"]
+                elif "qwen-turbo" in model_name:
+                    cost_config = self.DATA_COST_MAP["qwen-turbo"]
+                else:
+                    cost_config = self.DATA_COST_MAP["default"]
+
                 if token_usage:
                     input_tokens = token_usage.get("prompt_tokens", 0)
                     output_tokens = token_usage.get("completion_tokens", 0)
@@ -313,8 +333,8 @@ class CostTrackingCallback(BaseCallbackHandler):
                         "llm_call",
                         input_tokens,
                         output_tokens,
-                        self.input_cost_per_1k,
-                        self.output_cost_per_1k
+                        cost_config["input"],
+                        cost_config["output"]
                     )
         except CostLimitExceeded as e:
             # Raise to stop execution

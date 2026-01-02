@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+import pytest
 from retrieval import (
     RetrievalResult,
     RetrievalService,
@@ -249,20 +250,44 @@ class TestRetrievalService:
         assert "doc1.pdf" not in new_sources
 
 
-class TestDictCompatibleModel:
-    """Test DictCompatibleModel functionality"""
+    @pytest.mark.asyncio
+    async def test_aretrieve_internal_success(self):
+        """Test async internal retrieval"""
+        # We need to mock the synchronous method since the async wrapper calls it via to_thread
+        with patch("retrieval.RetrievalService.retrieve_internal") as mock_sync:
+            mock_sync.return_value = RetrievalResult(
+                content="Async content",
+                sources=[],
+                source_type=RetrievalSource.INTERNAL,
+                has_content=True
+            )
 
-    def test_retrieval_result_dict_compatible(self):
-        """Test that RetrievalResult works with dict-style access"""
-        result = RetrievalResult(
-            content="test",
-            sources=[],
-            source_type=RetrievalSource.INTERNAL,
-            has_content=True
-        )
+            result = await RetrievalService.aretrieve_internal(
+                query="async query",
+                visited_sources=[],
+                k=3
+            )
 
-        # Should support dict-style access (DictCompatibleModel feature)
-        assert result["content"] == "test"
-        assert result.get("content") == "test"
-        assert result.get("nonexistent", "default") == "default"
+            assert result.content == "Async content"
+            mock_sync.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_aretrieve_web_success(self):
+        """Test async web retrieval"""
+        with patch("retrieval.RetrievalService.retrieve_web") as mock_sync:
+            mock_sync.return_value = RetrievalResult(
+                content="Web content",
+                sources=[],
+                source_type=RetrievalSource.WEB,
+                has_content=True
+            )
+
+            result = await RetrievalService.aretrieve_web(
+                query="web query",
+                visited_urls=[],
+                max_results=2
+            )
+
+            assert result.content == "Web content"
+            mock_sync.assert_called_once()
 

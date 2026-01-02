@@ -54,11 +54,13 @@ subagent_workflow.add_edge("analysis_node", END)
 subagent_app = subagent_workflow.compile()
 
 
-def subagent_node(state: SubagentState):
+
+async def subagent_node(state: SubagentState):
     """Wrapper to invoke the subagent subgraph and filter output"""
     # Invoke the subgraph
     # We pass the state directly. The subgraph runs and returns its final state.
-    result_state = subagent_app.invoke(state)
+    # Note: StateGraph.compile() produces a CompiledGraph which supports ainvoke.
+    result_state = await subagent_app.ainvoke(state)
 
     # Extract visited sources from retrieval results and convert to VisitedSource format
     visited_sources = []

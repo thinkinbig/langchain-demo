@@ -107,12 +107,13 @@ class VectorStoreManager:
 
         # Use similarity_search_with_score to filter irrelevant results
         # Chroma/HF default is L2 distance. Lower is better.
-        # Threshold: 1.0 (Empirical: Relevant ~0.7, Irrelevant > 1.1)
+        # Threshold controlled via config.
+        from config import settings
         results_with_score = self.vector_store.similarity_search_with_score(query, k=k)
 
         relevant_results = []
         for doc, score in results_with_score:
-            if score < 1.0:
+            if score < settings.RETRIEVAL_L2_THRESHOLD:
                 relevant_results.append(doc)
             else:
                 # Debug log (optional, or remove in prod)

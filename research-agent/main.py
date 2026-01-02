@@ -1,16 +1,18 @@
 """Main entry point for research agent"""
 
+import asyncio
 import uuid
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
 from graph import app  # noqa: E402
 from schemas import ResearchState  # noqa: E402
 
 
-def main():
+async def main():
     """Run research agent on a query"""
     import sys
     if len(sys.argv) > 1:
@@ -75,7 +77,8 @@ def main():
             "configurable": {"thread_id": thread_id}
         }
 
-        final_state = app.invoke(initial_state, config=config)
+        # Use async invoke for the graph
+        final_state = await app.ainvoke(initial_state, config=config)
 
         # Display results
         print("\n" + "=" * 80)
@@ -98,14 +101,14 @@ def main():
         # Only what was consumed
         print("\n💰 Cost Report:")
         print(f"   Tokens Used: {query_budget.current_tokens}")
-        print(f"   Est. Cost: ${(query_budget.current_tokens/1000)*0.002:.4f}")
+        print(f"   Est. Cost: ${query_budget.current_cost:.4f}")
 
         cost_controller.record_daily_usage(
             tokens=query_budget.current_tokens,
-            cost=(query_budget.current_tokens / 1000) * 0.002  # Simplified calc
+            cost=query_budget.current_cost
         )
         print("   (Recorded to daily budget)")
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -4,7 +4,8 @@ from retrieval import RetrievalService
 from schemas import SubagentState
 
 
-def web_search_node(state: SubagentState):
+
+async def web_search_node(state: SubagentState):
     """Node: Perform web search if RAG failed"""
     task_description = state.get("task_description", "")
 
@@ -28,8 +29,8 @@ def web_search_node(state: SubagentState):
         if vs.source_type == "web"
     ]
 
-    # Use unified retrieval service
-    result = RetrievalService.retrieve_web(
+    # Use unified retrieval service (Async)
+    result = await RetrievalService.aretrieve_web(
         query=task_description,
         visited_urls=visited_urls,
         max_results=5,

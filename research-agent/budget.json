@@ -8,5 +8,10 @@
     "current_tokens": 634850,
     "current_queries": 44,
     "current_cost": 1.2696999999999998
+  },
+  "2026-01-02": {
+    "current_tokens": 155206,
+    "current_queries": 8,
+    "current_cost": 0.20389000000000002
   }
 }

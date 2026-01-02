@@ -18,60 +18,41 @@ Process:
 Output Format:
 You must respond with a JSON object matching the `ResearchTasks` schema.
 However, you should perform your internal analysis before generating the JSON.
+
+<format_example>
+{
+  "research_plan": "Plan to investigate X...",
+  "tasks": [
+    {
+      "id": "task_1",
+      "description": "Investigate A",
+      "rationale": "Need to understand A to proceed with B",
+      "dependencies": []
+    },
+    {
+      "id": "task_2",
+      "description": "Analyze B",
+      "rationale": "Depends on A",
+      "dependencies": ["task_1"]
+    }
+  ]
+}
+</format_example>
 """
 
 LEAD_RESEARCHER_INITIAL = ChatPromptTemplate.from_template(
-    """<role>
-You are an expert research planner. Your task is to decompose the user's
-query into parallel subtasks.
-</role>
-
-<query>
+    """<query>
 {query}
 </query>
 
 <scratchpad>
 {scratchpad}
 </scratchpad>
-
-<instructions>
-1. Review your scratchpad notes.
-2. Break this query into 2-3 distinct research tasks.
-3. Each task should focus on a specific aspect (e.g., "Financials",
-   "Competitor Analysis", "Technology Stack").
-4. Ensure tasks are independent enough to run in parallel.
-5. Update your scratchpad with any new thoughts or tracking info.
-</instructions>
-
-<format_example>
-{{
-  "research_plan": "Plan to investigate X...",
-  "tasks": [
-    {{
-      "id": "task_1",
-      "description": "Investigate A",
-      "rationale": "Need to understand A to proceed with B",
-      "dependencies": []
-    }},
-    {{
-      "id": "task_2",
-      "description": "Analyze B",
-      "rationale": "Depends on A",
-      "dependencies": ["task_1"]
-    }}
-  ]
-}}
-</format_example>
 """
 )
 
 LEAD_RESEARCHER_REFINE = ChatPromptTemplate.from_template(
-    """<role>
-You are an expert research planner. You are iterating on a research plan
-based on new findings.
-</role>
-
-<query>
+    """<query>
 {query}
 </query>
 
@@ -89,17 +70,9 @@ The following research has already been completed:
 </scratchpad>
 
 <instructions>
-1. Review your scratchpad notes and the findings above. Are there gaps?
-2. Check the extracted_citations section. If specific papers or sources were
-   mentioned in the knowledge base, consider whether investigating them would
-   improve the answer.
-3. If the user's query is fully answered, generate an empty task list.
-4. If information is missing OR valuable citations were found, generate 1-2
-   new targeted tasks.
-   - For citations: "Search for details about [Author/Paper] on [Topic]"
-   - For gaps: Regular research tasks
-5. Do NOT repeat completed tasks.
-6. Update your scratchpad with progress notes.
+1. Review scratchpad and findings.
+2. Check extracted_citations.
+3. Identify 1-2 new tasks or return empty if done.
 </instructions>
 """
 )
@@ -214,16 +187,6 @@ Your goal is to synthesize disparate research findings into a comprehensive,
 deeply informative, EXPANDED report.
 Your report must be detailed, specific, and include concrete information
 from the findings. DO NOT compress or condense - expand and elaborate.
-"""
-
-SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
-    """<query>
-{query}
-</query>
-
-<findings>
-{findings}
-</findings>
 
 <instructions>
 1. Synthesize all findings into a comprehensive, EXPANDED, DETAILED narrative.
@@ -264,6 +227,16 @@ SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
     report is better than a condensed summary.
 </instructions>
 """
+
+SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<findings>
+{findings}
+</findings>
+"""
 )
 
 SYNTHESIZER_RETRY = ChatPromptTemplate.from_template(
@@ -280,6 +253,7 @@ Fix the JSON structure.
 )
 
 
+
 # =============================================================================
 # Verifier Prompts
 # =============================================================================
@@ -287,16 +261,6 @@ Fix the JSON structure.
 VERIFIER_SYSTEM = """You are a rigorous Fact Checker.
 Your task is to verify the claims in a research report against the provided
 source evidence using a "Chain of Verification" process.
-"""
-
-VERIFIER_MAIN = ChatPromptTemplate.from_template(
-    """<report>
-{report}
-</report>
-
-<evidence>
-{evidence}
-</evidence>
 
 <instructions>
 1. **Identify Claims:** Extract every factual claim (dates, metrics,
@@ -316,13 +280,28 @@ VERIFIER_MAIN = ChatPromptTemplate.from_template(
    qualify it (e.g., "According to some sources...").
 </instructions>
 """
+
+VERIFIER_MAIN = ChatPromptTemplate.from_template(
+    """<report>
+{report}
+</report>
+
+<evidence>
+{evidence}
+</evidence>
+"""
 )
 
 # =============================================================================
 # Extraction Prompts (Unified Pattern for Citations and Web Content)
 # =============================================================================
 
-CITATION_EXTRACTION = """Analyze the following text and extract any academic
+# =============================================================================
+# Extraction Prompts (Unified Pattern for Citations and Web Content)
+# =============================================================================
+
+CITATION_EXTRACTION = ChatPromptTemplate.from_messages([
+    ("system", """Analyze the text provided by the user and extract any academic
 paper citations or references to other research.
 
 For each citation found, provide:
@@ -331,13 +310,14 @@ For each citation found, provide:
 2. Brief context about what the paper discusses
 3. Why it might be relevant for deeper research
 
-Text to analyze:
-{text}
-
 If no citations are found, respond with an empty list. Return your answer
-in JSON format."""
+in JSON format."""),
+    ("human", """Text to analyze:
+{text}""")
+])
 
-WEB_CONTENT_EXTRACTION = """Analyze the following web search results and
+WEB_CONTENT_EXTRACTION = ChatPromptTemplate.from_messages([
+    ("system", """Analyze the web search results provided by the user and
 extract the most relevant and actionable information.
 
 For each key finding, provide:
@@ -345,13 +325,13 @@ For each key finding, provide:
 2. Which source it came from (URL or title)
 3. Why this information is relevant to the research question
 
-Search results to analyze:
+If no relevant information is found, respond with an empty list. Return your
+answer in JSON format."""),
+    ("human", """Search results to analyze:
 {text}
 
-Research question: {query}
-
-If no relevant information is found, respond with an empty list. Return your
-answer in JSON format."""
+Research question: {query}""")
+])
 
 # Generic extraction template - can be customized for any extraction task
 GENERIC_EXTRACTION = """Analyze the following content and extract {extraction_type}.

@@ -54,16 +54,23 @@ def extract_with_llm(
         return []
 
     # Import here to avoid circular dependency
+    # Import here to avoid circular dependency
     if llm is None:
         try:
-            from llm.factory import get_subagent_llm
-            llm = get_subagent_llm()
+            from llm.factory import get_extraction_llm
+            llm = get_extraction_llm()
         except Exception:
             # Fallback: if LLM not available, return empty
             return []
 
     # Format prompt with text and any additional kwargs
-    prompt = prompt_template.format(text=text, **prompt_kwargs)
+    if hasattr(prompt_template, "invoke"):
+        # It's a ChatPromptTemplate or similar Runnable
+        # invoke returns a PromptValue which preserves message structure (System/Human)
+        prompt = prompt_template.invoke({"text": text, **prompt_kwargs})
+    else:
+        # It's a string template
+        prompt = prompt_template.format(text=text, **prompt_kwargs)
 
     try:
         # Use structured output for reliable parsing

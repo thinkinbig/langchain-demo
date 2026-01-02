@@ -1,0 +1,65 @@
+"""
+Configuration management for the Research Agent.
+Uses Pydantic BaseSettings for environment variable management and validation.
+"""
+
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class AgentSettings(BaseSettings):
+    """
+    Centralized configuration for the Research Agent.
+    Values can be overridden by environment variables (e.g., AGENT_RETRIEVAL_K=5).
+    """
+    model_config = SettingsConfigDict(
+        env_prefix="AGENT_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
+
+    # =========================================================================
+    # Retrieval Hyperparameters
+    # =========================================================================
+
+    # Threshold for vector similarity (L2 distance).
+    # Lower is stricter (0.0 = identical).
+    # 1.0 is default strictness (approx cosine 0.5).
+    # 1.6 is loose (approx cosine 0.2), ensuring high recall for diverse queries.
+    RETRIEVAL_L2_THRESHOLD: float = 1.6
+
+    # Number of chunks to retrieve per query
+    RETRIEVAL_K: int = 4
+
+    # =========================================================================
+    # LLM Configuration
+    # =========================================================================
+
+    # Model Names
+    # Common options: "qwen-plus", "qwen-turbo", "qwen-max"
+    MODEL_PLANNER: str = "qwen-plus"
+    MODEL_SYNTHESIZER: str = "qwen-plus"
+    MODEL_VERIFIER: str = "qwen-plus"
+    MODEL_EXTRACTOR: str = "qwen-turbo"
+
+    # Temperatures
+    TEMP_PLANNER: float = 0.3      # Creativity + Stability
+    TEMP_SYNTHESIZER: float = 0.4  # Flow
+    TEMP_VERIFIER: float = 0.1     # Strictness
+    TEMP_EXTRACTOR: float = 0.0    # Determinism
+
+    # Base URL for API
+    LLM_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+    # =========================================================================
+    # Budget Controls
+    # =========================================================================
+
+    MAX_TOKENS_PER_QUERY: int = 100_000
+    MAX_ITERATIONS: int = 3
+    MAX_SEARCH_CALLS: int = 20
+
+
+# Global singleton
+settings = AgentSettings()

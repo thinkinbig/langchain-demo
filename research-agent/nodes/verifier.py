@@ -2,7 +2,7 @@
 
 import context_manager
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_lead_llm
+from llm.factory import get_verifier_llm
 from memory_helpers import extract_evidence_summaries
 from prompts import VERIFIER_MAIN, VERIFIER_SYSTEM
 from schemas import ResearchState, VerificationResult
@@ -56,7 +56,7 @@ def verifier_node(state: ResearchState):
     )
 
     # Use lead LLM (stronger model) for verification
-    structured_llm = get_lead_llm().with_structured_output(VerificationResult)
+    structured_llm = get_verifier_llm().with_structured_output(VerificationResult)
 
     try:
         response = structured_llm.invoke([

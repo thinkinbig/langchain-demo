@@ -16,8 +16,10 @@ from retrieval import RetrievalResult, RetrievalSource, Source
 from schemas import AnalysisOutput, Finding, SubagentState
 
 
-def analysis_node(state: SubagentState):
+
+async def analysis_node(state: SubagentState):
     """Node: Analyze gathered context (Internal or Web) using Structured Flow"""
+    import asyncio  # Import locally to avoid global pollution if desired, or move up
 
     # --- Context Preparation (Same as before) ---
     task_description = state.get("task_description", "")
@@ -87,11 +89,12 @@ def analysis_node(state: SubagentState):
     structured_llm = llm.with_structured_output(AnalysisOutput, include_raw=True)
 
     # Helper for Retry Logic (Error Prompt Pattern)
-    def invoke_with_retry(msgs, existing_retries=0):
+    async def invoke_with_retry(msgs, existing_retries=0):
         # Limit local retries to 2
         for _i in range(2):
             try:
-                response = structured_llm.invoke(msgs)
+                # Async invoke
+                response = await structured_llm.ainvoke(msgs)
             except Exception as e:
                 # Manually handle Pydantic validation errors that might bubble up
                 error_msg = f"Validation Error: {str(e)}"
@@ -127,7 +130,7 @@ def analysis_node(state: SubagentState):
         )
 
     # 2. Execute Analysis (One-Shot)
-    analysis = invoke_with_retry(messages)
+    analysis = await invoke_with_retry(messages)
 
     # 3. Tool Execution Loop (Simulated "Refine" if code present)
     if analysis.python_code:
@@ -135,7 +138,10 @@ def analysis_node(state: SubagentState):
         try:
             # We use the python_repl tool function directly
             start_code = analysis.python_code
-            result = tools.python_repl(start_code)
+            
+            # Use asyncio.to_thread for blocking tool execution
+            result = await asyncio.to_thread(tools.python_repl, start_code)
+            
             print(f"     Result: {str(result)[:100]}...")
 
             # 4. Refine Step (Maximize KV Cache by appending)
@@ -157,7 +163,7 @@ def analysis_node(state: SubagentState):
             messages.append(HumanMessage(content=refine_prompt))
 
             print("  🔄 [Analysis] Refining with tool output...")
-            analysis = invoke_with_retry(messages)
+            analysis = await invoke_with_retry(messages)
 
         except Exception as e:
             print(f"  ⚠️ [Analysis] Code execution failed: {e}")

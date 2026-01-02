@@ -4,7 +4,8 @@ from retrieval import RetrievalService
 from schemas import SubagentState
 
 
-def retrieve_node(state: SubagentState):
+
+async def retrieve_node(state: SubagentState):
     """Node: Retrieve internal knowledge (RAG)"""
     tasks = state.get("subagent_tasks", [])
     if not tasks:
@@ -24,8 +25,8 @@ def retrieve_node(state: SubagentState):
 
     print(f"  🧠 [RAG] Retrieving context for task: {task_description[:50]}...")
 
-    # Use unified retrieval service
-    result = RetrievalService.retrieve_internal(
+    # Use unified retrieval service (Async)
+    result = await RetrievalService.aretrieve_internal(
         query=task_description,
         visited_sources=visited_identifiers,
         k=4
