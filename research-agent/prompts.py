@@ -45,9 +45,23 @@ LEAD_RESEARCHER_INITIAL = ChatPromptTemplate.from_template(
 {query}
 </query>
 
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<memory_context>
+{memory_context}
+</memory_context>
+
 <scratchpad>
 {scratchpad}
 </scratchpad>
+
+<instructions>
+The scratchpad contains only current iteration notes. For historical context,
+refer to the memory_context section above which contains relevant planning history
+from previous iterations.
+</instructions>
 """
 )
 
@@ -55,6 +69,10 @@ LEAD_RESEARCHER_REFINE = ChatPromptTemplate.from_template(
     """<query>
 {query}
 </query>
+
+<memory_context>
+{memory_context}
+</memory_context>
 
 <context>
 The following research has already been completed:
@@ -70,9 +88,11 @@ The following research has already been completed:
 </scratchpad>
 
 <instructions>
-1. Review scratchpad and findings.
-2. Check extracted_citations.
-3. Identify 1-2 new tasks or return empty if done.
+1. Review memory_context for previous planning decisions and history.
+2. Review scratchpad (current iteration notes only).
+3. Review findings and extracted_citations.
+4. Identify 1-2 new tasks or return empty if done.
+Note: The scratchpad is kept short; historical context is in memory_context.
 </instructions>
 """
 )
@@ -87,6 +107,83 @@ The previous attempt failed validation:
 
 <instructions>
 Please correct the JSON structure and try again.
+</instructions>
+"""
+)
+
+
+# =============================================================================
+# Complexity Analyzer Prompts
+# =============================================================================
+
+COMPLEXITY_ANALYZER_SYSTEM = """You are a Complexity Analysis Expert.
+Your goal is to assess the complexity of a research query and recommend
+optimal resource allocation.
+
+Analyze the query considering:
+1. **Query Length & Scope**: Short, focused queries vs. broad, multi-faceted ones
+2. **Domain Complexity**: Simple factual queries vs. technical/academic research
+3. **Number of Topics**: Single topic vs. multiple interconnected topics
+4. **Research Depth**: Surface-level information vs. deep analysis needed
+5. **Task Breakdown Needs**: How many parallel workers would be beneficial
+
+Output Format:
+You MUST respond with a JSON object matching the `ComplexityAnalysis` schema.
+ALL fields are REQUIRED: complexity_level, recommended_workers,
+max_iterations, rationale
+
+<required_fields>
+- complexity_level: "simple", "medium", or "complex" (REQUIRED)
+- recommended_workers: integer between 1-5 (REQUIRED)
+- max_iterations: integer between 1-3 (REQUIRED)
+- rationale: string explaining the assessment (REQUIRED)
+</required_fields>
+
+<complexity_levels>
+- "simple": Single, straightforward query requiring 1-2 workers, 1 iteration
+- "medium": Moderate complexity requiring 2-3 workers, 1-2 iterations
+- "complex": Multi-faceted query requiring 3-5 workers, 2-3 iterations
+</complexity_levels>
+
+<worker_recommendations>
+- Simple queries: 1-2 workers (single focused task)
+- Medium queries: 2-3 workers (2-3 parallel tasks)
+- Complex queries: 3-5 workers (multiple parallel research streams)
+</worker_recommendations>
+
+<iteration_recommendations>
+- Simple: 1 iteration (straightforward research)
+- Medium: 1-2 iterations (may need refinement)
+- Complex: 2-3 iterations (deep research with multiple rounds)
+</iteration_recommendations>
+
+<example_format>
+{
+  "complexity_level": "complex",
+  "recommended_workers": 4,
+  "max_iterations": 3,
+  "rationale": "This query requires deep analysis across multiple domains..."
+}
+</example_format>
+"""
+
+COMPLEXITY_ANALYZER_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<instructions>
+Analyze the complexity of this research query and provide ALL required fields:
+1. complexity_level: "simple", "medium", or "complex" (REQUIRED)
+2. recommended_workers: integer 1-5 based on task breakdown needs (REQUIRED)
+3. max_iterations: integer 1-3 based on research depth (REQUIRED)
+4. rationale: string explaining your assessment (REQUIRED)
+
+IMPORTANT: You must include ALL four fields in your response. Do not omit any field.
+
+Consider how the query would naturally break down into parallel research tasks.
+More complex queries typically benefit from more workers handling different
+aspects simultaneously.
 </instructions>
 """
 )
@@ -293,8 +390,75 @@ VERIFIER_MAIN = ChatPromptTemplate.from_template(
 )
 
 # =============================================================================
-# Extraction Prompts (Unified Pattern for Citations and Web Content)
+# Decision Node Prompts
 # =============================================================================
+
+DECISION_SYSTEM = """You are a Research Quality Assessment Expert.
+Your task is to evaluate whether the current research state is sufficient
+to answer the user's query, or if more research iterations are needed.
+
+Consider the following factors:
+1. **Query Coverage**: Does the current research adequately address all
+   aspects of the query?
+2. **Information Quality**: Are the findings substantive, relevant, and
+   well-supported?
+3. **Synthesis Depth**: Is the synthesized result comprehensive and
+   informative enough?
+4. **Citation Richness**: Are there sufficient citations and sources?
+5. **Iteration Limits**: Respect the maximum iterations based on complexity.
+6. **Diminishing Returns**: Consider if additional iterations would add
+   meaningful value.
+
+Output Format:
+You must respond with a JSON object matching the `DecisionResult` schema.
+Provide a clear boolean decision, confidence score, detailed reasoning,
+and key factors that influenced your decision.
+"""
+
+DECISION_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<current_state>
+Iteration: {iteration_count} / {max_iterations}
+Findings Count: {findings_count}
+Synthesis Length: {synthesis_length} characters
+Citations Found: {citations_count}
+</current_state>
+
+<findings_summary>
+{findings_summary}
+</findings_summary>
+
+<synthesis_preview>
+{synthesis_preview}
+</synthesis_preview>
+
+<citations_info>
+{citations_info}
+</citations_info>
+
+<instructions>
+Evaluate whether more research is needed based on:
+1. Whether the query is adequately answered
+2. Quality and depth of current findings
+3. Completeness of synthesis
+4. Availability of citations for deeper exploration
+5. Remaining iteration budget
+
+Consider the complexity level when making your decision:
+- Simple queries: Can stop earlier if basic information is covered
+- Complex queries: May need more iterations for comprehensive coverage
+
+Provide your decision with confidence score and clear reasoning.
+</instructions>
+"""
+)
 
 # =============================================================================
 # Extraction Prompts (Unified Pattern for Citations and Web Content)

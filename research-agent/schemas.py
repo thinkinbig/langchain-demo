@@ -300,6 +300,30 @@ class ResearchTasks(DictCompatibleModel):
     )
 
 
+class ComplexityAnalysis(DictCompatibleModel):
+    """Complexity analysis result for a research query"""
+    complexity_level: str = Field(
+        ...,
+        description="Complexity level: 'simple', 'medium', or 'complex'"
+    )
+    recommended_workers: int = Field(
+        ...,
+        ge=1,
+        le=5,
+        description="Recommended number of workers to allocate (1-5)"
+    )
+    max_iterations: int = Field(
+        ...,
+        ge=1,
+        le=3,
+        description="Recommended maximum number of research iterations (1-3)"
+    )
+    rationale: str = Field(
+        ...,
+        description="Explanation of the complexity assessment and recommendations"
+    )
+
+
 class SynthesisResult(DictCompatibleModel):
     """Result of synthesis step"""
     summary: str = Field(..., description="Comprehensive summary of findings")
@@ -457,6 +481,12 @@ class ResearchState(DictCompatibleModel):
         description="Count of citations from previous iteration (for delta tracking)"
     )
 
+    # Complexity analysis
+    complexity_analysis: Optional[ComplexityAnalysis] = Field(
+        default=None,
+        description="Complexity analysis result with recommended workers and iterations"
+    )
+
     @field_validator("query")
     @classmethod
     def validate_query(cls, v: str) -> str:
@@ -543,13 +573,40 @@ class SynthesizerState(DictCompatibleModel):
     model_config = ConfigDict(extra="allow")
 
 
+class DecisionResult(DictCompatibleModel):
+    """Result of LLM-based decision analysis"""
+    needs_more_research: bool = Field(
+        ...,
+        description="Whether more research iterations are needed"
+    )
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Confidence score for the decision (0.0-1.0)"
+    )
+    reasoning: str = Field(
+        ...,
+        description="Detailed explanation of the decision and factors considered"
+    )
+    key_factors: List[str] = Field(
+        default_factory=list,
+        description="List of key factors that influenced the decision"
+    )
+
+
 class DecisionState(DictCompatibleModel):
     """State needed by decision node"""
+    query: str = Field(default="", description="Original user query")
     iteration_count: int = Field(..., ge=0)
     subagent_findings: List[Finding] = Field(..., min_length=1)
     synthesized_results: str = Field(..., min_length=1)
     all_extracted_citations: List[dict] = Field(
         default_factory=list, description="Extracted citations"
+    )
+    complexity_analysis: Optional[ComplexityAnalysis] = Field(
+        default=None,
+        description="Complexity analysis result"
     )
 
     model_config = ConfigDict(extra="allow")

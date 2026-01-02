@@ -97,16 +97,48 @@ class LongTermMemory:
                 .isoformat()
             ),
             "tags": ",".join(tags) if tags else "",
-            "valid_until": memory_metadata.get("valid_until"),  # None = currently valid
-            "invalidated_at": memory_metadata.get("invalidated_at"),  # None = not invalidated
-            "superseded_by": memory_metadata.get("superseded_by"),  # ID of memory that replaced this
-            "supersedes": memory_metadata.get("supersedes", []),  # List of IDs this supersedes
+            "valid_until": memory_metadata.get("valid_until"),
+            "invalidated_at": memory_metadata.get("invalidated_at"),
+            "superseded_by": memory_metadata.get("superseded_by"),
         })
+
+        # Filter complex metadata types BEFORE adding supersedes
+        # Chroma only supports: str, int, float, bool, None
+        # Convert all lists and dicts to strings
+        filtered_metadata = {}
+        for key, value in memory_metadata.items():
+            if value is None:
+                filtered_metadata[key] = None
+            elif isinstance(value, (str, int, float, bool)):
+                filtered_metadata[key] = value
+            elif isinstance(value, list):
+                # Convert list to comma-separated string
+                filtered_metadata[key] = (
+                    ",".join(str(v) for v in value) if value else None
+                )
+            elif isinstance(value, dict):
+                # Convert dict to JSON string
+                import json
+                filtered_metadata[key] = json.dumps(value)
+            else:
+                # Convert other types to string
+                filtered_metadata[key] = str(value)
+
+        # Handle supersedes separately (may be passed as list from temporal_memory)
+        supersedes = memory_metadata.get("supersedes")
+        if isinstance(supersedes, list):
+            filtered_metadata["supersedes"] = (
+                ",".join(str(v) for v in supersedes) if supersedes else None
+            )
+        elif supersedes is not None:
+            filtered_metadata["supersedes"] = str(supersedes)
+        else:
+            filtered_metadata["supersedes"] = None
 
         # Create document
         doc = Document(
             page_content=content,
-            metadata=memory_metadata
+            metadata=filtered_metadata
         )
 
         # Store in vector database
@@ -162,7 +194,8 @@ class LongTermMemory:
             # Check validity (temporal filtering)
             if exclude_expired:
                 # Filter by is_valid flag (temporal annotation)
-                is_valid = metadata.get("is_valid", True)  # Default to True for backward compatibility
+                # Default to True for backward compatibility
+                is_valid = metadata.get("is_valid", True)
                 if not is_valid:
                     continue
 

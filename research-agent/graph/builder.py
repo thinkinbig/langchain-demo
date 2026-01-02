@@ -7,6 +7,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from memory.checkpointer_factory import get_checkpointer
 from nodes.citation_agent import citation_agent_node
+from nodes.complexity_analyzer import complexity_analyzer_node
 from nodes.decision import decision_node
 from nodes.filter_findings import filter_findings_node
 from nodes.lead_researcher import lead_researcher_node
@@ -28,7 +29,24 @@ def assign_subagents(state: ResearchState):
         return "lead_researcher"
 
     tasks = state.get("subagent_tasks", [])
-    print(f"\n🔀 [Fan-out] Distributing {len(tasks)} tasks to subagents...")
+
+    # Respect recommended_workers from complexity analysis
+    complexity_analysis = state.get("complexity_analysis")
+    recommended_workers = None
+    if complexity_analysis:
+        if hasattr(complexity_analysis, "recommended_workers"):
+            recommended_workers = complexity_analysis.recommended_workers
+        elif isinstance(complexity_analysis, dict):
+            recommended_workers = complexity_analysis.get("recommended_workers")
+
+    # Limit tasks to recommended_workers if specified
+    tasks_to_distribute = tasks
+    if recommended_workers is not None and len(tasks) > recommended_workers:
+        tasks_to_distribute = tasks[:recommended_workers]
+        print(f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} of {len(tasks)} tasks to subagents...")
+        print(f"   ⚠️  Limited to {recommended_workers} workers based on complexity analysis")
+    else:
+        print(f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} tasks to subagents...")
 
     # Send task objects directly
     # CONTEXT ISOLATION: We create a minimal state for the subagent
@@ -47,7 +65,7 @@ def assign_subagents(state: ResearchState):
                 "_task_id": task.id if hasattr(task, 'id') else f"task_{i}",
             },
         )
-        for i, task in enumerate(tasks)
+        for i, task in enumerate(tasks_to_distribute)
     ]
 
 
@@ -76,6 +94,7 @@ def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"
 workflow = StateGraph(ResearchState)
 
 # Add nodes
+workflow.add_node("complexity_analyzer", complexity_analyzer_node)
 workflow.add_node("lead_researcher", lead_researcher_node)
 workflow.add_node("subagent", subagent_node)
 workflow.add_node("filter_findings", filter_findings_node)
@@ -85,7 +104,8 @@ workflow.add_node("verifier", verifier_node)
 workflow.add_node("citation_agent", citation_agent_node)
 
 # Add edges
-workflow.add_edge(START, "lead_researcher")
+workflow.add_edge(START, "complexity_analyzer")
+workflow.add_edge("complexity_analyzer", "lead_researcher")
 workflow.add_conditional_edges(
     "lead_researcher",
     assign_subagents,

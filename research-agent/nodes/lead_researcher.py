@@ -1,12 +1,14 @@
 """Lead researcher node: Analyze query, create plan, generate subagent tasks"""
 
 import hashlib
+from typing import Optional
 
 import context_manager
 from citation_parser import format_citations_for_prompt
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_lead_llm
+from memory.temporal_memory import TemporalMemory
 from prompts import (
     LEAD_RESEARCHER_INITIAL,
     LEAD_RESEARCHER_REFINE,
@@ -14,6 +16,86 @@ from prompts import (
     LEAD_RESEARCHER_SYSTEM,
 )
 from schemas import LeadResearcherState, ResearchTask, ResearchTasks
+
+
+def _retrieve_planning_history(query: str, k: int = 5) -> str:
+    """
+    Retrieve relevant planning history from long-term memory.
+
+    Args:
+        query: Current research query
+        k: Number of memories to retrieve
+
+    Returns:
+        Formatted string with planning history, or empty string if none found
+    """
+    try:
+        memory = TemporalMemory()
+        memories = memory.retrieve_valid_memories(
+            query=query,
+            k=k,
+            min_relevance=0.6,
+            filter_by_tags=["lead_researcher", "planning"],
+            include_invalid=False
+        )
+
+        if not memories:
+            return ""
+
+        # Format memories for prompt
+        history_parts = []
+        for doc, relevance in memories[:k]:
+            content = doc.page_content[:300]  # Limit each memory
+            metadata = doc.metadata
+            stored_at = metadata.get("stored_at", "unknown")
+            history_parts.append(
+                f"[{stored_at[:10]}] (relevance: {relevance:.2f})\n{content}"
+            )
+
+        return "\n\n".join(history_parts)
+    except Exception as e:
+        # Graceful fallback if memory retrieval fails
+        print(f"  ⚠️  Memory retrieval failed: {e}")
+        return ""
+
+
+def _store_planning_memory(
+    query: str,
+    content: str,
+    priority: float = 1.0,
+    metadata: Optional[dict] = None
+) -> Optional[str]:
+    """
+    Store important planning information to long-term memory.
+
+    Args:
+        query: Research query
+        content: Content to store (should be concise, < 500 chars)
+        priority: Priority score (1.0 = normal, 2.0 = important)
+        metadata: Additional metadata
+
+    Returns:
+        Memory ID if successful, None otherwise
+    """
+    try:
+        memory = TemporalMemory()
+        memory_metadata = metadata or {}
+        memory_metadata.update({
+            "query": query,
+            "type": "planning"
+        })
+
+        memory_id = memory.store_memory_with_temporal(
+            content=content[:500],  # Limit content length
+            metadata=memory_metadata,
+            priority=priority,
+            tags=["lead_researcher", "planning", "decision"]
+        )
+        return memory_id
+    except Exception as e:
+        # Graceful fallback if memory storage fails
+        print(f"  ⚠️  Memory storage failed: {e}")
+        return None
 
 
 def _compute_finding_hash(finding: dict) -> str:
@@ -60,6 +142,55 @@ def lead_researcher_node(state: LeadResearcherState):
     # Build conversation history incrementally
     messages = list(existing_messages) if existing_messages else []
 
+    # Retrieve planning history from long-term memory (for iterations > 0)
+    memory_context = ""
+    if iteration_count > 0:
+        print("  🧠 [Memory] Retrieving planning history...")
+        memory_context = _retrieve_planning_history(query, k=5)
+        if memory_context:
+            line_count = len(memory_context.split("\n"))
+            print(f"  ✅ Retrieved {line_count} lines of planning history")
+        else:
+            print("  ℹ️  No relevant planning history found")
+
+    # Get complexity analysis for task creation guidance
+    complexity_analysis = state.get("complexity_analysis")
+    complexity_info = ""
+    if complexity_analysis:
+        if hasattr(complexity_analysis, "complexity_level"):
+            # Pydantic model
+            recommended = complexity_analysis.recommended_workers
+            complexity_info = (
+                f"Complexity Level: {complexity_analysis.complexity_level}\n"
+                f"Recommended Workers: {recommended}\n"
+                f"Max Iterations: {complexity_analysis.max_iterations}\n"
+                f"Rationale: {complexity_analysis.rationale}\n\n"
+                f"Use this complexity assessment to guide task breakdown. "
+                f"Aim to create approximately {recommended} "
+                f"parallel research tasks that can be executed simultaneously."
+            )
+        elif isinstance(complexity_analysis, dict):
+            # Dict format
+            level = complexity_analysis.get('complexity_level', 'unknown')
+            workers = complexity_analysis.get('recommended_workers', 2)
+            iterations = complexity_analysis.get('max_iterations', 2)
+            rationale = complexity_analysis.get('rationale', '')
+            complexity_info = (
+                f"Complexity Level: {level}\n"
+                f"Recommended Workers: {workers}\n"
+                f"Max Iterations: {iterations}\n"
+                f"Rationale: {rationale}\n\n"
+                f"Use this complexity assessment to guide task breakdown. "
+                f"Aim to create approximately {workers} "
+                f"parallel research tasks that can be executed simultaneously."
+            )
+        else:
+            msg = (
+                "No complexity analysis available. "
+                "Use your judgment for task breakdown."
+            )
+            complexity_info = msg
+
     if iteration_count == 0:
         # First iteration: Initialize conversation
         system_prompt = context_manager.get_system_context(
@@ -67,9 +198,22 @@ def lead_researcher_node(state: LeadResearcherState):
         )
         messages.append(SystemMessage(content=system_prompt))
 
+        # Scratchpad: Keep only current iteration notes (simplified)
+        # Historical info is retrieved from memory
+        scratchpad = state.get("scratchpad", "")
+        max_scratchpad_length = 200  # Keep it short, history in memory
+        if len(scratchpad) > max_scratchpad_length:
+            scratchpad = scratchpad[:max_scratchpad_length] + "..."
+
+        memory_ctx = (
+            memory_context if memory_context
+            else "No previous planning history."
+        )
         prompt_content = LEAD_RESEARCHER_INITIAL.format(
             query=query,
-            scratchpad=state.get("scratchpad", "")
+            complexity_info=complexity_info,
+            scratchpad=scratchpad,
+            memory_context=memory_ctx
         )
 
         # Add RAG context to initial prompt
@@ -102,11 +246,22 @@ def lead_researcher_node(state: LeadResearcherState):
             format_citations_for_prompt(new_citations) if new_citations else ""
         )
 
+        # Scratchpad: Keep only current iteration notes (simplified)
+        scratchpad = state.get("scratchpad", "")
+        max_scratchpad_length = 200  # Keep it short, history in memory
+        if len(scratchpad) > max_scratchpad_length:
+            scratchpad = scratchpad[:max_scratchpad_length] + "..."
+
+        memory_ctx = (
+            memory_context if memory_context
+            else "No previous planning history."
+        )
         prompt_content = LEAD_RESEARCHER_REFINE.format(
             query=query,
             findings_summary=findings_summary,
             citations_from_previous_round=citations_formatted,
-            scratchpad=state.get("scratchpad", "")
+            scratchpad=scratchpad,
+            memory_context=memory_ctx
         )
 
         # Add RAG context (cached, so minimal cost)
@@ -182,6 +337,36 @@ def lead_researcher_node(state: LeadResearcherState):
     for i, task in enumerate(tasks, 1):
         print(f"     {i}. {task.description[:60]}... (ID: {task.id})")
 
+    # Store important planning information to long-term memory
+    # Only store if there's meaningful content (not just fallback)
+    if tasks and len(tasks) > 0:
+        task_summary = "; ".join(
+            [f"{t.id}: {t.description[:50]}" for t in tasks[:3]]
+        )
+        plan_note = (
+            parsed_result.scratchpad[:200]
+            if parsed_result.scratchpad else 'N/A'
+        )
+        planning_content = (
+            f"Iteration {iteration_count + 1}: Created {len(tasks)} tasks. "
+            f"Key tasks: {task_summary}. "
+            f"Plan: {plan_note}"
+        )
+        # First iteration is more important
+        priority = 2.0 if iteration_count == 0 else 1.5
+        memory_id = _store_planning_memory(
+            query=query,
+            content=planning_content,
+            priority=priority,
+            metadata={
+                "iteration": iteration_count + 1,
+                "task_count": len(tasks),
+                "task_ids": ",".join([t.id for t in tasks])
+            }
+        )
+        if memory_id:
+            print(f"  💾 Stored planning memory (ID: {memory_id[:8]}...)")
+
     # Update conversation history with AI response
     # Note: We don't store the full AI response, just track that we got one
     # The actual response is in parsed_result
@@ -198,13 +383,20 @@ def lead_researcher_node(state: LeadResearcherState):
     all_citations = state.get("all_extracted_citations", [])
     new_citation_count = len(all_citations)
 
+    # Simplify scratchpad: Keep only current iteration's key notes
+    # Historical info is in memory, so scratchpad stays short
+    new_scratchpad = (
+        parsed_result.scratchpad[:200]
+        if parsed_result.scratchpad else ""
+    )
+
     return {
         "research_plan": plan,
         "subagent_tasks": tasks,
         "iteration_count": iteration_count + 1,
         "error": None,
         "retry_count": 0,
-        "scratchpad": parsed_result.scratchpad,
+        "scratchpad": new_scratchpad,  # Simplified, history in memory
         "lead_researcher_messages": updated_messages,
         "rag_cache": rag_cache,
         "sent_finding_hashes": list(new_sent_hashes),
