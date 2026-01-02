@@ -132,11 +132,13 @@ The following search results were retrieved:
 
 <instructions>
 1. Analyze the search results relevant to the task.
-2. If you need to calculate averages, count items, or filter lists, use `python_repl`.
-   (Example: "Calculate the average risk score from the data")
-3. Extract key statistics, dates, and entities.
-4. Synthesize a 2-3 sentence summary.
-5. Call `submit_findings` with your final summary.
+2. Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt for any relevant internal information.
+3. If you need to calculate averages, count items, or filter lists, use `python_repl`.
+4. Extract key statistics, dates, and entities.
+5. Synthesize a 2-3 sentence summary.
+6. Call `submit_findings` with your final summary.
+   - IMPORANT: If you used information from the internal knowledge base or local files, you MUST explicitly include them in the `sources` list argument of `submit_findings`.
+   - Example sources: [{{"title": "Internal Alpha Project", "url": "internal/alpha.txt"}}]
 </instructions>
 """
 )
@@ -176,15 +178,17 @@ SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
 
 <instructions>
 1. Synthesize all findings into a single coherent narrative.
-2. **Chain of Density:** Start with a broad summary, then progressively add
+2. **Relevance Filter:** Ignore any findings marked as "No information found" or that do not directly address the query. Prioritize depth over breadth.
+3. **Source Hierarchy:** Give higher weight to Internal Knowledge Base sources (e.g., PDFs, local files) over generic web search results, unless the query explicitly asks for external info.
+4. **Chain of Density:** Start with a broad summary, then progressively add
    specific entities, metrics, and details from the findings without
    increasing the length unnecessarily. Fuse concepts to maintain density.
-3. **Conflict Resolution:** If findings contradict, explicitly state the
+5. **Conflict Resolution:** If findings contradict, explicitly state the
    conflict and the sources backing each side.
-4. **Tone:** Professional, objective, and dense with information. Avoid fluff
+6. **Tone:** Professional, objective, and dense with information. Avoid fluff
    like "The research shows that...".
-5. **Structure:** Use clear headers if the answer is complex.
-6. **Directness:** Address the user's query directly.
+7. **Structure:** Use clear headers if the answer is complex.
+8. **Directness:** Address the user's query directly.
 </instructions>
 """
 )

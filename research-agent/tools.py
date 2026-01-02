@@ -143,3 +143,37 @@ def python_repl(code: str) -> str:
         return f"Error executing code: {e}"
     finally:
         io_buffer.close()
+
+
+def read_local_file(file_path: str) -> str:
+    """
+    Read a local file from the filesystem.
+    Supports plain text (.txt, .md, .py, etc.) and PDF (.pdf).
+    """
+    if not os.path.exists(file_path):
+        return f"Error: File {file_path} not found."
+
+    try:
+        # Check for PDF
+        if file_path.lower().endswith(".pdf"):
+            try:
+                # Lazy import to avoid hard dependency if not used
+                from pypdf import PdfReader
+                reader = PdfReader(file_path)
+                text = []
+                for i, page in enumerate(reader.pages):
+                    page_text = page.extract_text()
+                    if page_text:
+                        text.append(f"--- Page {i+1} ---\n{page_text}")
+                return "\n".join(text)
+            except ImportError:
+                return "Error: pypdf not installed. Please install it to read PDFs."
+            except Exception as e:
+                return f"Error reading PDF {file_path}: {str(e)}"
+
+        # Default to text
+        with open(file_path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    except Exception as e:
+        return f"Error reading file {file_path}: {str(e)}"

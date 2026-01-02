@@ -5,11 +5,19 @@ This directory contains the implementation of a multi-agent research system insp
 ## Overview
 
 The system implements an orchestrator-worker pattern where:
-- **LeadResearcher** (orchestrator) analyzes queries, creates research strategies, and coordinates subagents
-- **Subagents** (workers) perform parallel web searches and return findings
-- **Synthesizer** aggregates and synthesizes results
-- **CitationAgent** extracts and formats citations
+- **Lead Researcher**: Decomposes queries into subtasks (uses RAG for internal context).
+- **Subagent**: Can execute Python code and search the web (uses RAG for internal context).
+- **Synthesizer**: Aggregates findings into a dense summary.
+- **Verifier**: Checker for hallucinations.
+- **Decision Maker**: Determines if more research loop is needed.
 
+### 2. Memory Architecture
+- **Vector Store (RAG)**: Uses ChromaDB + HuggingFace Embeddings for efficient retrieval of internal documents (PDFs, TXT).
+- **Short-Term Memory**: LangGraph State (persists across graph nodes).
+- **Long-Term Persistence**: MemorySaver (persists across sessions).
+
+### 3. Toolset
+ 
 ## Project Status
  
 ✅ **MVP Complete** - Core functionality, parallel execution, and cost control implemented.

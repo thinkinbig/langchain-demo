@@ -11,103 +11,147 @@ import os
 from typing import Optional
 
 # Global cache for the loaded knowledge retrieval
-_CACHED_KNOWLEDGE_BLOCK: Optional[str] = None
+# RAG Implementation
+import glob
+import os
+from typing import List, Optional
 
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-def load_long_term_memory(source_dir: str = "data") -> str:
-    """
-    Load all text documents from the source directory and format them
-    into an XML-like structure for the LLM.
+# Singleton instance
+_VECTOR_STORE = None
 
-    Args:
-        source_dir: Directory containing knowledge base files (relative to package root)
-
-    Returns:
-        str: Formatted XML string <knowledge_base>...</knowledge_base>
-    """
-    global _CACHED_KNOWLEDGE_BLOCK
-
-    # Return valid cache if available
-    if _CACHED_KNOWLEDGE_BLOCK:
-        return _CACHED_KNOWLEDGE_BLOCK
-
-    # Resolve absolute path
-    base_path = os.path.dirname(os.path.abspath(__file__))
-    full_path = os.path.join(base_path, source_dir)
-
-    if not os.path.exists(full_path):
-        print(f"  ⚠️  Knowledge base directory not found: {full_path}")
-        return "<knowledge_base>\n(No internal documents found)\n</knowledge_base>"
-
-    # Find all text-based files
-    files = []
-    patterns = ["*.txt", "*.md", "*.csv"]
-    for pattern in patterns:
-        files.extend(glob.glob(os.path.join(full_path, pattern)))
-
-    if not files:
-        print(f"  ⚠️  No documents found in: {full_path}")
-        return "<knowledge_base>\n(No internal documents found)\n</knowledge_base>"
-
-    print(f"  📚 Loading {len(files)} documents from knowledge base...")
-
-    # Build XML structure
-    xml_parts = ["<knowledge_base>"]
-
-    for i, file_path in enumerate(sorted(files)):
-        try:
-            filename = os.path.basename(file_path)
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read().strip()
-
-            xml_parts.append(f'  <document id="{i+1}" source="{filename}">')
-            xml_parts.append(f"{content}")
-            xml_parts.append('  </document>')
-
-        except Exception as e:
-            print(f"  ❌ Failed to load {file_path}: {e}")
-
-    xml_parts.append("</knowledge_base>")
-
-    # Cache the result
-    _CACHED_KNOWLEDGE_BLOCK = "\n".join(xml_parts)
-    return _CACHED_KNOWLEDGE_BLOCK
-
-
-def get_system_context(
-    role_instructions: str,
-    include_knowledge: bool = True
-) -> str:
-    """
-    Construct the full system context for an agent, including the
-    long-term memory block (if requested).
-
-    This entire string is suitable for Prompt Caching (Prefix Caching).
-
-    Args:
-        role_instructions: The specific system instructions for this agent role.
-        include_knowledge: Whether to append the enterprise knowledge base.
-
-    Returns:
-        str: The full system prompt content.
-    """
-    parts = [role_instructions]
-
-    if include_knowledge:
-        knowledge_block = load_long_term_memory()
-        parts.append("\n\n--- ENTERPRISE KNOWLEDGE BASE ---\n")
-        parts.append(
-            "You have access to the following internal knowledge. "
-            "Always search this knowledge base first before relying on "
-            "general knowledge."
+class VectorStoreManager:
+    def __init__(self, persist_dir: str = "chroma_db", data_dir: str = "data"):
+        self.persist_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), persist_dir)
+        self.data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), data_dir)
+        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.vector_store = Chroma(
+            collection_name="enterprise_knowledge",
+            embedding_function=self.embeddings,
+            persist_directory=self.persist_dir,
         )
-        parts.append(knowledge_block)
-        parts.append("\n--- END KNOWLEDGE BASE ---")
 
-    return "\n".join(parts)
+    def ingest_documents(self):
+        """Check for documents and ingest if DB is likely empty or upon request."""
+        # Simple check: if DB has data, skip (for MVP).
+        # In prod, we'd check file hashes.
+        existing_count =  self.vector_store._collection.count()
+        if existing_count > 0:
+            print(f"  📚 Knowledge Base loaded from persistence ({existing_count} chunks).")
+            return
 
+        print("  📚 Ingesting documents into Vector Store (First Run)...")
+        documents = []
+        
+        # 1. Load Texts
+        text_files = glob.glob(os.path.join(self.data_dir, "*.txt")) + \
+                     glob.glob(os.path.join(self.data_dir, "*.md")) + \
+                     glob.glob(os.path.join(self.data_dir, "*.csv"))
+        
+        for file_path in text_files:
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    text = f.read()
+                    documents.append(Document(
+                        page_content=text,
+                        metadata={"source": os.path.basename(file_path)}
+                    ))
+            except Exception as e:
+                print(f"  ❌ Failed to load {file_path}: {e}")
+
+        # 2. Load PDFs
+        pdf_files = glob.glob(os.path.join(self.data_dir, "*.pdf"))
+        for file_path in pdf_files:
+            try:
+                from pypdf import PdfReader
+                reader = PdfReader(file_path)
+                text = ""
+                for page in reader.pages:
+                    text += page.extract_text() + "\n"
+                documents.append(Document(
+                    page_content=text,
+                    metadata={"source": os.path.basename(file_path)}
+                ))
+            except Exception as e:
+                print(f"  ❌ Failed to load PDF {file_path}: {e}")
+
+        if not documents:
+            print("  ⚠️  No documents found to ingest.")
+            return
+
+        # 3. Split
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+        splits = text_splitter.split_documents(documents)
+        print(f"  🧩 Split {len(documents)} docs into {len(splits)} chunks.")
+
+        # 4. Index
+        self.vector_store.add_documents(splits)
+        print("  ✅ Ingestion complete.")
+
+    def retrieve(self, query: str, k: int = 4) -> tuple[str, list[str]]:
+        """Retrieve relevant context for a query. Returns (context_str, list_of_sources)."""
+        if not query:
+            return "", []
+            
+        # Use similarity_search_with_score to filter irrelevant results
+        # Chroma/HF default is L2 distance. Lower is better.
+        # Threshold: 1.0 (Empirical: Relevant ~0.7, Irrelevant > 1.1)
+        results_with_score = self.vector_store.similarity_search_with_score(query, k=k)
+        
+        relevant_results = []
+        for doc, score in results_with_score:
+            if score < 1.0:
+                relevant_results.append(doc)
+            else:
+                # Debug log (optional, or remove in prod)
+                # print(f"  [RAG] Skipped low relevance: {score:.3f}")
+                pass
+
+        if not relevant_results:
+            return "(No relevant internal documents found)", []
+            
+        context_parts = []
+        sources = set()
+        for doc in relevant_results:
+            source = doc.metadata.get("source", "Unknown")
+            sources.add(source)
+            context_parts.append(f"Source: {source}\nContent:\n{doc.page_content}\n---")
+        
+        return "\n".join(context_parts), list(sources)
+
+def get_vector_manager():
+    global _VECTOR_STORE
+    if _VECTOR_STORE is None:
+        _VECTOR_STORE = VectorStoreManager()
+        _VECTOR_STORE.ingest_documents()
+    return _VECTOR_STORE
+
+def get_system_context(role_instructions: str, include_knowledge: bool = True) -> str:
+    """
+    Get system context. 
+    NOTE: For RAG, we don't inject the *retrieved* context here (dynamic).
+    We inject a static instruction telling the agent that context will be provided 
+    in the human message or that it checks the vector store.
+    """
+    if include_knowledge:
+        # We perform lazy retrieval or setup here if needed, 
+        # but the prompt injection happens at runtime in the graph.
+        # This function just returns the static role instructions.
+        pass
+    return role_instructions
+
+def retrieve_knowledge(query: str, k: int = 4) -> tuple[str, list[str]]:
+    """Public helper to get RAG context string and sources."""
+    mgr = get_vector_manager()
+    return mgr.retrieve(query, k=k)
 
 def clear_cache():
-    """Clear the memory cache (useful for tests or reloading)"""
-    global _CACHED_KNOWLEDGE_BLOCK
-    _CACHED_KNOWLEDGE_BLOCK = None
+    global _VECTOR_STORE
+    _VECTOR_STORE = None

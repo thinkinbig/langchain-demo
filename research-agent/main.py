@@ -1,6 +1,7 @@
 """Main entry point for research agent"""
 
 from dotenv import load_dotenv
+import uuid
 
 load_dotenv()
 
@@ -59,15 +60,20 @@ def main():
         final_report="",
     )
 
+    # Generate a unique thread ID for checkpointer
+    thread_id = str(uuid.uuid4())
+
     try:
         # Run the graph with Cost Tracking Callback
         # This will auto-update query_budget on every LLM call
         cost_callback = CostTrackingCallback(query_budget)
+        
+        config = {
+            "callbacks": [cost_callback],
+            "configurable": {"thread_id": thread_id}
+        }
 
-        final_state = app.invoke(
-            initial_state,
-            config={"callbacks": [cost_callback]}
-        )
+        final_state = app.invoke(initial_state, config=config)
 
         # Display results
         print("\n" + "=" * 80)
