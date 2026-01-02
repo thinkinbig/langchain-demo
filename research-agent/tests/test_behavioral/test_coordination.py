@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from schemas import ResearchTasks, SubagentOutput, SynthesisResult
-from tests.test_helpers import (
+from tests.test_utils import (
     assert_complete_workflow,
     assert_content_relevance,
     assert_findings_structure,

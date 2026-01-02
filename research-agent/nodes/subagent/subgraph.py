@@ -51,16 +51,43 @@ subagent_workflow.add_edge("web_search_node", "analysis_node")
 subagent_workflow.add_edge("analysis_node", END)
 
 # Compile Subgraph
+# Note: Subgraph uses parent's checkpointer, but can use namespace isolation
+# via configurable parameter in the invoke call
 subagent_app = subagent_workflow.compile()
 
 
 
 async def subagent_node(state: SubagentState):
     """Wrapper to invoke the subagent subgraph and filter output"""
-    # Invoke the subgraph
-    # We pass the state directly. The subgraph runs and returns its final state.
+    # CONTEXT ISOLATION: Sanitize input state to prevent state leakage
+    from memory.subgraph_isolation import (
+        create_subgraph_sandbox,
+        isolate_subgraph_state,
+    )
+
+    # Get task ID for namespace isolation (if available)
+    task_id = None
+    tasks = state.get("subagent_tasks", [])
+    if tasks and hasattr(tasks[0], 'id'):
+        task_id = tasks[0].id
+    elif tasks and isinstance(tasks[0], dict):
+        task_id = tasks[0].get('id')
+
+    # Isolate input state - only pass what subagent needs
+    isolated_state = isolate_subgraph_state(
+        state if isinstance(state, dict) else state.model_dump(),
+        "subagent",
+        task_id=task_id
+    )
+
+    # Convert back to SubagentState if needed
+    if not isinstance(isolated_state, SubagentState):
+        isolated_state = SubagentState(**isolated_state)
+
+    # Invoke the subgraph with isolated state
+    # The subgraph runs and returns its final state.
     # Note: StateGraph.compile() produces a CompiledGraph which supports ainvoke.
-    result_state = await subagent_app.ainvoke(state)
+    result_state = await subagent_app.ainvoke(isolated_state)
 
     # Extract visited sources from retrieval results and convert to VisitedSource format
     visited_sources = []
@@ -100,9 +127,16 @@ async def subagent_node(state: SubagentState):
     # Filter output: return ONLY what needs to be merged to the parent state
     # This avoids 'InvalidConcurrentGraphUpdate' on non-reducer keys
     # like 'subagent_tasks'
-    return {
+    # CONTEXT ISOLATION: Validate output to prevent unauthorized state modifications
+    output = {
         "subagent_findings": result_state.get("subagent_findings", []),
         "visited_sources": visited_sources,
         "all_extracted_citations": result_state.get("extracted_citations", [])
     }
+
+    # Validate output using sandbox
+    sandbox = create_subgraph_sandbox("subagent")
+    validated_output = sandbox.validate_output_state(output, "subagent")
+
+    return validated_output
 

@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from schemas import ResearchTasks, SubagentOutput, SynthesisResult
-from tests.test_helpers import configure_structured_output_mock
+from tests.test_utils import configure_structured_output_mock
 
 
 @pytest.mark.edge_case

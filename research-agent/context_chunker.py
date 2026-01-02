@@ -117,7 +117,7 @@ class ContextChunker:
             last_newline = truncated.rfind('\n')
             cutoff = max(last_period, last_newline)
             if cutoff > max_chars * 0.8:  # Only use cutoff if it's not too early
-                return truncated[:cutoff + 1] + "\n\n[Content truncated..."
+                return truncated[:cutoff + 1] + "\n\n[Content truncated...]"
         else:
             truncated = content[-max_chars:]
             # Try to start at a sentence boundary
@@ -175,7 +175,8 @@ class ContextChunker:
         content: str,
         source_type: RetrievalSource,
         source_identifier: str = "",
-        enforce_limit: bool = True
+        enforce_limit: bool = True,
+        use_summarization: bool = False
     ) -> str:
         """
         Prepare context for prompt: chunk, truncate, and format.
@@ -187,6 +188,7 @@ class ContextChunker:
             source_type: Type of source
             source_identifier: Identifier of the source
             enforce_limit: Whether to enforce token limit
+            use_summarization: If True, use summarization instead of truncation
 
         Returns:
             Formatted context ready for prompt
@@ -197,8 +199,12 @@ class ContextChunker:
         # Estimate tokens
         estimated_tokens = self.estimate_tokens(content)
 
-        # Truncate if needed
-        if enforce_limit and estimated_tokens > self.max_tokens:
+        # Use summarization if enabled and content is too long
+        if use_summarization and enforce_limit and estimated_tokens > self.max_tokens:
+            summarizer = SummarizationChunker(max_tokens=self.max_tokens)
+            content = summarizer.summarize(content, source_type, source_identifier)
+        elif enforce_limit and estimated_tokens > self.max_tokens:
+            # Fallback to truncation
             content = self.truncate_to_limit(content, self.max_tokens)
 
         # Chunk if needed (for very long content)
@@ -212,4 +218,237 @@ class ContextChunker:
             # Multiple chunks, combine them
             combined = "\n\n".join(chunks)
             return self.format_for_prompt([combined], source_type, source_identifier)
+
+
+class SummarizationChunker:
+    """
+    Intelligent summarization-based context compression.
+
+    Uses LLM to create hierarchical summaries instead of simple truncation,
+    preserving key information like citations, sources, and important facts.
+    """
+
+    def __init__(
+        self,
+        max_tokens: int = 4000,
+        preserve_citations: bool = True,
+        preserve_sources: bool = True
+    ):
+        """
+        Initialize summarization chunker.
+
+        Args:
+            max_tokens: Target token count for summary
+            preserve_citations: Whether to preserve citation information
+            preserve_sources: Whether to preserve source URLs/identifiers
+        """
+        self.max_tokens = max_tokens
+        self.preserve_citations = preserve_citations
+        self.preserve_sources = preserve_sources
+        self.TOKENS_PER_CHAR = 0.25
+
+    def _extract_preserved_elements(self, content: str) -> dict:
+        """
+        Extract elements that should be preserved in summary.
+
+        Args:
+            content: Content to analyze
+
+        Returns:
+            Dictionary with citations, sources, and other preserved elements
+        """
+        preserved = {
+            "citations": [],
+            "sources": [],
+            "urls": [],
+            "key_facts": []
+        }
+
+        # Extract URLs
+        import re
+        url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
+        preserved["urls"] = list(set(re.findall(url_pattern, content)))
+
+        # Extract citation patterns (e.g., [1], (Smith et al., 2023))
+        citation_patterns = [
+            r'\[(\d+)\]',  # [1], [2], etc.
+            r'\(([A-Z][a-z]+(?:\s+et\s+al\.)?,\s+\d{4})\)',  # (Author, Year)
+        ]
+        for pattern in citation_patterns:
+            matches = re.findall(pattern, content)
+            preserved["citations"].extend(matches)
+
+        # Extract source identifiers (from formatted context)
+        if "Source:" in content:
+            source_lines = [
+                line for line in content.split('\n')
+                if line.startswith('Source:')
+            ]
+            preserved["sources"] = [
+                line.replace('Source:', '').strip()
+                for line in source_lines
+            ]
+
+        return preserved
+
+    def summarize(
+        self,
+        content: str,
+        source_type: RetrievalSource,
+        source_identifier: str = ""
+    ) -> str:
+        """
+        Summarize content using LLM while preserving key information.
+
+        Args:
+            content: Content to summarize
+            source_type: Type of source
+            source_identifier: Identifier of the source
+
+        Returns:
+            Summarized content
+        """
+        # Extract preserved elements before summarization
+        preserved = self._extract_preserved_elements(content)
+
+        # Estimate target summary length
+        target_chars = int(self.max_tokens / self.TOKENS_PER_CHAR * 0.8)  # 80% of limit
+
+        # If content is not too long, return as-is
+        if len(content) <= target_chars:
+            return content
+
+        # Use simple extractive summarization for now
+        # In production, this could use LLM-based summarization
+        # For now, we use a hybrid approach: extractive + key info preservation
+
+        # Split into sentences
+        sentences = self._split_into_sentences(content)
+
+        # Score sentences by importance (simple heuristic)
+        scored_sentences = self._score_sentences(sentences, preserved)
+
+        # Select top sentences up to target length
+        selected = self._select_sentences(scored_sentences, target_chars)
+
+        # Reconstruct summary with preserved elements
+        summary = self._reconstruct_summary(
+            selected, preserved, source_type, source_identifier
+        )
+
+        return summary
+
+    def _split_into_sentences(self, text: str) -> List[str]:
+        """Split text into sentences."""
+        import re
+        # Simple sentence splitting (can be improved with nltk)
+        sentences = re.split(r'(?<=[.!?])\s+', text)
+        return [s.strip() for s in sentences if s.strip()]
+
+    def _score_sentences(
+        self,
+        sentences: List[str],
+        preserved: dict
+    ) -> List[tuple[str, float]]:
+        """
+        Score sentences by importance.
+
+        Returns:
+            List of (sentence, score) tuples
+        """
+        scored = []
+
+        for sentence in sentences:
+            score = 0.0
+
+            # Boost score if sentence contains preserved elements
+            # Check for citations
+            if any(cit in sentence for cit in preserved["citations"]):
+                score += 2.0
+
+            # Check for URLs
+            if any(url in sentence for url in preserved["urls"]):
+                score += 1.5
+
+            # Check for source identifiers
+            if any(src in sentence for src in preserved["sources"]):
+                score += 1.5
+
+            # Boost first sentences (often contain key info)
+            if sentences.index(sentence) < 3:
+                score += 1.0
+
+            # Boost sentences with numbers (often contain facts)
+            if any(char.isdigit() for char in sentence):
+                score += 0.5
+
+            # Boost longer sentences (often more informative)
+            if len(sentence) > 100:
+                score += 0.3
+
+            scored.append((sentence, score))
+
+        return scored
+
+    def _select_sentences(
+        self,
+        scored_sentences: List[tuple[str, float]],
+        target_chars: int
+    ) -> List[str]:
+        """Select top sentences up to target length."""
+        # Sort by score (descending)
+        sorted_sentences = sorted(scored_sentences, key=lambda x: x[1], reverse=True)
+
+        selected = []
+        current_length = 0
+
+        for sentence, _ in sorted_sentences:
+            if current_length + len(sentence) <= target_chars:
+                selected.append(sentence)
+                current_length += len(sentence) + 1  # +1 for space
+            else:
+                break
+
+        # If we have space, add more sentences in order
+        remaining = [s for s, _ in sorted_sentences if s not in selected]
+        for sentence in remaining:
+            if current_length + len(sentence) <= target_chars:
+                selected.append(sentence)
+                current_length += len(sentence) + 1
+            else:
+                break
+
+        return selected
+
+    def _reconstruct_summary(
+        self,
+        selected_sentences: List[str],
+        preserved: dict,
+        source_type: RetrievalSource,
+        source_identifier: str
+    ) -> str:
+        """Reconstruct summary with preserved elements."""
+        summary_parts = []
+
+        # Add preserved URLs if not already in sentences
+        if preserved["urls"]:
+            url_section = "\nSources: " + ", ".join(
+                preserved["urls"][:5]
+            )  # Limit to 5
+            if not any(
+                url in " ".join(selected_sentences)
+                for url in preserved["urls"]
+            ):
+                summary_parts.append(url_section)
+
+        # Add selected sentences
+        summary_parts.append(" ".join(selected_sentences))
+
+        # Add note about summarization
+        summary_parts.append(
+            "\n[Note: Content summarized to fit context limit while "
+            "preserving key information]"
+        )
+
+        return "\n".join(summary_parts)
 

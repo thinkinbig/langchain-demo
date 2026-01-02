@@ -1,10 +1,12 @@
 """State schemas for research agent with Pydantic validation"""
 
+import hashlib
+import json
 import operator
 from datetime import datetime
 
 # Forward reference for RetrievalResult (defined in retrieval.py)
-from typing import TYPE_CHECKING, Annotated, Any, List, Optional
+from typing import TYPE_CHECKING, Annotated, Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -48,8 +50,209 @@ class Finding(DictCompatibleModel):
         Extract content metadata for token-efficient storage.
         Returns dict with content_hash, content_length, and preview.
         """
-        from memory_helpers import parse_content_metadata
         return parse_content_metadata(self.content)
+
+
+# =============================================================================
+# Finding utility functions
+# =============================================================================
+
+
+def compute_content_hash(content: str) -> str:
+    """Compute short hash for content reference"""
+    if not content:
+        return ""
+    return hashlib.sha256(content.encode()).hexdigest()[:16]
+
+
+def create_content_metadata(content: str, max_preview: int = 200) -> dict:
+    """
+    Create metadata dict for content instead of storing full content.
+    This reduces token usage while preserving essential information.
+
+    Args:
+        content: Full content string
+        max_preview: Maximum length of preview to include
+
+    Returns:
+        Dictionary with content_hash, content_length, and preview
+    """
+    if not content:
+        return {
+            "content_hash": "",
+            "content_length": 0,
+            "content_preview": ""
+        }
+
+    return {
+        "content_hash": compute_content_hash(content),
+        "content_length": len(content),
+        "content_preview": content[:max_preview],
+        "content_type": "metadata"
+    }
+
+
+def content_metadata_to_string(metadata: dict) -> str:
+    """
+    Convert content metadata dict to string for storage in Finding.content.
+    Uses JSON format for structured data.
+    """
+    if isinstance(metadata, dict):
+        return json.dumps(metadata)
+    return str(metadata)
+
+
+def parse_content_metadata(content_str: str) -> dict:
+    """
+    Parse content string to extract metadata dict.
+    Expects JSON format with content_hash, content_length, and content_preview.
+    """
+    if not content_str:
+        return {"content_hash": "", "content_length": 0, "content_preview": ""}
+
+    # Parse as JSON format
+    try:
+        metadata = json.loads(content_str)
+        if isinstance(metadata, dict) and "content_hash" in metadata:
+            return metadata
+    except (json.JSONDecodeError, TypeError):
+        # If not valid JSON, treat as empty/invalid
+        return {
+            "content_hash": "",
+            "content_length": 0,
+            "content_preview": "",
+            "content_type": "invalid"
+        }
+
+    # If JSON parsing succeeded but no content_hash, return empty
+    return {"content_hash": "", "content_length": 0, "content_preview": ""}
+
+
+def extract_evidence_summaries(
+    findings: List[Finding],
+    max_length: int = 500
+) -> List[str]:
+    """
+    Extract concise evidence summaries from findings.
+    Uses metadata and summaries instead of full content to reduce tokens.
+
+    Args:
+        findings: List of Finding objects
+        max_length: Maximum length per summary
+
+    Returns:
+        List of evidence summary strings (optimized for token usage)
+    """
+    summaries = []
+
+    for finding in findings:
+        # Parse content metadata
+        content_meta = parse_content_metadata(finding.content)
+
+        # Use summary as primary evidence (already concise)
+        # Include content preview if available and relevant
+        evidence_parts = [finding.summary]
+
+        # Add content preview if it provides additional context
+        preview = content_meta.get("content_preview", "")
+        if preview and len(preview) > 50:
+            # Only add preview if it's different from summary
+            if preview[:100] not in finding.summary:
+                evidence_parts.append(f"Context: {preview[:max_length//2]}")
+
+        # Combine evidence parts
+        evidence = " | ".join(evidence_parts)[:max_length]
+
+        # Format with task context (keep it concise)
+        summary = f"Task: {finding.task[:40]}\n{evidence}"
+        summaries.append(summary)
+
+    return summaries
+
+
+def extract_findings_metadata(findings: List[Finding]) -> dict:
+    """
+    Extract metadata from findings for use in prompts.
+
+    Args:
+        findings: List of Finding objects
+
+    Returns:
+        Dictionary with findings statistics and metadata
+    """
+    if not findings:
+        return {
+            "count": 0,
+            "total_sources": 0,
+            "avg_summary_length": 0,
+            "tasks": []
+        }
+
+    total_sources = sum(len(f.sources) for f in findings)
+    avg_summary_length = sum(len(f.summary) for f in findings) / len(findings)
+    tasks = [f.task[:60] for f in findings]
+
+    return {
+        "count": len(findings),
+        "total_sources": total_sources,
+        "avg_summary_length": int(avg_summary_length),
+        "tasks": tasks
+    }
+
+
+def extract_source_metadata(sources: List[Any]) -> Dict[str, str]:
+    """
+    Create identifier → title mapping for sources.
+
+    Args:
+        sources: List of Source objects or dicts
+
+    Returns:
+        Dictionary mapping source identifier to title
+    """
+    from retrieval import Source
+
+    source_map = {}
+    for source in sources:
+        if isinstance(source, Source):
+            source_map[source.identifier] = source.title or source.identifier
+        elif isinstance(source, dict):
+            identifier = source.get("identifier", "")
+            title = source.get("title") or identifier
+            source_map[identifier] = title
+    return source_map
+
+
+def create_findings_statistics(findings: List[Finding]) -> dict:
+    """
+    Create statistics about findings for use in prompts.
+
+    Args:
+        findings: List of Finding objects
+
+    Returns:
+        Dictionary with findings statistics
+    """
+    if not findings:
+        return {
+            "count": 0,
+            "avg_length": 0,
+            "coverage_areas": []
+        }
+
+    summaries = [f.summary for f in findings]
+    avg_length = sum(len(s) for s in summaries) / len(summaries)
+
+    # Extract coverage areas from task descriptions
+    coverage_areas = list(set([
+        f.task.split(":")[0].strip() for f in findings if ":" in f.task
+    ]))
+
+    return {
+        "count": len(findings),
+        "avg_length": int(avg_length),
+        "coverage_areas": coverage_areas[:5]  # Top 5 areas
+    }
 
 
 class VerificationResult(DictCompatibleModel):
@@ -341,3 +544,31 @@ class CitationExtractionResult(DictCompatibleModel):
     """Result of citation extraction"""
     citations: List[Citation] = Field(default_factory=list)
     has_citations: bool = Field(default=False)
+
+
+# =============================================================================
+# Extraction Schemas (for extraction_service)
+# =============================================================================
+
+
+class WebInsight(DictCompatibleModel):
+    """Single insight from web content"""
+    insight: str = Field(..., description="The main fact or finding")
+    source: str = Field(..., description="URL or source title")
+    relevance: str = Field(..., description="Why this is relevant")
+
+
+class WebExtractionResult(DictCompatibleModel):
+    """Result of web content extraction"""
+    findings: List[WebInsight] = Field(default_factory=list)
+
+
+class GenericItem(DictCompatibleModel):
+    """Generic extracted item"""
+    content: str = Field(..., description="The extracted content")
+    context: str = Field(default="", description="Context or explanation")
+
+
+class GenericExtractionResult(DictCompatibleModel):
+    """Generic extraction result"""
+    items: List[GenericItem] = Field(default_factory=list)

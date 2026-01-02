@@ -1,33 +1,48 @@
 """
-Simplified citation parser using unified extraction utility.
+Citation extraction and processing utilities.
 
-This module now serves as a thin wrapper around the generic extraction_utils,
-with citation-specific helper functions.
+This module handles citation extraction from text using LLM-based extraction.
 """
 
 from typing import Dict, List
 
 
-def extract_citations(text: str) -> List[Dict[str, str]]:
+def extract_citations(text: str, llm=None) -> List[Dict[str, str]]:
     """
     Extract academic citations from text using LLM.
 
-    This is the main entry point for citation extraction.
-    Uses the unified extraction pattern from extraction_utils.
-
     Args:
         text: Text to extract citations from
+        llm: Optional LLM instance (defaults to subagent LLM)
 
     Returns:
         List of citation dictionaries with keys:
-        - reference: The citation as it appears
+        - title: The citation title or reference
         - context: What the paper discusses
         - relevance: Why it's relevant
         - citation_id: Unique ID for deduplication
     """
-    from extraction_utils import extract_citations as unified_extract
+    from extraction_service import extract_with_llm
+    from prompts import CITATION_EXTRACTION
+    from schemas import CitationExtractionResult
 
-    return unified_extract(text)
+    if not text or len(text.strip()) < 20:
+        return []
+
+    results = extract_with_llm(
+        text=text[:2000],  # Limit text length
+        prompt_template=CITATION_EXTRACTION,
+        result_schema=CitationExtractionResult,
+        llm=llm
+    )
+
+    # Add citation_id for deduplication
+    for item in results:
+        # Use title for ID generation
+        if 'title' in item:
+            item['citation_id'] = str(hash(item['title']))
+
+    return results
 
 
 def deduplicate_citations(citations: List[Dict[str, str]]) -> List[Dict[str, str]]:

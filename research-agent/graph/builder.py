@@ -2,10 +2,10 @@
 
 from typing import Literal
 
-from graph_helpers import should_retry
-from langgraph.checkpoint.memory import MemorySaver
+from graph.utils import should_retry
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
+from memory.checkpointer_factory import get_checkpointer
 from nodes.citation_agent import citation_agent_node
 from nodes.decision import decision_node
 from nodes.filter_findings import filter_findings_node
@@ -34,6 +34,7 @@ def assign_subagents(state: ResearchState):
     # CONTEXT ISOLATION: We create a minimal state for the subagent
     # It receives ONLY the query and its specific task.
     # It does NOT receive the full history or other agent findings.
+    # WRITE ISOLATION: Each subagent gets its own namespace for state writes
     return [
         Send(
             "subagent",
@@ -41,10 +42,12 @@ def assign_subagents(state: ResearchState):
                 "subagent_tasks": [task],
                 "query": state["query"],
                 # Pass unified visited sources
-                "visited_sources": state.get("visited_sources", [])
+                "visited_sources": state.get("visited_sources", []),
+                # Metadata for namespace isolation (used in node wrapper)
+                "_task_id": task.id if hasattr(task, 'id') else f"task_{i}",
             },
         )
-        for task in tasks
+        for i, task in enumerate(tasks)
     ]
 
 
@@ -107,7 +110,8 @@ workflow.add_edge("verifier", "citation_agent")
 workflow.add_edge("citation_agent", END)
 
 # Compile app
-# Compile app with persistence (MemorySaver)
-# This enables "Short-Term Memory" (thread-scoped)
-checkpointer = MemorySaver()
+# Compile app with persistence (configurable via CHECKPOINTER_BACKEND env var)
+# Supports: 'memory', 'sqlite' (default), 'postgres'
+# This enables "Short-Term Memory" (thread-scoped) with optional persistence
+checkpointer = get_checkpointer()
 app = workflow.compile(checkpointer=checkpointer)

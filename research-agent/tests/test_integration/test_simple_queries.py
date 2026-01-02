@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 # Load environment variables for integration tests
 load_dotenv()
 
-from tests.test_helpers import (  # noqa: E402
+from tests.test_utils import (  # noqa: E402
     assert_complete_workflow,
     assert_content_relevance,
     assert_iteration_reasonable,

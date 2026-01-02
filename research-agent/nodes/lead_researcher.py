@@ -2,9 +2,9 @@
 
 import context_manager
 from citation_parser import format_citations_for_prompt
-from graph_helpers import process_structured_response
+from graph.utils import process_structured_response
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_planner_llm
+from llm.factory import get_lead_llm
 from prompts import (
     LEAD_RESEARCHER_INITIAL,
     LEAD_RESEARCHER_REFINE,
@@ -58,7 +58,7 @@ def lead_researcher_node(state: LeadResearcherState):
         )
 
     # Invoke LLM
-    structured_llm = get_planner_llm().with_structured_output(
+    structured_llm = get_lead_llm().with_structured_output(
         ResearchTasks, include_raw=True
     )
 

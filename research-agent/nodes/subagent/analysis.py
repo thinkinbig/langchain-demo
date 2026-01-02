@@ -5,7 +5,6 @@ import tools
 from context_formatter import ContextFormatter
 from langchain_core.messages import HumanMessage, SystemMessage
 from llm.factory import get_subagent_llm
-from memory_helpers import content_metadata_to_string, create_content_metadata
 from prompts import (
     SUBAGENT_ANALYSIS_RETRY,
     SUBAGENT_REFINE_WITH_TOOL,
@@ -13,8 +12,13 @@ from prompts import (
     SUBAGENT_SYSTEM,
 )
 from retrieval import RetrievalResult, RetrievalSource, Source
-from schemas import AnalysisOutput, Finding, SubagentState
-
+from schemas import (
+    AnalysisOutput,
+    Finding,
+    SubagentState,
+    content_metadata_to_string,
+    create_content_metadata,
+)
 
 
 async def analysis_node(state: SubagentState):
@@ -138,10 +142,10 @@ async def analysis_node(state: SubagentState):
         try:
             # We use the python_repl tool function directly
             start_code = analysis.python_code
-            
+
             # Use asyncio.to_thread for blocking tool execution
             result = await asyncio.to_thread(tools.python_repl, start_code)
-            
+
             print(f"     Result: {str(result)[:100]}...")
 
             # 4. Refine Step (Maximize KV Cache by appending)

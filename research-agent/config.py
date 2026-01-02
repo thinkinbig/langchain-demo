@@ -60,6 +60,22 @@ class AgentSettings(BaseSettings):
     MAX_ITERATIONS: int = 3
     MAX_SEARCH_CALLS: int = 20
 
+    # =========================================================================
+    # Checkpointer Configuration
+    # =========================================================================
+
+    # Checkpointer backend: 'memory', 'sqlite', or 'postgres'
+    # Note: SQLite/Postgres support may require additional packages or
+    # newer langgraph version
+    CHECKPOINTER_BACKEND: str = "memory"
+
+    # SQLite database path (for sqlite backend)
+    CHECKPOINTER_DB_PATH: str = "checkpoints.db"
+
+    # PostgreSQL connection string (for postgres backend)
+    # Format: postgresql://user:password@host:port/database
+    CHECKPOINTER_CONNECTION_STRING: str = ""
+
 
 # Global singleton
 settings = AgentSettings()
