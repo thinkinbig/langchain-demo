@@ -134,7 +134,9 @@ class VisitedSource(DictCompatibleModel):
     """Unified representation of a visited source"""
     identifier: str = Field(..., description="URL or document name")
     source_type: str = Field(..., description="Type: 'internal' or 'web'")
-    visited_at: Optional[datetime] = Field(default=None, description="When source was visited")
+    visited_at: Optional[datetime] = Field(
+        default=None, description="When source was visited"
+    )
 
     def __hash__(self):
         """Make hashable for set operations"""
@@ -144,7 +146,10 @@ class VisitedSource(DictCompatibleModel):
         """Equality based on identifier and source_type"""
         if not isinstance(other, VisitedSource):
             return False
-        return self.identifier == other.identifier and self.source_type == other.source_type
+        return (
+            self.identifier == other.identifier
+            and self.source_type == other.source_type
+        )
 
 
 class ResearchState(DictCompatibleModel):
@@ -168,7 +173,9 @@ class ResearchState(DictCompatibleModel):
     ] = Field(default_factory=list, description="Findings from subagents")
 
     # Filtered findings (overwrite, not append)
-    filtered_findings: List[Finding] = Field(default_factory=list, description="Quality-filtered findings")
+    filtered_findings: List[Finding] = Field(
+        default_factory=list, description="Quality-filtered findings"
+    )
 
     # Unified visited sources tracking
     visited_sources: Annotated[
@@ -208,14 +215,16 @@ class ResearchState(DictCompatibleModel):
     )
 
     @staticmethod
-    def get_visited_identifiers(state: dict, source_type: Optional[str] = None) -> List[str]:
+    def get_visited_identifiers(
+        state: dict, source_type: Optional[str] = None
+    ) -> List[str]:
         """
         Get visited identifiers from state.
-        
+
         Args:
             state: State dictionary
             source_type: Optional filter ('internal' or 'web')
-            
+
         Returns:
             List of visited identifiers
         """
@@ -241,10 +250,18 @@ class SubagentState(DictCompatibleModel):
 
     # Context channels for subgraph
     task_description: str = Field(default="", description="Cached task description")
-    internal_result: Optional[Any] = Field(default=None, description="Internal knowledge retrieval result")
-    web_result: Optional[Any] = Field(default=None, description="Web search retrieval result")
-    subagent_findings: List[Finding] = Field(default_factory=list, description="Findings output")
-    visited_sources: List[VisitedSource] = Field(default_factory=list, description="Already visited sources")
+    internal_result: Optional[Any] = Field(
+        default=None, description="Internal knowledge retrieval result"
+    )
+    web_result: Optional[Any] = Field(
+        default=None, description="Web search retrieval result"
+    )
+    subagent_findings: List[Finding] = Field(
+        default_factory=list, description="Findings output"
+    )
+    visited_sources: List[VisitedSource] = Field(
+        default_factory=list, description="Already visited sources"
+    )
 
     model_config = ConfigDict(extra="allow")
 

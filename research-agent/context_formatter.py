@@ -12,7 +12,7 @@ class ContextFormatter:
     def __init__(self, chunker: Optional[ContextChunker] = None):
         """
         Initialize context formatter.
-        
+
         Args:
             chunker: ContextChunker instance (creates default if None)
         """
@@ -25,18 +25,16 @@ class ContextFormatter:
     ) -> str:
         """
         Format a single retrieval result for prompt inclusion.
-        
+
         Args:
             result: RetrievalResult to format
             visited_identifiers: List of already visited source identifiers
-            
+
         Returns:
             Formatted context string
         """
         if result.is_empty():
             return ""
-
-        visited_set = set(visited_identifiers or [])
 
         # Get primary source identifier for formatting
         primary_source = ""
@@ -56,10 +54,10 @@ class ContextFormatter:
     def format_citation_instructions(self, sources: List[Source]) -> str:
         """
         Generate citation instructions for the LLM.
-        
+
         Args:
             sources: List of sources to cite
-            
+
         Returns:
             Citation instruction string
         """
@@ -79,10 +77,12 @@ class ContextFormatter:
                     "url": source.identifier
                 })
 
+        source_titles = [s.get('title', 'Unknown') for s in formatted_sources]
         instruction = (
-            f"\n\nIMPORTANT: You have been provided with information from the following sources: "
-            f"{[s.get('title', 'Unknown') for s in formatted_sources]}. "
-            f"If you use this information, you MUST include it in the `sources` argument of `submit_findings`. "
+            f"\n\nIMPORTANT: You have been provided with information "
+            f"from the following sources: {source_titles}. "
+            f"If you use this information, you MUST include it in the "
+            f"`sources` argument of `submit_findings`. "
             f"Suggested sources format: {formatted_sources}"
         )
 
@@ -95,11 +95,11 @@ class ContextFormatter:
     ) -> str:
         """
         Combine internal and web contexts into a single formatted string.
-        
+
         Args:
             internal: Internal knowledge base result
             web: Web search result
-            
+
         Returns:
             Combined formatted context
         """
@@ -122,15 +122,15 @@ class ContextFormatter:
     ) -> tuple[str, str, List[Source]]:
         """
         Format all contexts for analysis node prompt.
-        
+
         This is the main entry point for preparing context for the analysis node.
-        
+
         Args:
             task: Task description
             internal_result: Internal knowledge base result
             web_result: Web search result
             visited_identifiers: List of already visited identifiers
-            
+
         Returns:
             Tuple of (formatted_context, citation_instructions, all_sources)
         """
@@ -168,12 +168,12 @@ class ContextFormatter:
     def format_search_results_summary(self, search_results: List[dict]) -> str:
         """
         Format web search results into a summary string.
-        
+
         This is used when we have search results but haven't scraped yet.
-        
+
         Args:
             search_results: List of search result dicts with 'title', 'url', 'content'
-            
+
         Returns:
             Formatted summary string
         """

@@ -13,7 +13,11 @@ class TestContextFormatter:
         formatter = ContextFormatter()
 
         sources = [
-            Source(identifier="doc1.pdf", title="Document 1", source_type=RetrievalSource.INTERNAL)
+            Source(
+                identifier="doc1.pdf",
+                title="Document 1",
+                source_type=RetrievalSource.INTERNAL
+            )
         ]
         result = RetrievalResult(
             content="Internal knowledge content",
@@ -24,7 +28,10 @@ class TestContextFormatter:
 
         formatted = formatter.format_retrieval_result(result, [])
 
-        assert "INTERNAL KNOWLEDGE BASE" in formatted or "Internal knowledge content" in formatted
+        assert (
+            "INTERNAL KNOWLEDGE BASE" in formatted
+            or "Internal knowledge content" in formatted
+        )
 
     def test_format_retrieval_result_empty(self):
         """Test formatting empty retrieval result"""
@@ -45,8 +52,16 @@ class TestContextFormatter:
         formatter = ContextFormatter()
 
         sources = [
-            Source(identifier="doc1.pdf", title="Document 1", source_type=RetrievalSource.INTERNAL),
-            Source(identifier="doc2.pdf", title="Document 2", source_type=RetrievalSource.INTERNAL)
+            Source(
+                identifier="doc1.pdf",
+                title="Document 1",
+                source_type=RetrievalSource.INTERNAL
+            ),
+            Source(
+                identifier="doc2.pdf",
+                title="Document 2",
+                source_type=RetrievalSource.INTERNAL
+            )
         ]
 
         instructions = formatter.format_citation_instructions(sources)
@@ -137,7 +152,11 @@ class TestContextFormatter:
         formatter = ContextFormatter()
 
         sources = [
-            Source(identifier="doc1.pdf", title="Doc 1", source_type=RetrievalSource.INTERNAL)
+            Source(
+                identifier="doc1.pdf",
+                title="Doc 1",
+                source_type=RetrievalSource.INTERNAL
+            )
         ]
         internal_result = RetrievalResult(
             content="Internal knowledge",
@@ -163,7 +182,11 @@ class TestContextFormatter:
         formatter = ContextFormatter()
 
         sources = [
-            Source(identifier="http://example.com", title="Example", source_type=RetrievalSource.WEB)
+            Source(
+                identifier="http://example.com",
+                title="Example",
+                source_type=RetrievalSource.WEB
+            )
         ]
         web_result = RetrievalResult(
             content="Web content",
@@ -189,14 +212,18 @@ class TestContextFormatter:
 
         internal_result = RetrievalResult(
             content="Internal",
-            sources=[Source(identifier="doc1.pdf", source_type=RetrievalSource.INTERNAL)],
+            sources=[
+                Source(identifier="doc1.pdf", source_type=RetrievalSource.INTERNAL)
+            ],
             source_type=RetrievalSource.INTERNAL,
             has_content=True
         )
 
         web_result = RetrievalResult(
             content="Web",
-            sources=[Source(identifier="http://example.com", source_type=RetrievalSource.WEB)],
+            sources=[
+                Source(identifier="http://example.com", source_type=RetrievalSource.WEB)
+            ],
             source_type=RetrievalSource.WEB,
             has_content=True
         )
@@ -209,8 +236,14 @@ class TestContextFormatter:
         )
 
         assert len(all_sources) == 2
-        assert len([s for s in all_sources if s.source_type == RetrievalSource.INTERNAL]) == 1
-        assert len([s for s in all_sources if s.source_type == RetrievalSource.WEB]) == 1
+        internal_count = len([
+            s for s in all_sources if s.source_type == RetrievalSource.INTERNAL
+        ])
+        web_count = len([
+            s for s in all_sources if s.source_type == RetrievalSource.WEB
+        ])
+        assert internal_count == 1
+        assert web_count == 1
 
     def test_format_for_analysis_empty(self):
         """Test formatting for analysis with no results"""
@@ -232,8 +265,16 @@ class TestContextFormatter:
         formatter = ContextFormatter()
 
         search_results = [
-            {"title": "Result 1", "url": "http://example.com/1", "content": "Content 1"},
-            {"title": "Result 2", "url": "http://example.com/2", "content": "Content 2"}
+            {
+                "title": "Result 1",
+                "url": "http://example.com/1",
+                "content": "Content 1"
+            },
+            {
+                "title": "Result 2",
+                "url": "http://example.com/2",
+                "content": "Content 2"
+            }
         ]
 
         summary = formatter.format_search_results_summary(search_results)

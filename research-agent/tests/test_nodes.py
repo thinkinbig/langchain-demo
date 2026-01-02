@@ -104,14 +104,20 @@ def test_subagent_node_success():
 
     # Mock LLM tool calls
 
-    with patch("graph.RetrievalService.retrieve_internal", return_value=mock_internal_result):
+    with patch(
+        "graph.RetrievalService.retrieve_internal",
+        return_value=mock_internal_result
+    ):
         with patch("graph.RetrievalService.retrieve_web", return_value=mock_web_result):
             with patch("graph.get_subagent_llm") as mock_get_llm:
                 mock_llm = MagicMock()
                 mock_response = MagicMock()
                 mock_response.tool_calls = [{
                     "name": "submit_findings",
-                    "args": {"summary": "Summary 1", "sources": [{"title": "T1", "url": "u1"}]},
+                    "args": {
+                        "summary": "Summary 1",
+                        "sources": [{"title": "T1", "url": "u1"}]
+                    },
                     "id": "call_1"
                 }]
                 mock_llm.bind_tools.return_value.invoke.return_value = mock_response
@@ -147,7 +153,10 @@ def test_subagent_node_empty_search():
         has_content=False
     )
 
-    with patch("graph.RetrievalService.retrieve_internal", return_value=mock_internal_result):
+    with patch(
+        "graph.RetrievalService.retrieve_internal",
+        return_value=mock_internal_result
+    ):
         with patch("graph.RetrievalService.retrieve_web", return_value=mock_web_result):
             with patch("graph.get_subagent_llm") as mock_get_llm:
                 mock_llm = MagicMock()
@@ -163,7 +172,8 @@ def test_subagent_node_empty_search():
                 result = subagent_node(state)
 
                 assert len(result["subagent_findings"]) == 1
-                assert "No information" in result["subagent_findings"][0].summary.lower()
+                finding_summary = result["subagent_findings"][0].summary.lower()
+                assert "No information" in finding_summary
 
 # 3. Test Synthesizer Node
 def test_synthesizer_node_success(initial_state):

@@ -19,11 +19,11 @@ def create_content_metadata(content: str, max_preview: int = 200) -> dict:
     """
     Create metadata dict for content instead of storing full content.
     This reduces token usage while preserving essential information.
-    
+
     Args:
         content: Full content string
         max_preview: Maximum length of preview to include
-        
+
     Returns:
         Dictionary with content_hash, content_length, and preview
     """
@@ -93,11 +93,11 @@ def extract_evidence_summaries(
     """
     Extract concise evidence summaries from findings.
     Uses metadata and summaries instead of full content to reduce tokens.
-    
+
     Args:
         findings: List of Finding objects
         max_length: Maximum length per summary
-        
+
     Returns:
         List of evidence summary strings (optimized for token usage)
     """
@@ -131,10 +131,10 @@ def extract_evidence_summaries(
 def extract_findings_metadata(findings: List[Finding]) -> dict:
     """
     Extract metadata from findings for use in prompts.
-    
+
     Args:
         findings: List of Finding objects
-        
+
     Returns:
         Dictionary with findings statistics and metadata
     """
@@ -161,10 +161,10 @@ def extract_findings_metadata(findings: List[Finding]) -> dict:
 def extract_source_metadata(sources: List[Source]) -> Dict[str, str]:
     """
     Create identifier → title mapping for sources.
-    
+
     Args:
         sources: List of Source objects
-        
+
     Returns:
         Dictionary mapping source identifier to title
     """
@@ -195,7 +195,9 @@ def create_findings_statistics(findings: List[Finding]) -> dict:
     avg_length = sum(len(s) for s in summaries) / len(summaries)
 
     # Extract coverage areas from task descriptions
-    coverage_areas = list(set([f.task.split(":")[0].strip() for f in findings if ":" in f.task]))
+    coverage_areas = list(set([
+        f.task.split(":")[0].strip() for f in findings if ":" in f.task
+    ]))
 
     return {
         "count": len(findings),

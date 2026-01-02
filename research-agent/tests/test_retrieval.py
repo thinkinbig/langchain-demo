@@ -49,7 +49,11 @@ class TestRetrievalResult:
     def test_retrieval_result_creation(self):
         """Test creating a RetrievalResult"""
         sources = [
-            Source(identifier="doc1.pdf", title="Doc 1", source_type=RetrievalSource.INTERNAL)
+            Source(
+                identifier="doc1.pdf",
+                title="Doc 1",
+                source_type=RetrievalSource.INTERNAL
+            )
         ]
         result = RetrievalResult(
             content="Test content",
@@ -151,8 +155,16 @@ class TestRetrievalService:
     def test_retrieve_web_success(self, mock_search, mock_scrape):
         """Test successful web retrieval"""
         mock_search.return_value = [
-            {"title": "Result 1", "url": "http://example.com/1", "content": "Content 1"},
-            {"title": "Result 2", "url": "http://example.com/2", "content": "Content 2"}
+            {
+                "title": "Result 1",
+                "url": "http://example.com/1",
+                "content": "Content 1"
+            },
+            {
+                "title": "Result 2",
+                "url": "http://example.com/2",
+                "content": "Content 2"
+            }
         ]
         mock_scrape.return_value = "Full scraped content"
 
@@ -190,8 +202,16 @@ class TestRetrievalService:
     def test_retrieve_web_with_visited(self, mock_search, mock_scrape):
         """Test web retrieval with visited URLs"""
         mock_search.return_value = [
-            {"title": "Result 1", "url": "http://example.com/1", "content": "Content 1"},
-            {"title": "Result 2", "url": "http://example.com/2", "content": "Content 2"}
+            {
+                "title": "Result 1",
+                "url": "http://example.com/1",
+                "content": "Content 1"
+            },
+            {
+                "title": "Result 2",
+                "url": "http://example.com/2",
+                "content": "Content 2"
+            }
         ]
         mock_scrape.return_value = "Scraped content"
 

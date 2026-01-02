@@ -180,7 +180,9 @@ def lead_researcher_node(state: LeadResearcherState):
     )
 
     # Invoke LLM without static knowledge base in system prompt
-    system_prompt = context_manager.get_system_context(LEAD_RESEARCHER_SYSTEM, include_knowledge=False)
+    system_prompt = context_manager.get_system_context(
+        LEAD_RESEARCHER_SYSTEM, include_knowledge=False
+    )
 
     response = structured_llm.invoke([
         SystemMessage(content=system_prompt),
@@ -244,13 +246,22 @@ def retrieve_node(state: SubagentState):
 
     # Get task description
     rs_task = tasks[0]
-    task_description = rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+    task_description = (
+        rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+    )
 
     # Get visited sources from unified format
     visited_sources = state.get("visited_sources", [])
-    visited_identifiers = [vs.identifier if hasattr(vs, "identifier") else vs.get("identifier", "")
-                          for vs in visited_sources if (hasattr(vs, "source_type") and getattr(vs, "source_type", "") == "internal")
-                          or (isinstance(vs, dict) and vs.get("source_type") == "internal")]
+    visited_identifiers = [
+        vs.identifier if hasattr(vs, "identifier") else vs.get("identifier", "")
+        for vs in visited_sources
+        if (
+            hasattr(vs, "source_type")
+            and getattr(vs, "source_type", "") == "internal"
+        ) or (
+            isinstance(vs, dict) and vs.get("source_type") == "internal"
+        )
+    ]
 
     print(f"  🧠 [RAG] Retrieving context for task: {task_description[:50]}...")
 
@@ -276,15 +287,25 @@ def web_search_node(state: SubagentState):
         # Fallback if not cached
         tasks = state.get("subagent_tasks", [])
         rs_task = tasks[0]
-        task_description = rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+        task_description = (
+            rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+        )
 
-    print(f"\n🔎 [Subagent-Web] Internal knowledge empty. Performing Web Search: {task_description[:60]}...")
+    print(
+        f"\n🔎 [Subagent-Web] Internal knowledge empty. "
+        f"Performing Web Search: {task_description[:60]}..."
+    )
 
     # Get visited URLs from unified format
     visited_sources = state.get("visited_sources", [])
-    visited_urls = [vs.identifier if hasattr(vs, "identifier") else vs.get("identifier", "")
-                    for vs in visited_sources if (hasattr(vs, "source_type") and getattr(vs, "source_type", "") == "web")
-                    or (isinstance(vs, dict) and vs.get("source_type") == "web")]
+    visited_urls = [
+        vs.identifier if hasattr(vs, "identifier") else vs.get("identifier", "")
+        for vs in visited_sources
+        if (
+            (hasattr(vs, "source_type") and getattr(vs, "source_type", "") == "web")
+            or (isinstance(vs, dict) and vs.get("source_type") == "web")
+        )
+    ]
 
     # Use unified retrieval service
     result = RetrievalService.retrieve_web(
@@ -300,7 +321,9 @@ def web_search_node(state: SubagentState):
     }
 
 
-def route_source_necessity(state: SubagentState) -> Literal["analysis_node", "web_search_node"]:
+def route_source_necessity(
+    state: SubagentState
+) -> Literal["analysis_node", "web_search_node"]:
     """Gating Node: Check if internal knowledge is sufficient"""
     internal_result = state.get("internal_result")
 
@@ -311,7 +334,9 @@ def route_source_necessity(state: SubagentState) -> Literal["analysis_node", "we
                 return "analysis_node"
         elif isinstance(internal_result, dict):
             # Handle dict representation (from state serialization)
-            if internal_result.get("has_content") and not internal_result.get("content", "").startswith("(No relevant"):
+            has_content = internal_result.get("has_content")
+            content = internal_result.get("content", "")
+            if has_content and not content.startswith("(No relevant"):
                 print("  🚫 [Gating] Internal knowledge found. Skipping Web Search.")
                 return "analysis_node"
 
@@ -329,13 +354,16 @@ def analysis_node(state: SubagentState):
         tasks = state.get("subagent_tasks", [])
         if tasks:
             rs_task = tasks[0]
-            task_description = rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+            task_description = (
+                rs_task.description if hasattr(rs_task, "description") else str(rs_task)
+            )
 
     # Get retrieval results (unified format)
     internal_result = state.get("internal_result")
     web_result = state.get("web_result")
 
-    # Convert dict representation to RetrievalResult if needed (from state serialization)
+    # Convert dict representation to RetrievalResult if needed
+    # (from state serialization)
     if internal_result and not isinstance(internal_result, RetrievalResult):
         if isinstance(internal_result, dict):
             from retrieval import RetrievalSource, Source
@@ -373,23 +401,39 @@ def analysis_node(state: SubagentState):
 
     # Use ContextFormatter to format context
     formatter = ContextFormatter()
-    formatted_context, citation_instructions, all_sources = formatter.format_for_analysis(
-        task=task_description,
-        internal_result=internal_result,
-        web_result=web_result,
-        visited_identifiers=visited_identifiers
+    formatted_context, citation_instructions, all_sources = (
+        formatter.format_for_analysis(
+            task=task_description,
+            internal_result=internal_result,
+            web_result=web_result,
+            visited_identifiers=visited_identifiers
+        )
     )
 
     # Log context info and source tracking
     if internal_result and not internal_result.is_empty():
         source_ids = [s.identifier for s in internal_result.sources]
-        print(f"     Found {len(internal_result.content)} chars of internal context from {len(internal_result.sources)} sources: {source_ids[:3]}")
+        content_len = len(internal_result.content)
+        sources_count = len(internal_result.sources)
+        print(
+            f"     Found {content_len} chars of internal context "
+            f"from {sources_count} sources: {source_ids[:3]}"
+        )
     if web_result and not web_result.is_empty():
         source_urls = [s.identifier for s in web_result.sources]
-        print(f"     Found {len(web_result.content)} chars of web context from {len(web_result.sources)} sources: {source_urls[:3]}")
+        content_len = len(web_result.content)
+        sources_count = len(web_result.sources)
+        print(
+            f"     Found {content_len} chars of web context "
+            f"from {sources_count} sources: {source_urls[:3]}"
+        )
 
     # Debug: Log total sources collected
-    print(f"  📚 [Source Tracking] Total sources available: {len(all_sources)} ({[s.identifier[:30] for s in all_sources[:3]]})")
+    source_previews = [s.identifier[:30] for s in all_sources[:3]]
+    print(
+        f"  📚 [Source Tracking] Total sources available: "
+        f"{len(all_sources)} ({source_previews})"
+    )
 
     # Create Analysis Prompt
     analysis_prompt_content = SUBAGENT_ANALYSIS.format(
@@ -398,7 +442,9 @@ def analysis_node(state: SubagentState):
     )
 
     # --- Agent Loop (Same as before) ---
-    system_prompt = context_manager.get_system_context(SUBAGENT_SYSTEM, include_knowledge=True)
+    system_prompt = context_manager.get_system_context(
+        SUBAGENT_SYSTEM, include_knowledge=True
+    )
 
     # Define Tools
     from langchain_core.tools import tool
@@ -416,7 +462,7 @@ def analysis_node(state: SubagentState):
         HumanMessage(content=analysis_prompt_content),
     ]
 
-    for step in range(5):
+    for _ in range(5):
         response = formatted_llm.invoke(messages)
         messages.append(response)
 
@@ -431,9 +477,13 @@ def analysis_node(state: SubagentState):
                 if t_name == "python_repl":
                     try:
                         result = tools.python_repl(t_args.get("code", ""))
-                        messages.append(ToolMessage(tool_call_id=t_id, content=str(result)))
+                        messages.append(
+                            ToolMessage(tool_call_id=t_id, content=str(result))
+                        )
                     except Exception as e:
-                        messages.append(ToolMessage(tool_call_id=t_id, content=f"Error: {e}"))
+                        messages.append(
+                            ToolMessage(tool_call_id=t_id, content=f"Error: {e}")
+                        )
 
                 elif t_name == "read_local_file":
                     res = tools.read_local_file(t_args.get("file_path", ""))
@@ -445,8 +495,12 @@ def analysis_node(state: SubagentState):
                     final_sources = []
                     for source in all_sources:
                         if source.source_type.value == "internal":
+                            doc_title = (
+                                source.title
+                                or f"Internal Document: {source.identifier}"
+                            )
                             final_sources.append({
-                                "title": source.title or f"Internal Document: {source.identifier}",
+                                "title": doc_title,
                                 "url": f"internal/{source.identifier}"
                             })
                         else:
@@ -455,41 +509,63 @@ def analysis_node(state: SubagentState):
                                 "url": source.identifier
                             })
 
-                    # Add tool-provided sources (from LLM) - merge with retrieval sources
+                    # Add tool-provided sources (from LLM)
+                    # Merge with retrieval sources
                     tool_sources = t_args.get("sources")
                     if tool_sources:
                         for s in tool_sources:
                             # Check if source already exists by URL
                             url = s.get("url", "")
-                            if url and not any(fs.get("url") == url for fs in final_sources):
+                            if url and not any(
+                                fs.get("url") == url for fs in final_sources
+                            ):
                                 final_sources.append(s)
 
                     # Log source collection for debugging
-                    print(f"  📚 [Sources] Collected {len(final_sources)} sources: {[s.get('title', s.get('url', 'Unknown')) for s in final_sources[:3]]}")
+                    source_names = [
+                        s.get('title', s.get('url', 'Unknown'))
+                        for s in final_sources[:3]
+                    ]
+                    sources_count = len(final_sources)
+                    print(
+                        f"  📚 [Sources] Collected {sources_count} "
+                        f"sources: {source_names}"
+                    )
 
-                    # Store content metadata instead of full content (token optimization)
-                    # Full content is available in formatted_context but we store only metadata
+                    # Store content metadata instead of full content
+                    # (token optimization)
+                    # Full content is available in formatted_context
+                    # but we store only metadata
                     if formatted_context:
-                        content_metadata = create_content_metadata(formatted_context, max_preview=200)
+                        content_metadata = create_content_metadata(
+                            formatted_context, max_preview=200
+                        )
                         evidence_content = content_metadata_to_string(content_metadata)
                     else:
                         evidence_content = ""
 
+                    # Now stores metadata dict as JSON string
                     finding = Finding(
                         task=task_description,
                         summary=t_args.get("summary", ""),
                         sources=final_sources,
-                        content=evidence_content  # Now stores metadata dict as JSON string
+                        content=evidence_content
                     )
                     print("  ✅ CodeAgent finished via tool.")
                     return {"subagent_findings": [finding]}
         else:
-             print("  ⚠️  CodeAgent output text but no tool call. Re-prompting...")
-             messages.append(HumanMessage(content="You generally must call `submit_findings`."))
+            print("  ⚠️  CodeAgent output text but no tool call. Re-prompting...")
+            messages.append(
+                HumanMessage(content="You generally must call `submit_findings`.")
+            )
 
     # Fail safe
     print("  ❌ CodeAgent failed to submit findings.")
-    return {"subagent_findings": [Finding(task=task_description, summary="Analysis failed", sources=[])]}
+    return {
+        "subagent_findings": [
+            Finding(task=task_description, summary="Analysis failed", sources=[])
+        ]
+    }
 
 # Define the Subgraph
 subagent_workflow = StateGraph(SubagentState)
@@ -558,7 +634,8 @@ def subagent_node(state: SubagentState):
                 ))
 
     # Filter output: return ONLY what needs to be merged to the parent state
-    # This avoids 'InvalidConcurrentGraphUpdate' on non-reducer keys like 'subagent_tasks'
+    # This avoids 'InvalidConcurrentGraphUpdate' on non-reducer keys
+    # like 'subagent_tasks'
     return {
         "subagent_findings": result_state.get("subagent_findings", []),
         "visited_sources": visited_sources
@@ -609,8 +686,9 @@ def filter_findings_node(state: ResearchState):
 
     print(f"  ✅ Kept {len(valid_findings)}/{len(findings)} relevant findings.")
 
-    # Return REPLACEMENT list (Note: requires reducer in schema to handle strict replacement if needed,
-    # but since this is a sequential node, it overwrites if we change schema or just clean up here.
+    # Return REPLACEMENT list (Note: requires reducer in schema to handle
+    # strict replacement if needed, but since this is a sequential node,
+    # it overwrites if we change schema or just clean up here.
     # Actually, standard LangGraph behavior with Annotated[list, add] is APPEND.
     # To FILTER, we usually need to overwrite.
     # Workaround: We pass 'valid_findings' to the next step via a distinct key OR
@@ -642,7 +720,8 @@ def assign_subagents(state: ResearchState):
             {
                 "subagent_tasks": [task],
                 "query": state["query"],
-                "visited_sources": state.get("visited_sources", [])  # Pass unified visited sources
+                # Pass unified visited sources
+                "visited_sources": state.get("visited_sources", [])
             },
         )
         for task in tasks
@@ -674,15 +753,19 @@ def synthesizer_node(state: SynthesizerState):
 
     # Format findings - only include essential information (already optimized)
     findings_text = "\n\n".join([
-        f"{i+1}. {f.get('task', 'Unknown')[:60]}\n{f.get('summary', 'No summary')}"
+        f"{i+1}. {f.get('task', 'Unknown')[:60]}\n"
+        f"{f.get('summary', 'No summary')}"
         for i, f in enumerate(findings)
     ])
 
-    # Add metadata context to prompt (helps LLM understand scope without full content)
+    # Add metadata context to prompt (helps LLM understand scope)
+    count = findings_metadata['count']
+    total_sources = findings_metadata['total_sources']
+    avg_length = findings_metadata['avg_summary_length']
     metadata_context = (
-        f"\n\n[Metadata: {findings_metadata['count']} findings, "
-        f"{findings_metadata['total_sources']} sources, "
-        f"avg length: {findings_metadata['avg_summary_length']} chars]"
+        f"\n\n[Metadata: {count} findings, "
+        f"{total_sources} sources, "
+        f"avg length: {avg_length} chars]"
     )
 
     prompt_content = SYNTHESIZER_MAIN.format(
@@ -784,8 +867,18 @@ def citation_agent_node(state: CitationAgentState):
             url = source.get("url", "")
             title = source.get("title", "Unknown")
         else:
-            url = getattr(source, "url", "") if hasattr(source, "url") else source.get("url", "") if hasattr(source, "get") else ""
-            title = getattr(source, "title", "Unknown") if hasattr(source, "title") else source.get("title", "Unknown") if hasattr(source, "get") else "Unknown"
+            if hasattr(source, "url"):
+                url = getattr(source, "url", "")
+            elif hasattr(source, "get"):
+                url = source.get("url", "")
+            else:
+                url = ""
+            if hasattr(source, "title"):
+                title = getattr(source, "title", "Unknown")
+            elif hasattr(source, "get"):
+                title = source.get("title", "Unknown")
+            else:
+                title = "Unknown"
 
         if url:
             source_map[url] = title
