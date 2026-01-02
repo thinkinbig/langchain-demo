@@ -7,6 +7,7 @@ single-agent systems, including a rapid growth in coordination complexity."
 from unittest.mock import patch
 
 import pytest
+from schemas import ResearchTasks, SubagentOutput, SynthesisResult
 from tests.test_helpers import (
     assert_complete_workflow,
     assert_content_relevance,
@@ -15,7 +16,6 @@ from tests.test_helpers import (
     assert_tasks_related_to_query,
     configure_structured_output_mock,
 )  # noqa: E402
-from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
 
 @pytest.mark.behavioral
@@ -40,17 +40,24 @@ class TestCoordination:
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
-            ResearchTasks: ResearchTasks(tasks=["Research Python features", "Research Rust features"]),
+            ResearchTasks: ResearchTasks(
+                tasks=["Research Python features", "Research Rust features"]
+            ),
             SynthesisResult: SynthesisResult(
                 summary="Mock synthesized results combining Python and Rust findings. "
                 "This is a comprehensive summary."
             )
         })
         configure_structured_output_mock(mock_subagent_llm, {
-            SubagentOutput: SubagentOutput(summary="Mock summary of findings from search results.")
+            SubagentOutput: SubagentOutput(
+                summary="Mock summary of findings from search results."
+            )
         })
 
-        state = {**initial_state, "query": "Compare Python and Rust for web development"}
+        state = {
+            **initial_state,
+            "query": "Compare Python and Rust for web development"
+        }
         query = state["query"]
 
         final_state = app.invoke(state)
@@ -80,14 +87,19 @@ class TestCoordination:
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
-            ResearchTasks: ResearchTasks(tasks=["Research microservices pros", "Research microservices cons"]),
+            ResearchTasks: ResearchTasks(
+                tasks=["Research microservices pros", "Research microservices cons"]
+            ),
             SynthesisResult: SynthesisResult(
                 summary="Mock synthesized results about microservices pros and cons. "
                 "This is a comprehensive summary covering all aspects."
             )
         })
         configure_structured_output_mock(mock_subagent_llm, {
-            SubagentOutput: SubagentOutput(summary="Mock summary of microservices findings from search results.")
+            SubagentOutput: SubagentOutput(
+                summary="Mock summary of microservices findings from "
+                "search results."
+            )
         })
 
         state = initial_state.copy()
@@ -125,12 +137,18 @@ class TestCoordination:
         configure_structured_output_mock(mock_lead_llm, {
             ResearchTasks: ResearchTasks(tasks=["Research LangGraph features"]),
             SynthesisResult: SynthesisResult(
-                summary="LangGraph is a library for building stateful, multi-actor applications with LLMs. "
-                "It provides graph-based workflow orchestration."
+                summary=(
+                    "LangGraph is a library for building stateful, "
+                    "multi-actor applications with LLMs. "
+                    "It provides graph-based workflow orchestration."
+                )
             )
         })
         configure_structured_output_mock(mock_subagent_llm, {
-            SubagentOutput: SubagentOutput(summary="LangGraph provides graph-based orchestration for LLM applications.")
+            SubagentOutput: SubagentOutput(
+                summary="LangGraph provides graph-based orchestration for "
+                "LLM applications."
+            )
         })
 
         state = initial_state.copy()

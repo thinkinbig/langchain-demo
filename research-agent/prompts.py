@@ -90,10 +90,12 @@ The following research has already been completed:
 
 <instructions>
 1. Review your scratchpad notes and the findings above. Are there gaps?
-2. Check the extracted_citations section. If specific papers or sources were mentioned 
-   in the knowledge base, consider whether investigating them would improve the answer.
+2. Check the extracted_citations section. If specific papers or sources were
+   mentioned in the knowledge base, consider whether investigating them would
+   improve the answer.
 3. If the user's query is fully answered, generate an empty task list.
-4. If information is missing OR valuable citations were found, generate 1-2 new targeted tasks.
+4. If information is missing OR valuable citations were found, generate 1-2
+   new targeted tasks.
    - For citations: "Search for details about [Author/Paper] on [Topic]"
    - For gaps: Regular research tasks
 5. Do NOT repeat completed tasks.
@@ -123,13 +125,10 @@ Please correct the JSON structure and try again.
 
 SUBAGENT_SYSTEM = """You are a Research Analyst with access to a Python Environment.
 Your goal is to synthesize search results into a concise, fact-based summary.
-You have three tools:
-1. `python_repl`: Use this to perform calculations, filter data, or count items if needed.
-2. `extract_citations_from_text`: Use this to extract academic paper citations from text when you see citation patterns.
-3. `submit_findings`: Use this to submit your final summary when you are done.
+You must return your analysis in a structured JSON format.
 """
 
-SUBAGENT_ANALYSIS = ChatPromptTemplate.from_template(
+SUBAGENT_STRUCTURED_ANALYSIS = ChatPromptTemplate.from_template(
     """<task>
 {task}
 </task>
@@ -141,30 +140,48 @@ The following search results were retrieved:
 
 <instructions>
 1. Analyze the search results relevant to the task.
-2. Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt for any relevant internal information.
-3. **CITATION EXTRACTION**: If you notice citation patterns in the retrieved content 
-   (e.g., "Song et al., 2023", "Zhang et al., 2025", paper titles in quotes), 
-   use the `extract_citations_from_text` tool to extract them. These citations 
-   can be valuable leads for deeper research and should be included in your analysis.
-4. If you need to calculate averages, count items, or filter lists, use `python_repl`.
-5. Extract key statistics, dates, and entities.
-6. Synthesize a 2-3 sentence summary.
-7. Call `submit_findings` with your final summary.
-   - IMPORTANT: If you used information from the internal knowledge base or local files, you MUST explicitly include them in the `sources` list argument of `submit_findings`.
-   - Example sources: [{{"title": "Internal Alpha Project", "url": "internal/alpha.txt"}}]
+2. Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt.
+3. **CITATION EXTRACTION**: Extract academic paper citations into the `citations` list.
+   - Each item must be an object with:
+     - `title`: The citation text (e.g. "Author et al., 2023")
+     - `context`: Brief context of what the paper is about or why it's cited.
+     - `url`: Empty string if not available.
+     - `relevance`: Brief note on relevance.
+4. **Reasoning**: Explain your analysis process in `reasoning`.
+5. **Python Code**: If you need to calculate averages, count items, or filter
+   lists, provide the code in `python_code`.
+   - The code must print the result to stdout.
+   - If no calculation is needed, leave `python_code` null.
+6. **Summary**: Synthesize a 2-3 sentence summary in `summary`.
 </instructions>
 """
 )
 
-SUBAGENT_RETRY = ChatPromptTemplate.from_template(
+SUBAGENT_REFINE_WITH_TOOL = ChatPromptTemplate.from_template(
+    """<tool_output>
+{tool_output}
+</tool_output>
+
+<instructions>
+1. Review the tool output above.
+2. Update your `summary` to incorporate this new information.
+3. Clear the `python_code` field (set to null) as it has been executed.
+4. Keep the `citations` and `reasoning` updated.
+</instructions>
+"""
+)
+
+SUBAGENT_ANALYSIS_RETRY = ChatPromptTemplate.from_template(
     """{previous_prompt}
 
 <error>
-Previous attempt failed: {error}
+The previous attempt failed validation:
+{error}
 </error>
 
 <instructions>
-Ensure you return a valid JSON object matching the `SubagentOutput` schema.
+Please correct the JSON structure and try again.
+Ensure all fields match the `AnalysisOutput` schema.
 </instructions>
 """
 )
@@ -191,8 +208,11 @@ SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
 
 <instructions>
 1. Synthesize all findings into a single coherent narrative.
-2. **Relevance Filter:** Ignore any findings marked as "No information found" or that do not directly address the query. Prioritize depth over breadth.
-3. **Source Hierarchy:** Give higher weight to Internal Knowledge Base sources (e.g., PDFs, local files) over generic web search results, unless the query explicitly asks for external info.
+2. **Relevance Filter:** Ignore any findings marked as "No information found"
+   or that do not directly address the query. Prioritize depth over breadth.
+3. **Source Hierarchy:** Give higher weight to Internal Knowledge Base
+   sources (e.g., PDFs, local files) over generic web search results, unless
+   the query explicitly asks for external info.
 4. **Chain of Density:** Start with a broad summary, then progressively add
    specific entities, metrics, and details from the findings without
    increasing the length unnecessarily. Fuse concepts to maintain density.
@@ -262,19 +282,23 @@ VERIFIER_MAIN = ChatPromptTemplate.from_template(
 # Extraction Prompts (Unified Pattern for Citations and Web Content)
 # =============================================================================
 
-CITATION_EXTRACTION = """Analyze the following text and extract any academic paper citations or references to other research.
+CITATION_EXTRACTION = """Analyze the following text and extract any academic
+paper citations or references to other research.
 
 For each citation found, provide:
-1. The title field containing the citation as it appears (e.g., "Song et al., 2023", "Zhang et al. (2025q)")
+1. The title field containing the citation as it appears (e.g., "Song et al.,
+   2023", "Zhang et al. (2025q)")
 2. Brief context about what the paper discusses
 3. Why it might be relevant for deeper research
 
 Text to analyze:
 {text}
 
-If no citations are found, respond with an empty list. Return your answer in JSON format."""
+If no citations are found, respond with an empty list. Return your answer
+in JSON format."""
 
-WEB_CONTENT_EXTRACTION = """Analyze the following web search results and extract the most relevant and actionable information.
+WEB_CONTENT_EXTRACTION = """Analyze the following web search results and
+extract the most relevant and actionable information.
 
 For each key finding, provide:
 1. The main insight or fact discovered
@@ -286,7 +310,8 @@ Search results to analyze:
 
 Research question: {query}
 
-If no relevant information is found, respond with an empty list. Return your answer in JSON format."""
+If no relevant information is found, respond with an empty list. Return your
+answer in JSON format."""
 
 # Generic extraction template - can be customized for any extraction task
 GENERIC_EXTRACTION = """Analyze the following content and extract {extraction_type}.

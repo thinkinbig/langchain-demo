@@ -100,6 +100,7 @@ def subagent_node(state: SubagentState):
     # like 'subagent_tasks'
     return {
         "subagent_findings": result_state.get("subagent_findings", []),
-        "visited_sources": visited_sources
+        "visited_sources": visited_sources,
+        "all_extracted_citations": result_state.get("extracted_citations", [])
     }
 

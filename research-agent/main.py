@@ -1,7 +1,8 @@
 """Main entry point for research agent"""
 
-from dotenv import load_dotenv
 import uuid
+
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -16,7 +17,8 @@ def main():
         query = sys.argv[1]
     else:
         query = (
-            "What are the key differences between Python and Rust programming languages?"
+            "What are the key differences between Python and Rust "
+            "programming languages?"
         )
 
     print("=" * 80)
@@ -67,7 +69,7 @@ def main():
         # Run the graph with Cost Tracking Callback
         # This will auto-update query_budget on every LLM call
         cost_callback = CostTrackingCallback(query_budget)
-        
+
         config = {
             "callbacks": [cost_callback],
             "configurable": {"thread_id": thread_id}

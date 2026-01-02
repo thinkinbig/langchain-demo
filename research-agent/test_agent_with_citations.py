@@ -12,10 +12,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv()  # noqa: E402
 
-from graph import app
-from schemas import ResearchState
+from graph import app  # noqa: E402
+from schemas import ResearchState  # noqa: E402
 
 
 def test_citation_extraction():

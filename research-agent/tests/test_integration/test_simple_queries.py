@@ -1,6 +1,7 @@
 """Integration tests for simple queries
 
-Based on Anthropic's principle: "Simple fact-finding requires just 1 agent with 3-10 tool calls"
+Based on Anthropic's principle: "Simple fact-finding requires just 1 agent "
+"with 3-10 tool calls"
 
 NOTE: These tests use REAL API calls. Make sure you have valid API keys in .env file.
 """

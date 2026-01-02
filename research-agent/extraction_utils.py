@@ -7,7 +7,7 @@ from unstructured text using LLM agents. It can be used for:
 - Key insights from web search results
 - Any custom extraction task
 
-Design principle: Let the agent decide what's important rather than 
+Design principle: Let the agent decide what's important rather than
 hardcoding patterns.
 """
 
@@ -25,22 +25,22 @@ def extract_with_llm(
 ) -> List[Dict[str, Any]]:
     """
     Generic LLM-based extraction function.
-    
+
     This is the unified pattern for all extraction tasks:
     - Citations from PDFs
     - Insights from web search
     - Custom extractions
-    
+
     Args:
         text: Text to extract from
         prompt_template: Prompt template with {text} and any custom placeholders
         result_schema: Pydantic schema for structured output
         llm: Optional LLM instance (defaults to subagent LLM)
         **prompt_kwargs: Additional variables for prompt template
-        
+
     Returns:
         List of extracted items as dictionaries
-        
+
     Example:
         >>> from prompts import CITATION_EXTRACTION
         >>> from schemas import CitationExtractionResult
@@ -120,12 +120,12 @@ def extract_citations(text: str, llm=None) -> List[Dict[str, str]]:
 def extract_web_insights(text: str, query: str, llm=None) -> List[Dict[str, str]]:
     """
     Extract key insights from web search results using LLM.
-    
+
     Args:
         text: Web search results text
         query: The research question being answered
         llm: Optional LLM instance
-        
+
     Returns:
         List of extracted insights with source and relevance
     """
@@ -162,17 +162,17 @@ def extract_custom(
 ) -> List[Dict[str, Any]]:
     """
     Custom extraction for any use case.
-    
+
     Args:
         text: Text to extract from
         extraction_type: What to extract (e.g., "key metrics", "action items")
         instructions: Specific instructions for what to look for
         context_info: Additional context for the agent
         llm: Optional LLM instance
-        
+
     Returns:
         List of extracted items
-        
+
     Example:
         >>> metrics = extract_custom(
         ...     text="Revenue was $5M with 20% growth...",

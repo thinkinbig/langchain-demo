@@ -12,7 +12,7 @@ class ContextChunker:
     # Default configuration
     DEFAULT_CHUNK_SIZE = 1000
     DEFAULT_CHUNK_OVERLAP = 200
-    DEFAULT_MAX_TOKENS = 8000  # Conservative limit for analysis prompts
+    DEFAULT_MAX_TOKENS = 4000  # Conservative limit for analysis prompts
     TOKENS_PER_CHAR = 0.25  # Rough estimation: ~4 chars per token
 
     def __init__(
@@ -23,7 +23,7 @@ class ContextChunker:
     ):
         """
         Initialize context chunker.
-        
+
         Args:
             chunk_size: Maximum characters per chunk
             chunk_overlap: Overlap between chunks in characters
@@ -40,13 +40,13 @@ class ContextChunker:
     def estimate_tokens(self, text: str) -> int:
         """
         Estimate token count from text.
-        
+
         Uses a simple heuristic: ~4 characters per token.
         This is conservative and works well for English text.
-        
+
         Args:
             text: Text to estimate
-            
+
         Returns:
             Estimated token count
         """
@@ -61,11 +61,11 @@ class ContextChunker:
     ) -> List[str]:
         """
         Split content into chunks.
-        
+
         Args:
             content: Content to chunk
             source_type: Type of source (affects chunking strategy)
-            
+
         Returns:
             List of content chunks
         """
@@ -92,12 +92,12 @@ class ContextChunker:
     ) -> str:
         """
         Truncate content to fit within token limit.
-        
+
         Args:
             content: Content to truncate
             max_tokens: Maximum tokens (uses instance default if None)
             preserve_start: If True, keep the beginning; if False, keep the end
-            
+
         Returns:
             Truncated content
         """
@@ -141,12 +141,12 @@ class ContextChunker:
     ) -> str:
         """
         Format chunks for inclusion in prompt.
-        
+
         Args:
             chunks: List of content chunks
             source_type: Type of source
             source_identifier: Identifier of the source (URL or doc name)
-            
+
         Returns:
             Formatted string for prompt
         """
@@ -179,15 +179,15 @@ class ContextChunker:
     ) -> str:
         """
         Prepare context for prompt: chunk, truncate, and format.
-        
+
         This is the main entry point for preparing any content for use in prompts.
-        
+
         Args:
             content: Raw content
             source_type: Type of source
             source_identifier: Identifier of the source
             enforce_limit: Whether to enforce token limit
-            
+
         Returns:
             Formatted context ready for prompt
         """

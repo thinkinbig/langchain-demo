@@ -63,6 +63,9 @@ class VerificationResult(DictCompatibleModel):
     )
 
 
+
+
+
 class SubagentOutput(DictCompatibleModel):
     """Output from subagent LLM validaton"""
     summary: str = Field(
@@ -112,6 +115,22 @@ class Citation(DictCompatibleModel):
     )
     relevance: str = Field(
         default="", description="Why this citation might be relevant"
+    )
+
+
+class AnalysisOutput(DictCompatibleModel):
+    """Output from subagent structured analysis"""
+    summary: str = Field(
+        ..., min_length=1, description="Summary of findings from search results"
+    )
+    citations: List[Citation] = Field(
+        default_factory=list, description="Extracted citations"
+    )
+    python_code: Optional[str] = Field(
+        default=None, description="Python code to run if calculations/filtering needed"
+    )
+    reasoning: str = Field(
+        default="", description="Reasoning behind the summary and tool use"
     )
 
 
@@ -183,8 +202,12 @@ class ResearchState(DictCompatibleModel):
     final_report: str = Field(default="", description="Final report")
 
     # Citation tracking - now using unified Citation object
-    all_extracted_citations: List[Citation] = Field(
-        default_factory=list, description="All citations extracted across all findings"
+    all_extracted_citations: Annotated[
+        List[dict],
+        operator.add
+    ] = Field(
+        default_factory=list,
+        description="All citations extracted across all findings"
     )
 
     # Retry state

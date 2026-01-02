@@ -26,7 +26,7 @@ def decision_node(state: DecisionState):
     # Continue if: iteration < 3 AND (few findings OR short synthesis
     # OR has unexplored citations)
     needs_more = (
-        iteration_count < 3 and  # Allow one extra iteration for citations
+        iteration_count < 2 and  # Allow one extra iteration for citations
         (
             findings_count < 3 or
             synthesized_length < 500 or

@@ -1,6 +1,7 @@
 """Integration tests for medium complexity queries
 
-Based on Anthropic's principle: "Direct comparisons might need 2-4 subagents with 10-15 calls each"
+Based on Anthropic's principle: "Direct comparisons might need 2-4 "
+"subagents with 10-15 calls each"
 
 NOTE: These tests use REAL API calls. Make sure you have valid API keys in .env file.
 """
@@ -19,7 +20,10 @@ class TestMediumQueries:
 
     def test_compare_python_rust(self, app, initial_state):
         """Test: Compare Python and Rust for web development"""
-        state = {**initial_state, "query": "Compare Python and Rust for web development"}
+        state = {
+            **initial_state,
+            "query": "Compare Python and Rust for web development"
+        }
 
         final_state = app.invoke(state)
 
@@ -64,7 +68,10 @@ class TestMediumQueries:
 
     def test_rest_vs_graphql(self, app, initial_state):
         """Test: Analyze differences between REST and GraphQL"""
-        state = {**initial_state, "query": "Analyze the differences between REST and GraphQL APIs"}
+        state = {
+            **initial_state,
+            "query": "Analyze the differences between REST and GraphQL APIs"
+        }
 
         final_state = app.invoke(state)
 

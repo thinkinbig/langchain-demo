@@ -728,7 +728,11 @@ def filter_findings_node(state: ResearchState):
     unique_citations = deduplicate_citations(all_citations)
 
     if unique_citations:
-        print(f"  📚 [Citations] Aggregated {len(unique_citations)} unique citations from findings")
+        msg = (
+            f"  📚 [Citations] Aggregated {len(unique_citations)} "
+            "unique citations from findings"
+        )
+        print(msg)
 
     # Return REPLACEMENT list (Note: requires reducer in schema to handle
     # strict replacement if needed, but since this is a sequential node,
@@ -879,7 +883,8 @@ def decision_node(state: DecisionState):
     )
 
     # Citation-aware decision logic
-    # Continue if: iteration < 3 AND (few findings OR short synthesis OR has unexplored citations)
+    # Continue if: iteration < 3 AND (few findings OR short synthesis OR
+    # has unexplored citations)
     needs_more = (
         iteration_count < 3 and  # Allow one extra iteration for citations
         (
@@ -891,7 +896,11 @@ def decision_node(state: DecisionState):
 
     if needs_more:
         if has_citations and iteration_count == 1:
-            print(f"  ✅ Decision: Continue research (exploring {len(extracted_citations)} citations)")
+            msg = (
+                f"  ✅ Decision: Continue research "
+                f"(exploring {len(extracted_citations)} citations)"
+            )
+            print(msg)
         else:
             print("  ✅ Decision: Continue research")
         return {"needs_more_research": True}

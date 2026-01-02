@@ -3,8 +3,8 @@
 from unittest.mock import patch
 
 import pytest
+from schemas import ResearchTasks, SubagentOutput, SynthesisResult
 from tests.test_helpers import configure_structured_output_mock
-from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
 
 @pytest.mark.edge_case
@@ -29,14 +29,18 @@ class TestMaxIterations:
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
-            ResearchTasks: ResearchTasks(tasks=["Research complex topic", "Deep analysis"]),
+            ResearchTasks: ResearchTasks(
+                tasks=["Research complex topic", "Deep analysis"]
+            ),
             SynthesisResult: SynthesisResult(
                 summary="Comprehensive summary of the complex query findings. "
                 "This covers all aspects of the topic in detail."
             )
         })
         configure_structured_output_mock(mock_subagent_llm, {
-            SubagentOutput: SubagentOutput(summary="Detailed findings from search results.")
+            SubagentOutput: SubagentOutput(
+                summary="Detailed findings from search results."
+            )
         })
 
         state = {**initial_state, "query": "Very complex query needing many iterations"}
@@ -77,7 +81,9 @@ class TestMaxIterations:
             )
         })
         configure_structured_output_mock(mock_subagent_llm, {
-            SubagentOutput: SubagentOutput(summary="Summary from search results for termination test.")
+            SubagentOutput: SubagentOutput(
+                summary="Summary from search results for termination test."
+            )
         })
 
         state = {**initial_state, "query": "Test query for loop termination"}
@@ -90,5 +96,6 @@ class TestMaxIterations:
 
         # Should have needs_more_research set correctly
         # At termination, should be False
-        # (unless we're at max iterations, in which case it might be True but we still terminate)
+        # (unless we're at max iterations, in which case it might be True
+        # but we still terminate)
         _ = final_state.get("needs_more_research", False)  # Check it exists

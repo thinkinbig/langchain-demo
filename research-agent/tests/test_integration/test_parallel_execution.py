@@ -21,7 +21,10 @@ class TestParallelExecution:
 
     def test_parallel_subagents(self, app, initial_state):
         """Test that multiple subagents execute in parallel"""
-        state = {**initial_state, "query": "Compare Python, Rust, and Go programming languages"}
+        state = {
+            **initial_state,
+            "query": "Compare Python, Rust, and Go programming languages"
+        }
 
         start_time = time.time()
         final_state = app.invoke(state)
@@ -56,5 +59,7 @@ class TestParallelExecution:
         # Number of findings should match or be close to number of tasks
         # (some tasks might fail, but most should complete)
         assert len(findings) > 0, "Should have at least some findings"
-        assert len(findings) <= len(tasks) + 2, "Findings should not exceed tasks significantly"
+        assert len(findings) <= len(tasks) + 2, (
+            "Findings should not exceed tasks significantly"
+        )
 

@@ -7,6 +7,37 @@ from unittest.mock import MagicMock, patch
 import pytest
 from dotenv import load_dotenv
 
+# ==============================================================================
+# MOCK MISSING DEPENDENCIES (Global Patching)
+# ==============================================================================
+# This is necessary because the test environment lacks some production dependencies
+# (langchain_chroma, langgraph). We mock them here so pytest can collect tests.
+
+# Mock langgraph
+if "langgraph" not in sys.modules:
+    sys.modules["langgraph"] = MagicMock()
+if "langgraph.graph" not in sys.modules:
+    sys.modules["langgraph.graph"] = MagicMock()
+if "langgraph.checkpoint.memory" not in sys.modules:
+    sys.modules["langgraph.checkpoint.memory"] = MagicMock()
+if "langgraph.types" not in sys.modules:
+    sys.modules["langgraph.types"] = MagicMock()
+
+# Mock langchain_chroma
+if "langchain_chroma" not in sys.modules:
+    sys.modules["langchain_chroma"] = MagicMock()
+
+# Mock langchain_huggingface
+if "langchain_huggingface" not in sys.modules:
+    sys.modules["langchain_huggingface"] = MagicMock()
+
+# Mock langchain_community (often needed)
+if "langchain_community" not in sys.modules:
+    sys.modules["langchain_community"] = MagicMock()
+if "langchain_community.vectorstores" not in sys.modules:
+    sys.modules["langchain_community.vectorstores"] = MagicMock()
+
+# ==============================================================================
 
 # Only load env for integration tests
 # Other tests should use mocks
@@ -116,7 +147,8 @@ def mock_app_with_mocks(mock_search_results, mock_llm_response):
                 "and provides detailed insights based on the collected information."
             )
         elif schema_class == SubagentOutput:
-            parsed = SubagentOutput(summary="Mock summary of findings from search results.")
+            msg = "Mock summary of findings from search results."
+            parsed = SubagentOutput(summary=msg)
         else:
             parsed = MagicMock()
 

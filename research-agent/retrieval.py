@@ -28,7 +28,10 @@ class Source(DictCompatibleModel):
         """Equality based on identifier and source_type"""
         if not isinstance(other, Source):
             return False
-        return self.identifier == other.identifier and self.source_type == other.source_type
+        return (
+            self.identifier == other.identifier
+            and self.source_type == other.source_type
+        )
 
 
 class RetrievalResult(DictCompatibleModel):
@@ -54,12 +57,12 @@ class RetrievalService:
     ) -> RetrievalResult:
         """
         Retrieve context from internal knowledge base (RAG).
-        
+
         Args:
             query: Search query
             visited_sources: List of already visited source identifiers
             k: Number of chunks to retrieve
-            
+
         Returns:
             RetrievalResult with content and sources
         """
@@ -107,13 +110,13 @@ class RetrievalService:
     ) -> RetrievalResult:
         """
         Retrieve context from web search and scraping.
-        
+
         Args:
             query: Search query
             visited_urls: List of already visited URLs
             max_results: Maximum number of search results
             scrape_top_result: Whether to scrape full content from top result
-            
+
         Returns:
             RetrievalResult with content and sources
         """
@@ -202,11 +205,11 @@ class RetrievalService:
     ) -> List[str]:
         """
         Extract new source identifiers from a retrieval result.
-        
+
         Args:
             result: RetrievalResult to check
             visited_identifiers: Set of already visited identifiers
-            
+
         Returns:
             List of new source identifiers
         """
