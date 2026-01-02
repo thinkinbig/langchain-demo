@@ -4,7 +4,6 @@ from retrieval import RetrievalService
 from schemas import SubagentState
 
 
-
 async def retrieve_node(state: SubagentState):
     """Node: Retrieve internal knowledge (RAG)"""
     tasks = state.get("subagent_tasks", [])
@@ -25,12 +24,29 @@ async def retrieve_node(state: SubagentState):
 
     print(f"  🧠 [RAG] Retrieving context for task: {task_description[:50]}...")
 
-    # Use unified retrieval service (Async)
-    result = await RetrievalService.aretrieve_internal(
-        query=task_description,
-        visited_sources=visited_identifiers,
-        k=4
-    )
+    # Use unified retrieval service (Async) with timeout
+    import asyncio
+
+    from config import settings
+    from retrieval import RetrievalResult
+    try:
+        result = await asyncio.wait_for(
+            RetrievalService.aretrieve_internal(
+                query=task_description,
+                visited_sources=visited_identifiers,
+                k=4
+            ),
+            timeout=settings.TIMEOUT_RETRIEVAL
+        )
+    except asyncio.TimeoutError:
+        print(f"  ⚠️  [RAG] Retrieval timeout ({settings.TIMEOUT_RETRIEVAL}s)")
+        # Return empty result on timeout
+        result = RetrievalResult(
+            content="(Internal retrieval timed out)",
+            sources=[],
+            source_type="internal",
+            has_content=False
+        )
 
     # Store in state using new unified format
     return {

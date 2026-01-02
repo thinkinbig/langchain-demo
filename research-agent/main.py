@@ -77,8 +77,12 @@ async def main():
             "configurable": {"thread_id": thread_id}
         }
 
-        # Use async invoke for the graph
-        final_state = await app.ainvoke(initial_state, config=config)
+        # Use async invoke for the graph with timeout
+        from config import settings
+        final_state = await asyncio.wait_for(
+            app.ainvoke(initial_state, config=config),
+            timeout=settings.TIMEOUT_MAIN
+        )
 
         # Display results
         print("\n" + "=" * 80)
@@ -94,6 +98,10 @@ async def main():
 
     except CostLimitExceeded as e:
         print(f"\n⛔ EXCEPTION: Research stopped due to cost limit: {e}")
+    except asyncio.TimeoutError:
+        from config import settings
+        print(f"\n⛔ EXCEPTION: Research stopped due to timeout "
+              f"({settings.TIMEOUT_MAIN}s exceeded)")
     except Exception as e:
         print(f"\n❌ Error during execution: {e}")
     finally:

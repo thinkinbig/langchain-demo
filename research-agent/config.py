@@ -38,15 +38,14 @@ class AgentSettings(BaseSettings):
 
     # Model Names
     # Common options: "qwen-plus", "qwen-turbo", "qwen-max"
+    # Note: Only two LLM instances are used:
+    #   - lead_llm (for planning, synthesis, verification) uses MODEL_PLANNER
+    #   - subagent_llm (for extraction, sub-tasks) uses MODEL_EXTRACTOR
     MODEL_PLANNER: str = "qwen-plus"
-    MODEL_SYNTHESIZER: str = "qwen-plus"
-    MODEL_VERIFIER: str = "qwen-plus"
     MODEL_EXTRACTOR: str = "qwen-turbo"
 
     # Temperatures
-    TEMP_PLANNER: float = 0.3      # Creativity + Stability
-    TEMP_SYNTHESIZER: float = 0.4  # Flow
-    TEMP_VERIFIER: float = 0.1     # Strictness
+    TEMP_PLANNER: float = 0.0      # Determinism for cost optimization
     TEMP_EXTRACTOR: float = 0.0    # Determinism
 
     # Base URL for API
@@ -59,6 +58,28 @@ class AgentSettings(BaseSettings):
     MAX_TOKENS_PER_QUERY: int = 100_000
     MAX_ITERATIONS: int = 3
     MAX_SEARCH_CALLS: int = 20
+
+    # =========================================================================
+    # Timeout Configuration (in seconds)
+    # =========================================================================
+
+    # Overall timeout for the entire research process
+    TIMEOUT_MAIN: float = 600.0  # 10 minutes
+
+    # Timeout for subagent subgraph execution
+    TIMEOUT_SUBAGENT: float = 180.0  # 3 minutes
+
+    # Timeout for web search requests
+    TIMEOUT_WEB_SEARCH: float = 60.0  # 1 minute
+
+    # Timeout for internal retrieval (RAG)
+    TIMEOUT_RETRIEVAL: float = 30.0  # 30 seconds
+
+    # Timeout for Python code execution
+    TIMEOUT_PYTHON_REPL: float = 30.0  # 30 seconds
+
+    # Timeout for LLM calls (optional, LLM may have built-in timeout)
+    TIMEOUT_LLM_CALL: float = 120.0  # 2 minutes
 
     # =========================================================================
     # Checkpointer Configuration

@@ -227,6 +227,3 @@ def apply_write_isolation(
 
     return filtered_update
 
-
-
-

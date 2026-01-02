@@ -95,10 +95,26 @@ async def analysis_node(state: SubagentState):
     # Helper for Retry Logic (Error Prompt Pattern)
     async def invoke_with_retry(msgs, existing_retries=0):
         # Limit local retries to 2
+        from config import settings
         for _i in range(2):
             try:
-                # Async invoke
-                response = await structured_llm.ainvoke(msgs)
+                # Async invoke with timeout
+                response = await asyncio.wait_for(
+                    structured_llm.ainvoke(msgs),
+                    timeout=settings.TIMEOUT_LLM_CALL
+                )
+            except asyncio.TimeoutError:
+                error_msg = f"LLM call timeout ({settings.TIMEOUT_LLM_CALL}s)"
+                print(f"  ⚠️  [Analysis] Timeout during invoke: {error_msg}")
+                if _i < 1:  # Only retry once for timeout
+                    msgs.append(HumanMessage(content=SUBAGENT_ANALYSIS_RETRY.format(
+                        previous_prompt="",
+                        error=error_msg
+                    ).content))
+                    continue
+                else:
+                    # Max retries reached, return fallback
+                    break
             except Exception as e:
                 # Manually handle Pydantic validation errors that might bubble up
                 error_msg = f"Validation Error: {str(e)}"
@@ -143,8 +159,17 @@ async def analysis_node(state: SubagentState):
             # We use the python_repl tool function directly
             start_code = analysis.python_code
 
-            # Use asyncio.to_thread for blocking tool execution
-            result = await asyncio.to_thread(tools.python_repl, start_code)
+            # Use asyncio.to_thread for blocking tool execution with timeout
+            from config import settings
+            try:
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(tools.python_repl, start_code),
+                    timeout=settings.TIMEOUT_PYTHON_REPL
+                )
+            except asyncio.TimeoutError:
+                print(f"  ⚠️  [Analysis] Python code execution timeout "
+                      f"({settings.TIMEOUT_PYTHON_REPL}s)")
+                result = "(Code execution timed out)"
 
             print(f"     Result: {str(result)[:100]}...")
 

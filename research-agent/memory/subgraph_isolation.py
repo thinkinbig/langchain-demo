@@ -208,6 +208,3 @@ def isolate_subgraph_state(
     sandbox = create_subgraph_sandbox(node_name)
     return sandbox.sanitize_input_state(state, task_id=task_id)
 
-
-
-

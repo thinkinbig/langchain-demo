@@ -84,10 +84,26 @@ async def subagent_node(state: SubagentState):
     if not isinstance(isolated_state, SubagentState):
         isolated_state = SubagentState(**isolated_state)
 
-    # Invoke the subgraph with isolated state
+    # Invoke the subgraph with isolated state and timeout
     # The subgraph runs and returns its final state.
     # Note: StateGraph.compile() produces a CompiledGraph which supports ainvoke.
-    result_state = await subagent_app.ainvoke(isolated_state)
+    import asyncio
+
+    from config import settings
+    try:
+        result_state = await asyncio.wait_for(
+            subagent_app.ainvoke(isolated_state),
+            timeout=settings.TIMEOUT_SUBAGENT
+        )
+    except asyncio.TimeoutError:
+        print(f"  ⚠️  [Subagent] Subgraph execution timeout "
+              f"({settings.TIMEOUT_SUBAGENT}s)")
+        # Return empty findings on timeout
+        return {
+            "subagent_findings": [],
+            "visited_sources": [],
+            "all_extracted_citations": []
+        }
 
     # Extract visited sources from retrieval results and convert to VisitedSource format
     visited_sources = []

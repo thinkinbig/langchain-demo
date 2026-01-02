@@ -8,6 +8,7 @@ from datetime import datetime
 # Forward reference for RetrievalResult (defined in retrieval.py)
 from typing import TYPE_CHECKING, Annotated, Any, Dict, List, Optional
 
+from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
@@ -416,6 +417,45 @@ class ResearchState(DictCompatibleModel):
     # Retry state
     error: str | None = Field(default=None, description="Error message from validation")
     retry_count: int = Field(default=0, description="Retry attempt count")
+
+    # Conversation history for cost optimization
+    lead_researcher_messages: Annotated[
+        List[BaseMessage],
+        operator.add
+    ] = Field(
+        default_factory=list,
+        description="Conversation history for lead researcher (incremental updates)"
+    )
+
+    synthesizer_messages: Annotated[
+        List[BaseMessage],
+        operator.add
+    ] = Field(
+        default_factory=list,
+        description="Conversation history for synthesizer (incremental updates)"
+    )
+
+    # Tracking for incremental processing
+    processed_findings_ids: List[str] = Field(
+        default_factory=list,
+        description="Hash IDs of findings already processed by synthesizer"
+    )
+
+    rag_cache: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Cached RAG retrieval results per query"
+    )
+
+    # Tracking for incremental lead researcher updates
+    sent_finding_hashes: List[str] = Field(
+        default_factory=list,
+        description="Hash IDs of findings already sent to lead researcher"
+    )
+
+    previous_citation_count: int = Field(
+        default=0,
+        description="Count of citations from previous iteration (for delta tracking)"
+    )
 
     @field_validator("query")
     @classmethod
