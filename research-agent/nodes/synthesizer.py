@@ -5,6 +5,7 @@ import hashlib
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_lead_llm
+from memory.temporal_memory import TemporalMemory
 from prompts import SYNTHESIZER_MAIN, SYNTHESIZER_RETRY, SYNTHESIZER_SYSTEM
 from schemas import (
     SynthesisResult,
@@ -28,6 +29,7 @@ def synthesizer_node(state: SynthesizerState):
         # Fallback to raw findings
         findings = state.get("subagent_findings", [])
     query = state["query"]
+    iteration_count = state.get("iteration_count", 0)
     retry_count = state.get("retry_count", 0)
     last_error = state.get("error")
     existing_messages = state.get("synthesizer_messages", [])
@@ -190,6 +192,51 @@ def synthesizer_node(state: SynthesizerState):
     final_synthesis = new_synthesis
 
     print(f"  ✅ Synthesis complete ({len(final_synthesis)} chars)")
+
+    # Store synthesis in long-term memory with conflict detection
+    try:
+        memory = TemporalMemory()
+
+        # Search for similar existing memories
+        similar_memories = memory.retrieve_memories(
+            query=query,
+            k=3,
+            min_relevance=0.7,
+            filter_by_tags=["synthesis"]
+        )
+
+        # Check for conflicts and supersede old memories
+        superseded_ids = []
+        for doc, relevance in similar_memories:
+            # If very similar (high relevance), mark for superseding
+            if relevance > 0.85:
+                # Get memory ID from document metadata or try to extract from doc
+                # ChromaDB stores IDs separately, so we need to get it from the vector store
+                # For now, we'll use a hash of the content as identifier
+                doc_id = doc.metadata.get("id") or doc.metadata.get("memory_id")
+                if doc_id:
+                    superseded_ids.append(doc_id)
+
+        # Store with temporal tracking, automatically invalidating old versions
+        memory_id = memory.store_memory_with_temporal(
+            content=final_synthesis,
+            metadata={
+                "query": query,
+                "iteration": iteration_count,
+                "findings_count": len(findings),
+            },
+            priority=2.0,  # High priority for synthesis results
+            tags=["synthesis", "research_result"],
+            supersedes=superseded_ids if superseded_ids else None
+        )
+
+        if superseded_ids:
+            print(f"  🔄 Updated {len(superseded_ids)} conflicting memories")
+        else:
+            print(f"  💾 Stored synthesis to long-term memory (ID: {memory_id[:8]}...)")
+    except Exception as e:
+        # Don't fail the node if memory storage fails
+        print(f"  ⚠️  Failed to store in long-term memory: {e}")
 
     return {
         "synthesized_results": final_synthesis,

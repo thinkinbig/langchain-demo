@@ -7,8 +7,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-
 from graph import app  # noqa: E402
+from langgraph.store.memory import InMemoryStore  # noqa: E402
+from memory.langmem_integration import LongTermMemoryLangMemBridge  # noqa: E402
 from schemas import ResearchState  # noqa: E402
 
 
@@ -67,6 +68,23 @@ async def main():
     # Generate a unique thread ID for checkpointer
     thread_id = str(uuid.uuid4())
 
+    # Initialize memory bridge for LangMem integration
+    # Use InMemoryStore for LangMem (can be replaced with persistent store)
+    try:
+        store = InMemoryStore(
+            index={
+                "dims": 1536,
+                "embed": "openai:text-embedding-3-small",
+            }
+        )
+        memory_bridge = LongTermMemoryLangMemBridge(store=store)
+    except Exception as e:
+        print(f"  ⚠️  LangMem not available: {e}")
+        memory_bridge = None
+
+    # Collect conversation messages for LangMem processing
+    conversation_messages = []
+
     try:
         # Run the graph with Cost Tracking Callback
         # This will auto-update query_budget on every LLM call
@@ -96,6 +114,27 @@ async def main():
         print(f"   Findings: {len(final_state['subagent_findings'])}")
         print(f"   Citations: {len(final_state['citations'])}")
 
+        # Process conversation through LangMem for automatic memory extraction
+        if memory_bridge:
+            try:
+                # Build conversation messages from state
+                from langchain_core.messages import AIMessage, HumanMessage
+                conversation_messages = [
+                    HumanMessage(content=query),
+                    AIMessage(content=final_state.get('final_report', '')),
+                ]
+
+                # Process through LangMem's background manager
+                result = memory_bridge.process_conversation(conversation_messages)
+                if result:
+                    msg = (
+                        "  🧠 LangMem: Automatically extracted and "
+                        "consolidated memories"
+                    )
+                    print(msg)
+            except Exception as e:
+                print(f"  ⚠️  LangMem processing failed: {e}")
+
     except CostLimitExceeded as e:
         print(f"\n⛔ EXCEPTION: Research stopped due to cost limit: {e}")
     except asyncio.TimeoutError:
@@ -116,6 +155,14 @@ async def main():
             cost=query_budget.current_cost
         )
         print("   (Recorded to daily budget)")
+
+        # Cleanup expired memories (non-blocking)
+        try:
+            from memory.cleanup import cleanup_expired_memories  # noqa: E402
+
+            asyncio.create_task(cleanup_expired_memories())
+        except Exception:
+            pass  # Don't fail if cleanup doesn't work
 
 
 if __name__ == "__main__":

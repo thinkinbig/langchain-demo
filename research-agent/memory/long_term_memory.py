@@ -77,16 +77,30 @@ class LongTermMemory:
         if not content or not content.strip():
             raise ValueError("Memory content cannot be empty")
 
-        # Prepare metadata
+        # Prepare metadata with temporal annotations
+        now = datetime.now()
         memory_metadata = metadata or {}
+
+        # Set temporal fields if not already present
+        if "valid_from" not in memory_metadata:
+            memory_metadata["valid_from"] = now.isoformat()
+        if "is_valid" not in memory_metadata:
+            memory_metadata["is_valid"] = True
+        if "version" not in memory_metadata:
+            memory_metadata["version"] = 1
+
         memory_metadata.update({
-            "stored_at": datetime.now().isoformat(),
+            "stored_at": now.isoformat(),
             "priority": priority,
             "expires_at": (
-                (datetime.now() + timedelta(days=ttl_days or self.default_ttl_days))
+                (now + timedelta(days=ttl_days or self.default_ttl_days))
                 .isoformat()
             ),
             "tags": ",".join(tags) if tags else "",
+            "valid_until": memory_metadata.get("valid_until"),  # None = currently valid
+            "invalidated_at": memory_metadata.get("invalidated_at"),  # None = not invalidated
+            "superseded_by": memory_metadata.get("superseded_by"),  # ID of memory that replaced this
+            "supersedes": memory_metadata.get("supersedes", []),  # List of IDs this supersedes
         })
 
         # Create document
@@ -145,8 +159,14 @@ class LongTermMemory:
 
             metadata = doc.metadata
 
-            # Check expiration
+            # Check validity (temporal filtering)
             if exclude_expired:
+                # Filter by is_valid flag (temporal annotation)
+                is_valid = metadata.get("is_valid", True)  # Default to True for backward compatibility
+                if not is_valid:
+                    continue
+
+                # Also check expiration
                 expires_at_str = metadata.get("expires_at")
                 if expires_at_str:
                     try:
@@ -216,14 +236,55 @@ class LongTermMemory:
         Returns:
             True if updated, False if not found
         """
-        # Note: Chroma doesn't support direct metadata updates easily
-        # This would require re-adding the document with updated metadata
-        # For now, this is a placeholder for future implementation
-        return False
+        # ChromaDB doesn't support direct metadata updates, so we use re-add pattern
+        doc = self.get_memory_by_id(memory_id)
+        if not doc:
+            return False
+
+        # Update metadata
+        doc.metadata["priority"] = new_priority
+        doc.metadata["stored_at"] = datetime.now().isoformat()  # Update timestamp
+
+        # Re-add with updated metadata (ChromaDB limitation)
+        try:
+            self.vector_store.add_documents([doc], ids=[memory_id])
+            return True
+        except Exception:
+            return False
+
+    def invalidate_memory(self, memory_id: str, reason: Optional[str] = None) -> bool:
+        """
+        Soft-delete a memory by marking it as invalid (temporal annotation).
+
+        Args:
+            memory_id: Memory ID
+            reason: Optional reason for invalidation
+
+        Returns:
+            True if invalidated, False if not found
+        """
+        # Get existing memory
+        doc = self.get_memory_by_id(memory_id)
+        if not doc:
+            return False
+
+        # Update metadata for soft deletion
+        now = datetime.now()
+        doc.metadata["is_valid"] = False
+        doc.metadata["invalidated_at"] = now.isoformat()
+        if reason:
+            doc.metadata["invalidation_reason"] = reason
+
+        # Re-add with updated metadata (ChromaDB limitation)
+        try:
+            self.vector_store.add_documents([doc], ids=[memory_id])
+            return True
+        except Exception:
+            return False
 
     def delete_memory(self, memory_id: str) -> bool:
         """
-        Delete a memory by ID.
+        Hard-delete a memory by ID (permanently removes from storage).
 
         Args:
             memory_id: Memory ID
@@ -236,6 +297,47 @@ class LongTermMemory:
             return True
         except Exception:
             return False
+
+    def get_memory_history(self, memory_id: str) -> List[Document]:
+        """
+        Retrieve all versions of a memory (valid + invalid) for history tracking.
+
+        Args:
+            memory_id: Memory ID
+
+        Returns:
+            List of Document objects representing all versions
+        """
+        # Get the current version
+        current = self.get_memory_by_id(memory_id)
+        if not current:
+            return []
+
+        history = [current]
+
+        # Check if this memory supersedes others
+        supersedes = current.metadata.get("supersedes", [])
+        if isinstance(supersedes, str):
+            # Handle case where it's stored as comma-separated string
+            supersedes = [s.strip() for s in supersedes.split(",") if s.strip()]
+
+        # Get superseded memories
+        for superseded_id in supersedes:
+            superseded = self.get_memory_by_id(superseded_id)
+            if superseded:
+                history.append(superseded)
+
+        # Check if this memory is superseded by another
+        superseded_by = current.metadata.get("superseded_by")
+        if superseded_by:
+            superseding = self.get_memory_by_id(superseded_by)
+            if superseding:
+                history.append(superseding)
+
+        # Sort by stored_at timestamp (oldest first)
+        history.sort(key=lambda d: d.metadata.get("stored_at", ""))
+
+        return history
 
     def cleanup_expired_memories(self) -> int:
         """
