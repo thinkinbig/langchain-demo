@@ -55,35 +55,27 @@ def content_metadata_to_string(metadata: dict) -> str:
 def parse_content_metadata(content_str: str) -> dict:
     """
     Parse content string to extract metadata dict.
-    Handles both JSON format and legacy string format.
+    Expects JSON format with content_hash, content_length, and content_preview.
     """
     if not content_str:
         return {"content_hash": "", "content_length": 0, "content_preview": ""}
 
-    # Try to parse as JSON (new format)
+    # Parse as JSON format
     try:
         metadata = json.loads(content_str)
         if isinstance(metadata, dict) and "content_hash" in metadata:
             return metadata
     except (json.JSONDecodeError, TypeError):
-        pass
-
-    # Legacy format: if it's a short hash-like string, treat as reference
-    if len(content_str) <= 16 and content_str.isalnum():
+        # If not valid JSON, treat as empty/invalid
         return {
-            "content_hash": content_str,
+            "content_hash": "",
             "content_length": 0,
             "content_preview": "",
-            "content_type": "legacy_hash"
+            "content_type": "invalid"
         }
 
-    # Legacy format: full content string
-    return {
-        "content_hash": compute_content_hash(content_str),
-        "content_length": len(content_str),
-        "content_preview": content_str[:200],
-        "content_type": "legacy_full"
-    }
+    # If JSON parsing succeeded but no content_hash, return empty
+    return {"content_hash": "", "content_length": 0, "content_preview": ""}
 
 
 def extract_evidence_summaries(

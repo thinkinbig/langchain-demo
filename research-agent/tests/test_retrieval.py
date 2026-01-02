@@ -249,8 +249,8 @@ class TestRetrievalService:
         assert "doc1.pdf" not in new_sources
 
 
-class TestBackwardCompatibility:
-    """Test backward compatibility with old state format"""
+class TestDictCompatibleModel:
+    """Test DictCompatibleModel functionality"""
 
     def test_retrieval_result_dict_compatible(self):
         """Test that RetrievalResult works with dict-style access"""
@@ -261,7 +261,7 @@ class TestBackwardCompatibility:
             has_content=True
         )
 
-        # Should support dict-style access
+        # Should support dict-style access (DictCompatibleModel feature)
         assert result["content"] == "test"
         assert result.get("content") == "test"
         assert result.get("nonexistent", "default") == "default"

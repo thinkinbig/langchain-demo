@@ -31,51 +31,25 @@ class Finding(DictCompatibleModel):
     content: str = Field(
         default="",
         description=(
-            "Content reference or metadata. "
-            "Can be: (1) ContentReference dict with content_hash and metadata, "
-            "(2) Legacy string format with full/truncated content, "
-            "(3) Empty string if no content stored"
+            "Content metadata as JSON string. "
+            "Contains content_hash, content_length, and content_preview. "
+            "Empty string if no content stored."
         )
     )
     sources: List[dict] = Field(
         default_factory=list, description="Source URLs and titles"
     )
+    extracted_citations: List[dict] = Field(
+        default_factory=list, description="Citations extracted from retrieved content"
+    )
 
     def get_content_metadata(self) -> dict:
         """
         Extract content metadata for token-efficient storage.
-        Returns dict with content_hash, content_length, and summary.
+        Returns dict with content_hash, content_length, and preview.
         """
-        content = self.content
-
-        # If it's a ContentReference dict
-        if isinstance(content, dict) and "content_hash" in content:
-            return content
-
-        # If it's a legacy string
-        if isinstance(content, str):
-            if len(content) <= 16 and content.isalnum():
-                # Likely a hash reference
-                return {
-                    "content_hash": content,
-                    "content_length": 0,
-                    "content_type": "reference"
-                }
-            else:
-                # Full content - return metadata
-                from memory_helpers import compute_content_hash
-                return {
-                    "content_hash": compute_content_hash(content),
-                    "content_length": len(content),
-                    "content_type": "legacy_full",
-                    "content_preview": content[:200]  # First 200 chars for context
-                }
-
-        return {
-            "content_hash": "",
-            "content_length": 0,
-            "content_type": "empty"
-        }
+        from memory_helpers import parse_content_metadata
+        return parse_content_metadata(self.content)
 
 
 class VerificationResult(DictCompatibleModel):
@@ -125,9 +99,20 @@ class SynthesisResult(DictCompatibleModel):
 
 
 class Citation(DictCompatibleModel):
-    """Citation entry"""
-    title: str
-    url: str = Field(..., description="Source URL")
+    """Unified citation entry for both extraction and reporting"""
+    title: str = Field(
+        ..., description="Title or reference text of the citation"
+    )
+    url: str = Field(
+        default="", description="Source URL (optional for extracted papers)"
+    )
+    context: str = Field(
+        default="",
+        description="Brief context about what this paper discusses"
+    )
+    relevance: str = Field(
+        default="", description="Why this citation might be relevant"
+    )
 
 
 class VisitedSource(DictCompatibleModel):
@@ -193,9 +178,14 @@ class ResearchState(DictCompatibleModel):
         default="", description="Synthesized results"
     )
     citations: List[Citation] = Field(
-        default_factory=list, description="Citations"
+        default_factory=list, description="Final list of citations"
     )
     final_report: str = Field(default="", description="Final report")
+
+    # Citation tracking - now using unified Citation object
+    all_extracted_citations: List[Citation] = Field(
+        default_factory=list, description="All citations extracted across all findings"
+    )
 
     # Retry state
     error: str | None = Field(default=None, description="Error message from validation")
@@ -262,6 +252,9 @@ class SubagentState(DictCompatibleModel):
     visited_sources: List[VisitedSource] = Field(
         default_factory=list, description="Already visited sources"
     )
+    extracted_citations: List[dict] = Field(
+        default_factory=list, description="Citations extracted in this subagent run"
+    )
 
     model_config = ConfigDict(extra="allow")
 
@@ -287,8 +280,19 @@ class SynthesizerState(DictCompatibleModel):
 class DecisionState(DictCompatibleModel):
     """State needed by decision node"""
     iteration_count: int = Field(..., ge=0)
-    subagent_findings: List[Finding] = Field(default_factory=list)
-    synthesized_results: str = Field(default="")
+    subagent_findings: List[Finding] = Field(..., min_length=1)
+    synthesized_results: str = Field(..., min_length=1)
+    all_extracted_citations: List[dict] = Field(
+        default_factory=list, description="Extracted citations"
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+
+class VerifierState(DictCompatibleModel):
+    """State needed by verifier"""
+    query: str = Field(..., min_length=1)
+    final_report: str = Field(..., min_length=1)
 
     model_config = ConfigDict(extra="allow")
 
@@ -298,6 +302,19 @@ class CitationAgentState(DictCompatibleModel):
     query: str = Field(..., min_length=1)
     subagent_findings: List[Finding] = Field(..., min_length=1)
     synthesized_results: str = Field(..., min_length=1)
+    all_extracted_citations: List[Citation] = Field(
+        default_factory=list, description="Extracted citations to include in sources"
+    )
 
     model_config = ConfigDict(extra="allow")
 
+
+# =============================================================================
+# Extraction Schemas (for unified extraction pattern)
+# =============================================================================
+
+
+class CitationExtractionResult(DictCompatibleModel):
+    """Result of citation extraction"""
+    citations: List[Citation] = Field(default_factory=list)
+    has_citations: bool = Field(default=False)

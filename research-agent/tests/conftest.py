@@ -137,8 +137,8 @@ def mock_app_with_mocks(mock_search_results, mock_llm_response):
     mock_subagent_llm.with_structured_output.side_effect = create_structured_output_mock
 
     # Mock the getter functions to return our mock LLMs
-    with patch("graph.get_lead_llm", return_value=mock_lead_llm), \
-         patch("graph.get_subagent_llm", return_value=mock_subagent_llm):
+    with patch("llm.factory.get_lead_llm", return_value=mock_lead_llm), \
+         patch("llm.factory.get_subagent_llm", return_value=mock_subagent_llm):
 
         # Mock search
         with patch("tools.search_web") as mock_search:

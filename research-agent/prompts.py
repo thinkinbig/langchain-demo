@@ -80,16 +80,24 @@ The following research has already been completed:
 {findings_summary}
 </context>
 
+<extracted_citations>
+{citations_from_previous_round}
+</extracted_citations>
+
 <scratchpad>
 {scratchpad}
 </scratchpad>
 
 <instructions>
 1. Review your scratchpad notes and the findings above. Are there gaps?
-2. If the user's query is fully answered, generate an empty task list.
-3. If information is missing, generate 1-2 new targeted tasks.
-4. Do NOT repeat completed tasks.
-5. Update your scratchpad with progress notes.
+2. Check the extracted_citations section. If specific papers or sources were mentioned 
+   in the knowledge base, consider whether investigating them would improve the answer.
+3. If the user's query is fully answered, generate an empty task list.
+4. If information is missing OR valuable citations were found, generate 1-2 new targeted tasks.
+   - For citations: "Search for details about [Author/Paper] on [Topic]"
+   - For gaps: Regular research tasks
+5. Do NOT repeat completed tasks.
+6. Update your scratchpad with progress notes.
 </instructions>
 """
 )
@@ -115,9 +123,10 @@ Please correct the JSON structure and try again.
 
 SUBAGENT_SYSTEM = """You are a Research Analyst with access to a Python Environment.
 Your goal is to synthesize search results into a concise, fact-based summary.
-You have two tools:
+You have three tools:
 1. `python_repl`: Use this to perform calculations, filter data, or count items if needed.
-2. `submit_findings`: Use this to submit your final summary when you are done.
+2. `extract_citations_from_text`: Use this to extract academic paper citations from text when you see citation patterns.
+3. `submit_findings`: Use this to submit your final summary when you are done.
 """
 
 SUBAGENT_ANALYSIS = ChatPromptTemplate.from_template(
@@ -133,11 +142,15 @@ The following search results were retrieved:
 <instructions>
 1. Analyze the search results relevant to the task.
 2. Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt for any relevant internal information.
-3. If you need to calculate averages, count items, or filter lists, use `python_repl`.
-4. Extract key statistics, dates, and entities.
-5. Synthesize a 2-3 sentence summary.
-6. Call `submit_findings` with your final summary.
-   - IMPORANT: If you used information from the internal knowledge base or local files, you MUST explicitly include them in the `sources` list argument of `submit_findings`.
+3. **CITATION EXTRACTION**: If you notice citation patterns in the retrieved content 
+   (e.g., "Song et al., 2023", "Zhang et al., 2025", paper titles in quotes), 
+   use the `extract_citations_from_text` tool to extract them. These citations 
+   can be valuable leads for deeper research and should be included in your analysis.
+4. If you need to calculate averages, count items, or filter lists, use `python_repl`.
+5. Extract key statistics, dates, and entities.
+6. Synthesize a 2-3 sentence summary.
+7. Call `submit_findings` with your final summary.
+   - IMPORTANT: If you used information from the internal knowledge base or local files, you MUST explicitly include them in the `sources` list argument of `submit_findings`.
    - Example sources: [{{"title": "Internal Alpha Project", "url": "internal/alpha.txt"}}]
 </instructions>
 """
@@ -244,3 +257,45 @@ VERIFIER_MAIN = ChatPromptTemplate.from_template(
 </instructions>
 """
 )
+
+# =============================================================================
+# Extraction Prompts (Unified Pattern for Citations and Web Content)
+# =============================================================================
+
+CITATION_EXTRACTION = """Analyze the following text and extract any academic paper citations or references to other research.
+
+For each citation found, provide:
+1. The title field containing the citation as it appears (e.g., "Song et al., 2023", "Zhang et al. (2025q)")
+2. Brief context about what the paper discusses
+3. Why it might be relevant for deeper research
+
+Text to analyze:
+{text}
+
+If no citations are found, respond with an empty list. Return your answer in JSON format."""
+
+WEB_CONTENT_EXTRACTION = """Analyze the following web search results and extract the most relevant and actionable information.
+
+For each key finding, provide:
+1. The main insight or fact discovered
+2. Which source it came from (URL or title)
+3. Why this information is relevant to the research question
+
+Search results to analyze:
+{text}
+
+Research question: {query}
+
+If no relevant information is found, respond with an empty list. Return your answer in JSON format."""
+
+# Generic extraction template - can be customized for any extraction task
+GENERIC_EXTRACTION = """Analyze the following content and extract {extraction_type}.
+
+{extraction_instructions}
+
+Content to analyze:
+{text}
+
+{context_info}
+
+Return your answer in JSON format."""

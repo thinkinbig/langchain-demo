@@ -1,10 +1,10 @@
 """Test handling of empty search results"""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+from schemas import ResearchTasks, SubagentOutput, SynthesisResult
 from tests.test_helpers import configure_structured_output_mock
-from schemas import ResearchTasks, SynthesisResult, SubagentOutput
 
 
 @pytest.mark.edge_case
@@ -12,8 +12,8 @@ class TestEmptyResults:
     """Test behavior when search returns no results"""
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_lead_llm")
+    @patch("llm.factory.get_subagent_llm")
     def test_empty_search_results(
         self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
     ):
@@ -48,8 +48,8 @@ class TestEmptyResults:
         assert isinstance(findings, list)
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_lead_llm")
+    @patch("llm.factory.get_subagent_llm")
     def test_partial_empty_results(
         self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
     ):

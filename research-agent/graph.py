@@ -146,14 +146,23 @@ def lead_researcher_node(state: LeadResearcherState):
             scratchpad=state.get("scratchpad", "")
         )
     else:
+        # REFINE mode - inject citations
         existing_findings = state.get("subagent_findings", [])
         findings_summary = "\n".join([
             f"- {f.get('task', 'Unknown')[:50]}: {f.get('summary', '')[:80]}"
             for f in existing_findings[:3]
         ])
+
+        # Format extracted citations for prompt
+        from citation_parser import format_citations_for_prompt
+
+        citations = state.get("all_extracted_citations", [])
+        citations_formatted = format_citations_for_prompt(citations)
+
         prompt_content = LEAD_RESEARCHER_REFINE.format(
             query=query,
             findings_summary=findings_summary,
+            citations_from_previous_round=citations_formatted,
             scratchpad=state.get("scratchpad", "")
         )
 
@@ -544,15 +553,34 @@ def analysis_node(state: SubagentState):
                     else:
                         evidence_content = ""
 
+                    # Extract citations from retrieved content
+                    from citation_parser import (
+                        create_citation_summary,
+                        extract_citations,
+                    )
+
+                    # Extract from both formatted context and summary
+                    all_text = formatted_context + " " + t_args.get("summary", "")
+                    extracted_citations = extract_citations(all_text)
+
+                    # Log citation extraction
+                    if extracted_citations:
+                        summary = create_citation_summary(extracted_citations)
+                        print(f"  📚 [Citations] {summary}")
+
                     # Now stores metadata dict as JSON string
                     finding = Finding(
                         task=task_description,
                         summary=t_args.get("summary", ""),
                         sources=final_sources,
-                        content=evidence_content
+                        content=evidence_content,
+                        extracted_citations=extracted_citations
                     )
                     print("  ✅ CodeAgent finished via tool.")
-                    return {"subagent_findings": [finding]}
+                    return {
+                        "subagent_findings": [finding],
+                        "extracted_citations": extracted_citations
+                    }
         else:
             print("  ⚠️  CodeAgent output text but no tool call. Re-prompting...")
             messages.append(
@@ -686,6 +714,22 @@ def filter_findings_node(state: ResearchState):
 
     print(f"  ✅ Kept {len(valid_findings)}/{len(findings)} relevant findings.")
 
+    # Aggregate all extracted citations
+    from citation_parser import deduplicate_citations
+
+    all_citations = []
+    for f in valid_findings:
+        # Handle both Pydantic model and dict
+        if hasattr(f, "extracted_citations"):
+            all_citations.extend(f.extracted_citations)
+        elif isinstance(f, dict):
+            all_citations.extend(f.get("extracted_citations", []))
+
+    unique_citations = deduplicate_citations(all_citations)
+
+    if unique_citations:
+        print(f"  📚 [Citations] Aggregated {len(unique_citations)} unique citations from findings")
+
     # Return REPLACEMENT list (Note: requires reducer in schema to handle
     # strict replacement if needed, but since this is a sequential node,
     # it overwrites if we change schema or just clean up here.
@@ -697,7 +741,10 @@ def filter_findings_node(state: ResearchState):
     #
     # SOLUTION: We will return a NEW key used by Synthesizer: `filtered_findings`.
     # AND update Synthesizer to look for `filtered_findings` first.
-    return {"filtered_findings": valid_findings}
+    return {
+        "filtered_findings": valid_findings,
+        "all_extracted_citations": unique_citations
+    }
 
 
 def assign_subagents(state: ResearchState):
@@ -819,22 +866,34 @@ def decision_node(state: DecisionState):
     findings_count = len(state.get("subagent_findings", []))
     synthesized_length = len(state.get("synthesized_results", ""))
 
+    # NEW: Check for extracted citations
+    extracted_citations = state.get("all_extracted_citations", [])
+    has_citations = len(extracted_citations) > 0
+
     print("\n🤔 [Decision] Evaluating if more research is needed...")
     print(
         f"   Iteration: {iteration_count}, "
         f"Findings: {findings_count}, "
-        f"Synthesis length: {synthesized_length}"
+        f"Synthesis length: {synthesized_length}, "
+        f"Citations found: {len(extracted_citations)}"
     )
 
-    # Simple decision logic using only metadata
-    # Continue if: iteration < 2 AND (few findings OR short synthesis)
+    # Citation-aware decision logic
+    # Continue if: iteration < 3 AND (few findings OR short synthesis OR has unexplored citations)
     needs_more = (
-        iteration_count < 2 and
-        (findings_count < 3 or synthesized_length < 500)
+        iteration_count < 3 and  # Allow one extra iteration for citations
+        (
+            findings_count < 3 or
+            synthesized_length < 500 or
+            (has_citations and iteration_count == 1)  # Continue once if citations found
+        )
     )
 
     if needs_more:
-        print("  ✅ Decision: Continue research")
+        if has_citations and iteration_count == 1:
+            print(f"  ✅ Decision: Continue research (exploring {len(extracted_citations)} citations)")
+        else:
+            print("  ✅ Decision: Continue research")
         return {"needs_more_research": True}
     else:
         print("  ✅ Decision: Finish research")
@@ -847,8 +906,16 @@ def citation_agent_node(state: CitationAgentState):
     synthesized = state.get("synthesized_results", "")
     query = state["query"]
 
+    # Get extracted citations from state (NEW!)
+    extracted_citations = state.get("all_extracted_citations", [])
+
     print("\n📝 [CitationAgent] Extracting citations and creating final report...")
     print(f"  📊 Processing {len(findings)} findings for citations...")
+    if extracted_citations:
+        print(f"  📚 Including {len(extracted_citations)} extracted paper citations...")
+        # Debug: show first few citations
+        for i, cite in enumerate(extracted_citations[:3], 1):
+            print(f"      {i}. {cite.get('title', 'Unknown')}")
 
     # Pre-extract all sources and build lookup map (performance optimization)
     all_source_dicts = []
@@ -882,6 +949,22 @@ def citation_agent_node(state: CitationAgentState):
 
         if url:
             source_map[url] = title
+
+    # Add extracted citations to source map (NEW!)
+    # These are papers mentioned in the content that we extracted
+    for citation in extracted_citations:
+        title = citation.get("title", "")
+        context = citation.get("context", "")
+
+        if title:
+            # Create a pseudo-URL for the citation (for deduplication)
+            citation_id = f"citation/{title}"
+            # Format: "Title - Context"
+            display_title = f"{title}"
+            if context:
+                display_title += f" - {context[:100]}"
+
+            source_map[citation_id] = display_title
 
     # Collect unique citations using pre-built map
     all_sources = []
