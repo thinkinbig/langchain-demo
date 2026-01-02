@@ -139,20 +139,38 @@ The following search results were retrieved:
 </data>
 
 <instructions>
-1. Analyze the search results relevant to the task.
-2. Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt.
-3. **CITATION EXTRACTION**: Extract academic paper citations into the `citations` list.
-   - Each item must be an object with:
-     - `title`: The citation text (e.g. "Author et al., 2023")
-     - `context`: Brief context of what the paper is about or why it's cited.
-     - `url`: Empty string if not available.
-     - `relevance`: Brief note on relevance.
-4. **Reasoning**: Explain your analysis process in `reasoning`.
-5. **Python Code**: If you need to calculate averages, count items, or filter
-   lists, provide the code in `python_code`.
-   - The code must print the result to stdout.
-   - If no calculation is needed, leave `python_code` null.
-6. **Summary**: Synthesize a 2-3 sentence summary in `summary`.
+Analyze the search results and extract information relevant to the task.
+Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt for
+additional context.
+
+**CITATION EXTRACTION**: Extract academic paper citations into the
+`citations` list.
+- Each item must be an object with:
+  - `title`: The citation text (e.g. "Author et al., 2023")
+  - `context`: Brief context of what the paper is about or why it's cited.
+  - `url`: Empty string if not available.
+  - `relevance`: Brief note on relevance.
+
+**Reasoning**: Explain your analysis process in `reasoning`.
+
+**Python Code**: If you need to calculate averages, count items, or filter
+lists, provide the code in `python_code`. The code must print the result to
+stdout. If no calculation is needed, leave `python_code` null.
+
+**Summary**: Write a comprehensive, detailed summary in `summary`. The summary
+should be substantive and informative, not just a high-level overview.
+
+Your summary should:
+- Include specific technical details, numbers, dates, names, and metrics
+  mentioned in the sources
+- Explain key concepts and provide definitions when relevant
+- Include concrete examples, case studies, or instances from the sources
+- Provide context and background information that helps understand the topic
+- Be comprehensive: aim for 6-10 sentences for complex topics, ensuring all
+  important information is included
+- Use precise terminology from the sources rather than generic paraphrasing
+- Structure information logically, potentially covering: definitions, key
+  mechanisms, historical context, current state, and implications
 </instructions>
 """
 )
@@ -193,8 +211,9 @@ Ensure all fields match the `AnalysisOutput` schema.
 
 SYNTHESIZER_SYSTEM = """You are a Senior Research Editor.
 Your goal is to synthesize disparate research findings into a comprehensive,
-deeply informative report.
-You must use a "Chain of Density" approach to make every sentence count.
+deeply informative, EXPANDED report.
+Your report must be detailed, specific, and include concrete information
+from the findings. DO NOT compress or condense - expand and elaborate.
 """
 
 SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
@@ -207,21 +226,42 @@ SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
 </findings>
 
 <instructions>
-1. Synthesize all findings into a single coherent narrative.
+1. Synthesize all findings into a comprehensive, EXPANDED, DETAILED narrative.
+   DO NOT compress or condense - expand on the findings with full context.
 2. **Relevance Filter:** Ignore any findings marked as "No information found"
    or that do not directly address the query. Prioritize depth over breadth.
 3. **Source Hierarchy:** Give higher weight to Internal Knowledge Base
    sources (e.g., PDFs, local files) over generic web search results, unless
    the query explicitly asks for external info.
-4. **Chain of Density:** Start with a broad summary, then progressively add
-   specific entities, metrics, and details from the findings without
-   increasing the length unnecessarily. Fuse concepts to maintain density.
-5. **Conflict Resolution:** If findings contradict, explicitly state the
-   conflict and the sources backing each side.
-6. **Tone:** Professional, objective, and dense with information. Avoid fluff
-   like "The research shows that...".
-7. **Structure:** Use clear headers if the answer is complex.
-8. **Directness:** Address the user's query directly.
+4. **Expansion and Detail:** Start with a comprehensive overview, then EXPAND
+   with specific entities, metrics, numbers, dates, names, and concrete details
+   from the findings. Include ALL relevant specifics: statistics, percentages,
+   measurements, dates, locations, names of people/organizations, technical
+   terms, and any quantitative data mentioned. For each key point, provide
+   context, explanation, and supporting details.
+5. **Source Attribution:** When mentioning key facts, note which sources
+   (Internal Knowledge Base vs Web) provided them, especially for important
+   claims or statistics. Explain the significance of each source.
+6. **Citations:** If findings mention specific papers or citations, include
+   them in your synthesis with FULL context about what they discuss, their
+   methodology, findings, and relevance to the query.
+7. **Conflict Resolution:** If findings contradict, explicitly state the
+   conflict and the sources backing each side with specific details. Explain
+   the nature of the disagreement and potential reasons.
+8. **Comprehensiveness:** Include ALL relevant information from the findings.
+   Don't summarize away important details - EXPAND on what was found.
+   Include examples, case studies, concrete instances, definitions, explanations,
+   and background context. Elaborate on technical concepts.
+9. **Tone:** Professional, objective, and informative. Avoid fluff
+   like "The research shows that...". Be direct and factual, but thorough.
+10. **Structure:** Use clear headers and subsections. Organize information
+    logically (e.g., by topic, chronology, or importance). Each section should
+    be well-developed with multiple paragraphs if needed.
+11. **Directness:** Address the user's query directly and comprehensively.
+12. **Expansion Level:** This should be a FULL, EXPANDED report, not a summary.
+    Include multiple paragraphs per major topic. Provide background, context,
+    detailed explanations, and comprehensive coverage. A detailed, expanded
+    report is better than a condensed summary.
 </instructions>
 """
 )

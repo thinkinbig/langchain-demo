@@ -16,19 +16,6 @@ from retrieval import RetrievalResult, RetrievalSource, Source
 from schemas import AnalysisOutput, Finding, SubagentState
 
 
-def process_structured_response(response, state, fallback_func=None):
-    """
-    Standardized validation and state update for retry loop.
-    (Local helper adapted from graph.py pattern)
-    """
-    parsing_error = response.get("parsing_error")
-
-    if parsing_error:
-        print(f"  ❌ Validation failed: {parsing_error}")
-        return {"error": str(parsing_error)}
-    return None
-
-
 def analysis_node(state: SubagentState):
     """Node: Analyze gathered context (Internal or Web) using Structured Flow"""
 

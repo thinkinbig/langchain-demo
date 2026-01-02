@@ -25,15 +25,49 @@ The system implements an orchestrator-worker pattern where:
 ## Usage
  
 ### 1. Setup Environment
- 
+
+**Prerequisites:**
+- Docker installed and running (required for secure Python code execution)
+- Python 3.11+
+
+**Install Docker:**
+```bash
+# Verify Docker is installed
+docker --version
+
+# Ensure Docker daemon is running
+docker ps
+```
+
+**Install Dependencies:**
+```bash
+pip install -e .
+# or
+uv sync
+```
+
+**Configure API Keys:**
 Ensure your `.env` file is configured with necessary API keys:
- 
+
 ```bash
 OPENAI_API_KEY="sk-..."
 TAVILY_API_KEY="tvly-..."
 LANGCHAIN_TRACING_V2=true  # Optional: For LangSmith monitoring
 LANGCHAIN_API_KEY="lsv2-..."
 ```
+
+**Optional: Configure Docker Sandbox:**
+The Python code execution sandbox can be configured via environment variables:
+
+```bash
+PYTHON_SANDBOX_IMAGE=python:3.11-slim  # Docker image to use
+PYTHON_SANDBOX_TIMEOUT=30              # Execution timeout (seconds)
+PYTHON_SANDBOX_MEMORY=256m             # Memory limit
+PYTHON_SANDBOX_CPU_QUOTA=50000         # CPU quota (50% = 50000/100000)
+ENABLE_DOCKER_SANDBOX=true             # Enable Docker sandboxing
+```
+
+**Note:** If Docker is not available, the system will automatically fall back to restricted execution mode (less secure but functional).
  
 ### 2. Run Research Agent
  
@@ -153,10 +187,40 @@ See [QUANTIFIED_REQUIREMENTS.md](./QUANTIFIED_REQUIREMENTS.md) for complete metr
 
 ## Dependencies
 
-All required dependencies are already in the project:
+All required dependencies are in the project:
 - `langgraph` - Workflow orchestration
 - `langchain-openai` - LLM integration
 - `tavily-python` - Web search API
+- `docker` - Docker Python SDK (for secure code execution sandbox)
+
+## Security Features
+
+### Python Code Execution Sandboxing
+
+The system implements production-grade security for Python code execution:
+
+- **Docker Containerization**: Code runs in isolated containers with no network access
+- **Resource Limits**: CPU (50%), Memory (256MB), Timeout (30s)
+- **AST Validation**: Pre-execution validation blocks dangerous operations
+- **Execution Logging**: All code execution attempts are logged
+- **Graceful Fallback**: Falls back to restricted execution if Docker unavailable
+
+See [SECURITY_ANALYSIS.md](./SECURITY_ANALYSIS.md) for detailed security documentation.
+
+### Troubleshooting
+
+**Docker not available:**
+- The system will automatically use restricted execution mode
+- A warning will be logged about reduced security
+- For production use, ensure Docker is installed and running
+
+**Docker permission errors:**
+- Ensure your user is in the `docker` group: `sudo usermod -aG docker $USER`
+- Restart your session after adding to docker group
+
+**Container timeout:**
+- Increase `PYTHON_SANDBOX_TIMEOUT` if legitimate code needs more time
+- Check logs for execution time to optimize timeout settings
 
 ## Next Steps
 

@@ -29,12 +29,42 @@ def synthesizer_node(state: SynthesizerState):
     # Pre-compute findings metadata (token optimization)
     findings_metadata = extract_findings_metadata(findings)
 
-    # Format findings - only include essential information (already optimized)
-    findings_text = "\n\n".join([
-        f"{i+1}. {f.get('task', 'Unknown')[:60]}\n"
-        f"{f.get('summary', 'No summary')}"
-        for i, f in enumerate(findings)
-    ])
+    # Format findings with sources and citations for detailed synthesis
+    findings_text_parts = []
+    for i, f in enumerate(findings, 1):
+        task = f.get('task', 'Unknown')
+        summary = f.get('summary', 'No summary')
+        sources = f.get('sources', [])
+        citations = f.get('extracted_citations', [])
+
+        finding_text = f"{i}. Task: {task}\n   Summary: {summary}"
+
+        # Include sources for context
+        if sources:
+            source_list = ", ".join([
+                s.get('title', 'Unknown')[:60]
+                for s in sources[:5]  # Limit to 5 sources per finding
+            ])
+            if len(sources) > 5:
+                source_list += f" (+{len(sources) - 5} more)"
+            finding_text += f"\n   Sources: {source_list}"
+
+        # Include extracted citations if available
+        if citations:
+            citation_titles = [
+                c.get('title', 'Unknown')[:60]
+                for c in citations[:3]  # Limit to 3 citations per finding
+            ]
+            if citation_titles:
+                finding_text += (
+                    f"\n   Mentioned Papers: {', '.join(citation_titles)}"
+                )
+                if len(citations) > 3:
+                    finding_text += f" (+{len(citations) - 3} more)"
+
+        findings_text_parts.append(finding_text)
+
+    findings_text = "\n\n".join(findings_text_parts)
 
     # Add metadata context to prompt (helps LLM understand scope)
     count = findings_metadata['count']

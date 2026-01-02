@@ -38,7 +38,6 @@ class TestCodeAgent(unittest.TestCase):
 
             # Since we can't easily spy on internal tool calls without a callback,
             # we rely on the final output mentioning the calculation or checking logs.
-            # But the 'graph.py' prints "🛠️ [CodeAgent] Call: python_repl" to stdout.
 
             print("Final Report:", final_state.get('final_report'))
 

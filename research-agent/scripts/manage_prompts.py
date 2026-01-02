@@ -10,7 +10,7 @@ from langsmith import Client
 from prompts import (
     LEAD_RESEARCHER_INITIAL,
     LEAD_RESEARCHER_REFINE,
-    SUBAGENT_ANALYSIS,
+    SUBAGENT_STRUCTURED_ANALYSIS,
     SYNTHESIZER_MAIN,
     VERIFIER_MAIN,
 )
@@ -26,7 +26,7 @@ def push_prompts():
     prompts_to_push = {
         "lead-researcher-initial": LEAD_RESEARCHER_INITIAL,
         "lead-researcher-refine": LEAD_RESEARCHER_REFINE,
-        "subagent-analysis": SUBAGENT_ANALYSIS,
+        "subagent-analysis": SUBAGENT_STRUCTURED_ANALYSIS,
         "synthesizer-main": SYNTHESIZER_MAIN,
         "verifier-main": VERIFIER_MAIN,
     }
