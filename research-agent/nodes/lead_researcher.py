@@ -10,17 +10,17 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_llm_by_model_choice
 from memory.temporal_memory import TemporalMemory
 from prompts import (
+    LEAD_RESEARCHER_APPROACH_MAIN,
+    LEAD_RESEARCHER_APPROACH_SYSTEM,
     LEAD_RESEARCHER_INITIAL,
     LEAD_RESEARCHER_REFINE,
     LEAD_RESEARCHER_RETRY,
     LEAD_RESEARCHER_SYSTEM,
-    STRATEGY_GENERATOR_MAIN,
-    STRATEGY_GENERATOR_SYSTEM,
+    LEAD_RESEARCHER_TASK_GENERATION,
 )
 from schemas import (
+    ApproachEvaluation,
     LeadResearcherState,
-    ResearchStrategies,
-    ResearchStrategy,
     ResearchTask,
     ResearchTasks,
 )
@@ -124,11 +124,7 @@ def _get_new_findings(existing_findings: list, sent_finding_hashes: set) -> list
 
 
 def lead_researcher_node(state: LeadResearcherState):
-    """LeadResearcher: Analyze query, create plan, generate subagent tasks
-    
-    Supports ToT mode: If selected_strategy_index is None and ToT mode is enabled,
-    generates 3 strategies. Otherwise, uses selected strategy or generates tasks directly.
-    """
+    """LeadResearcher: Analyze query, create plan, generate subagent tasks"""
     query = state["query"]
     iteration_count = state.get("iteration_count", 0)
     retry_count = state.get("retry_count", 0)
@@ -137,40 +133,8 @@ def lead_researcher_node(state: LeadResearcherState):
     rag_cache = state.get("rag_cache", {})
     sent_finding_hashes = set(state.get("sent_finding_hashes", []))
 
-    # Check if we're in ToT mode and need to generate strategies
-    selected_strategy_index = state.get("selected_strategy_index")
-    strategies = state.get("strategies", [])
-
-    # Check if we should use ToT mode
-    # ToT mode is enabled when complexity is "complex" and first iteration
-    complexity_analysis = state.get("complexity_analysis")
-    complexity_level = None
-    if complexity_analysis:
-        if hasattr(complexity_analysis, "complexity_level"):
-            complexity_level = complexity_analysis.complexity_level
-        elif isinstance(complexity_analysis, dict):
-            complexity_level = complexity_analysis.get("complexity_level")
-
-    use_tot_mode = (
-        complexity_level == "complex" and
-        iteration_count == 0 and
-        selected_strategy_index is None
-    )
-
-    # Determine if we need to generate strategies (first time in ToT mode)
-    need_strategy_generation = (
-        use_tot_mode and
-        len(strategies) == 0
-    )
-
-    if need_strategy_generation:
-        print("\n🌳 [LeadResearcher] ToT Mode: Generating 3 research strategies...")
-        print(f"   Query: {query[:80]}...")
-    else:
-        print(f"\n🔍 [LeadResearcher] Analyzing query (iteration {iteration_count + 1})...")
-        print(f"   Query: {query[:80]}...")
-        if selected_strategy_index is not None:
-            print(f"   📌 Using selected strategy {selected_strategy_index}")
+    print(f"\n🔍 [LeadResearcher] Analyzing query (iteration {iteration_count + 1})...")
+    print(f"   Query: {query[:80]}...")
     if retry_count > 0:
         print(f"   ⚠️  Retry attempt {retry_count}")
 
@@ -198,6 +162,7 @@ def lead_researcher_node(state: LeadResearcherState):
             print("  ℹ️  No relevant planning history found")
 
     # Get complexity analysis for task creation guidance
+    complexity_analysis = state.get("complexity_analysis")
     complexity_info = ""
     if complexity_analysis:
         if hasattr(complexity_analysis, "complexity_level"):
@@ -234,137 +199,146 @@ def lead_researcher_node(state: LeadResearcherState):
             )
             complexity_info = msg
 
-    # Handle ToT mode: Generate strategies if needed
-    if need_strategy_generation:
-        # Generate 3 strategies using ToT approach
+    # Check if we need to do approach evaluation (first iteration only)
+    selected_approach = state.get("selected_approach")
+    selection_reasoning = state.get("selection_reasoning")
+    need_approach_evaluation = (
+        iteration_count == 0 and not selected_approach
+    )
+
+    if need_approach_evaluation:
+        # Phase 1: Approach Evaluation
+        print("  📋 [Phase 1] Evaluating research approaches...")
+
         system_prompt = context_manager.get_system_context(
-            STRATEGY_GENERATOR_SYSTEM, include_knowledge=False
+            LEAD_RESEARCHER_APPROACH_SYSTEM, include_knowledge=False
         )
-        messages.append(SystemMessage(content=system_prompt))
+        approach_messages = [SystemMessage(content=system_prompt)]
 
         memory_ctx = (
-            _retrieve_planning_history(query, k=3) if iteration_count > 0
+            memory_context if memory_context
             else "No previous planning history."
         )
+        scratchpad = state.get("scratchpad", "")
+        max_scratchpad_length = 200
+        if len(scratchpad) > max_scratchpad_length:
+            scratchpad = scratchpad[:max_scratchpad_length] + "..."
 
-        prompt_content = STRATEGY_GENERATOR_MAIN.format(
+        approach_prompt = LEAD_RESEARCHER_APPROACH_MAIN.format(
             query=query,
             complexity_info=complexity_info,
-            memory_context=memory_ctx
+            memory_context=memory_ctx,
+            internal_knowledge=retrieved_context
         )
-
-        # Add RAG context
-        rag_instructions = (
-            f"\n\n<internal_knowledge>\n{retrieved_context}\n</internal_knowledge>\n"
-            "Note: Use the above internal knowledge if relevant to strategy generation."
-        )
-        messages.append(HumanMessage(content=prompt_content + rag_instructions))
+        approach_messages.append(HumanMessage(content=approach_prompt))
 
         # Get recommended model
-        recommended_model = "plus"  # Use plus for strategy generation
+        from config import settings
+        complexity_analysis = state.get("complexity_analysis")
+        recommended_model = "plus"  # Default
         if complexity_analysis:
             if hasattr(complexity_analysis, "recommended_model"):
                 model = complexity_analysis.recommended_model
-                if model in ["turbo", "plus"]:
-                    recommended_model = model
+                if model in ["turbo", "plus", "max"]:
+                    if model == "max" and not settings.ENABLE_MAX_MODEL:
+                        recommended_model = "plus"
+                    else:
+                        recommended_model = model
             elif isinstance(complexity_analysis, dict):
                 model = complexity_analysis.get("recommended_model", "plus")
-                if model in ["turbo", "plus"]:
-                    recommended_model = model
+                if model in ["turbo", "plus", "max"]:
+                    if model == "max" and not settings.ENABLE_MAX_MODEL:
+                        recommended_model = "plus"
+                    else:
+                        recommended_model = model
 
-        # Invoke LLM to generate strategies
+        # Invoke LLM for approach evaluation
         llm = get_llm_by_model_choice(recommended_model)
-        structured_llm = llm.with_structured_output(
-            ResearchStrategies, include_raw=True
+        approach_llm = llm.with_structured_output(
+            ApproachEvaluation, include_raw=True
         )
 
-        response = structured_llm.invoke(messages)
+        approach_response = approach_llm.invoke(approach_messages)
 
-        # Process response
-        def fallback_strategies(s):
-            # Fallback: Create 3 simple strategies
+        # Process approach evaluation response
+        def approach_fallback(s):
+            # Fallback: create a simple approach evaluation
+            from schemas import ResearchApproach
             return {
-                "strategies": [
-                    ResearchStrategy(
-                        strategy_id="strategy_1",
-                        description="Comprehensive overview approach",
-                        tasks=[
-                            ResearchTask(
-                                id="task_1",
-                                description=f"Research overview: {s['query']}",
-                                rationale="Fallback strategy"
-                            )
-                        ],
-                        rationale="Fallback strategy"
-                    ),
-                    ResearchStrategy(
-                        strategy_id="strategy_2",
-                        description="Detailed analysis approach",
-                        tasks=[
-                            ResearchTask(
-                                id="task_2",
-                                description=f"Deep dive: {s['query']}",
-                                rationale="Fallback strategy"
-                            )
-                        ],
-                        rationale="Fallback strategy"
-                    ),
-                    ResearchStrategy(
-                        strategy_id="strategy_3",
-                        description="Comparative approach",
-                        tasks=[
-                            ResearchTask(
-                                id="task_3",
-                                description=f"Compare aspects: {s['query']}",
-                                rationale="Fallback strategy"
-                            )
-                        ],
-                        rationale="Fallback strategy"
-                    )
-                ],
-                "scratchpad": "Fallback strategies due to error"
+                "approach_evaluation": ApproachEvaluation(
+                    approaches=[
+                        ResearchApproach(
+                            description="Direct research approach",
+                            advantages=["Straightforward", "Fast"],
+                            disadvantages=["May miss nuances"],
+                            suitability="Standard approach"
+                        ),
+                        ResearchApproach(
+                            description="Comprehensive analysis approach",
+                            advantages=["Thorough", "Complete"],
+                            disadvantages=["Time-consuming"],
+                            suitability="For complex queries"
+                        ),
+                        ResearchApproach(
+                            description="Focused targeted approach",
+                            advantages=["Efficient", "Focused"],
+                            disadvantages=["May miss context"],
+                            suitability="For specific queries"
+                        )
+                    ],
+                    selected_approach_index=0,
+                    selection_reasoning="Fallback: Using direct approach"
+                )
             }
 
-        retry_state = process_structured_response(response, state, fallback_strategies)
-        if retry_state:
-            preserved_scratchpad = state.get("scratchpad", "")
-            parsed_result = response.get("parsed")
-            if parsed_result and hasattr(parsed_result, "scratchpad"):
-                preserved_scratchpad = parsed_result.scratchpad
-            retry_state["scratchpad"] = preserved_scratchpad
-            retry_state["lead_researcher_messages"] = messages
-            retry_state["rag_cache"] = rag_cache
-            return retry_state
+        approach_retry_state = process_structured_response(
+            approach_response, state, approach_fallback
+        )
+        if approach_retry_state:
+            # If retry failed, use fallback
+            approach_eval = approach_retry_state.get("approach_evaluation")
+            if not approach_eval:
+                approach_eval = approach_fallback(state)["approach_evaluation"]
+        else:
+            approach_eval = approach_response["parsed"]
 
-        # Success: Return strategies for evaluation
-        parsed_result = response["parsed"]
-        generated_strategies = parsed_result.strategies
+        # Display approach evaluation results
+        print("\n  📊 [Approach Evaluation Results]")
+        for i, approach in enumerate(approach_eval.approaches):
+            is_selected = i == approach_eval.selected_approach_index
+            marker = "✅ SELECTED" if is_selected else "  "
+            print(f"\n     {marker} Approach {i + 1}:")
+            print(f"        Description: {approach.description[:100]}...")
+            if approach.advantages:
+                adv_str = ', '.join(approach.advantages[:3])
+                print(f"        Advantages: {adv_str}")
+            if approach.disadvantages:
+                dis_str = ', '.join(approach.disadvantages[:3])
+                print(f"        Disadvantages: {dis_str}")
+            if approach.suitability:
+                print(f"        Suitability: {approach.suitability[:80]}...")
 
-        print(f"  ✅ Generated {len(generated_strategies)} strategies")
-        for i, strategy in enumerate(generated_strategies):
-            print(f"     Strategy {i}: {strategy.description[:60]}... ({len(strategy.tasks)} tasks)")
+        selected_idx = approach_eval.selected_approach_index
+        selected_approach_obj = approach_eval.approaches[selected_idx]
+        print(f"\n     Selected: Approach {selected_idx + 1}")
+        print(f"     Reasoning: {approach_eval.selection_reasoning[:150]}...")
 
-        return {
-            "strategies": generated_strategies,
-            "scratchpad": parsed_result.scratchpad[:200] if parsed_result.scratchpad else "",
-            "lead_researcher_messages": messages + [AIMessage(content="Strategies generated")],
-            "rag_cache": rag_cache,
-            "error": None,
-            "retry_count": 0
-        }
+        # Store selected approach for Phase 2
+        selected_approach = selected_approach_obj.description
+        selection_reasoning = approach_eval.selection_reasoning
 
-    # Normal mode or using selected strategy
+        # Now proceed to Phase 2: Task Generation
+        print("\n  📝 [Phase 2] Generating tasks based on selected approach...")
+
     if iteration_count == 0:
-        # First iteration: Initialize conversation
+        # Phase 2: Task Generation (first iteration, after approach evaluation)
         system_prompt = context_manager.get_system_context(
             LEAD_RESEARCHER_SYSTEM, include_knowledge=False
         )
         messages.append(SystemMessage(content=system_prompt))
 
-        # Scratchpad: Keep only current iteration notes (simplified)
-        # Historical info is retrieved from memory
         scratchpad = state.get("scratchpad", "")
-        max_scratchpad_length = 200  # Keep it short, history in memory
+        max_scratchpad_length = 200
         if len(scratchpad) > max_scratchpad_length:
             scratchpad = scratchpad[:max_scratchpad_length] + "..."
 
@@ -372,19 +346,33 @@ def lead_researcher_node(state: LeadResearcherState):
             memory_context if memory_context
             else "No previous planning history."
         )
-        prompt_content = LEAD_RESEARCHER_INITIAL.format(
-            query=query,
-            complexity_info=complexity_info,
-            scratchpad=scratchpad,
-            memory_context=memory_ctx
-        )
 
-        # Add RAG context to initial prompt
-        rag_instructions = (
-            f"\n\n<internal_knowledge>\n{retrieved_context}\n</internal_knowledge>\n"
-            "Note: Use the above internal knowledge if relevant to the task breakdown."
-        )
-        messages.append(HumanMessage(content=prompt_content + rag_instructions))
+        if need_approach_evaluation or selected_approach:
+            # Use task generation prompt with selected approach
+            task_prompt = LEAD_RESEARCHER_TASK_GENERATION.format(
+                query=query,
+                selected_approach=selected_approach or "Standard research approach",
+                selection_reasoning=selection_reasoning or "Based on query analysis",
+                complexity_info=complexity_info,
+                memory_context=memory_ctx,
+                internal_knowledge=retrieved_context
+            )
+            messages.append(HumanMessage(content=task_prompt))
+        else:
+            # Fallback to original initial prompt
+            prompt_content = LEAD_RESEARCHER_INITIAL.format(
+                query=query,
+                complexity_info=complexity_info,
+                scratchpad=scratchpad,
+                memory_context=memory_ctx
+            )
+            rag_instructions = (
+                f"\n\n<internal_knowledge>\n{retrieved_context}\n"
+                "</internal_knowledge>\n"
+                "Note: Use the above internal knowledge if relevant "
+                "to the task breakdown."
+            )
+            messages.append(HumanMessage(content=prompt_content + rag_instructions))
     else:
         # Subsequent iterations: Only send new information
         existing_findings = state.get("subagent_findings", [])
@@ -446,80 +434,31 @@ def lead_researcher_node(state: LeadResearcherState):
         else:
             messages.append(HumanMessage(content=retry_prompt))
 
-    # Get recommended model from complexity analysis
-    complexity_analysis = state.get("complexity_analysis")
-    recommended_model = "plus"  # Default
-    if complexity_analysis:
-        if hasattr(complexity_analysis, "recommended_model"):
-            model = complexity_analysis.recommended_model
-            if model in ["turbo", "plus"]:
-                recommended_model = model
-        elif isinstance(complexity_analysis, dict):
-            model = complexity_analysis.get("recommended_model", "plus")
-            if model in ["turbo", "plus"]:
-                recommended_model = model
+    # Get recommended model from complexity analysis (if not already done in Phase 1)
+    if not need_approach_evaluation:
+        from config import settings
 
-    # If we have a selected strategy, use its tasks directly
-    if selected_strategy_index is not None and len(strategies) > selected_strategy_index:
-        selected_strategy = strategies[selected_strategy_index]
-        tasks = selected_strategy.tasks
-        print(f"  ✅ Using strategy {selected_strategy_index}: {selected_strategy.description[:60]}...")
-        print(f"  ✅ Extracted {len(tasks)} tasks from selected strategy")
+        complexity_analysis = state.get("complexity_analysis")
+        recommended_model = "plus"  # Default
+        if complexity_analysis:
+            if hasattr(complexity_analysis, "recommended_model"):
+                model = complexity_analysis.recommended_model
+                if model in ["turbo", "plus", "max"]:
+                    # Downgrade max to plus if not enabled
+                    if model == "max" and not settings.ENABLE_MAX_MODEL:
+                        recommended_model = "plus"
+                    else:
+                        recommended_model = model
+            elif isinstance(complexity_analysis, dict):
+                model = complexity_analysis.get("recommended_model", "plus")
+                if model in ["turbo", "plus", "max"]:
+                    # Downgrade max to plus if not enabled
+                    if model == "max" and not settings.ENABLE_MAX_MODEL:
+                        recommended_model = "plus"
+                    else:
+                        recommended_model = model
 
-        plan = f"Research plan using strategy {selected_strategy_index}: {selected_strategy.description}\nTasks: {len(tasks)} sub-tasks"
-
-        # Store planning memory
-        if tasks and len(tasks) > 0:
-            task_summary = "; ".join(
-                [f"{t.id}: {t.description[:50]}" for t in tasks[:3]]
-            )
-            planning_content = (
-                f"Iteration {iteration_count + 1}: Using strategy {selected_strategy_index}. "
-                f"Key tasks: {task_summary}."
-            )
-            priority = 2.0 if iteration_count == 0 else 1.5
-            memory_id = _store_planning_memory(
-                query=query,
-                content=planning_content,
-                priority=priority,
-                metadata={
-                    "iteration": iteration_count + 1,
-                    "task_count": len(tasks),
-                    "strategy_index": selected_strategy_index
-                }
-            )
-            if memory_id:
-                print(f"  💾 Stored planning memory (ID: {memory_id[:8]}...)")
-
-        # Update conversation history
-        updated_messages = messages + [AIMessage(content=f"Using strategy {selected_strategy_index}")]
-
-        # Track findings
-        existing_findings = state.get("subagent_findings", [])
-        new_sent_hashes = set(sent_finding_hashes)
-        for f in existing_findings:
-            f_hash = _compute_finding_hash(f)
-            new_sent_hashes.add(f_hash)
-
-        all_citations = state.get("all_extracted_citations", [])
-        new_citation_count = len(all_citations)
-
-        new_scratchpad = selected_strategy.rationale[:200] if selected_strategy.rationale else ""
-
-        return {
-            "research_plan": plan,
-            "subagent_tasks": tasks,
-            "iteration_count": iteration_count + 1,
-            "error": None,
-            "retry_count": 0,
-            "scratchpad": new_scratchpad,
-            "lead_researcher_messages": updated_messages,
-            "rag_cache": rag_cache,
-            "sent_finding_hashes": list(new_sent_hashes),
-            "previous_citation_count": new_citation_count
-        }
-
-    # Invoke LLM with conversation history (normal mode)
+    # Invoke LLM with conversation history for task generation
     llm = get_llm_by_model_choice(recommended_model)
     structured_llm = llm.with_structured_output(
         ResearchTasks, include_raw=True
@@ -563,6 +502,10 @@ def lead_researcher_node(state: LeadResearcherState):
         retry_state["scratchpad"] = preserved_scratchpad
         retry_state["lead_researcher_messages"] = messages
         retry_state["rag_cache"] = rag_cache
+        # Preserve selected approach if we're in Phase 2
+        if selected_approach:
+            retry_state["selected_approach"] = selected_approach
+            retry_state["selection_reasoning"] = selection_reasoning
         return retry_state
 
     # Success case
@@ -570,7 +513,10 @@ def lead_researcher_node(state: LeadResearcherState):
     tasks = parsed_result.tasks
 
     plan = f"Research plan for: {query}\nTasks: {len(tasks)} sub-tasks"
-    print(f"  ✅ Created {len(tasks)} sub-tasks")
+    if need_approach_evaluation:
+        print(f"\n  ✅ Created {len(tasks)} sub-tasks based on selected approach")
+    else:
+        print(f"  ✅ Created {len(tasks)} sub-tasks")
     for i, task in enumerate(tasks, 1):
         print(f"     {i}. {task.description[:60]}... (ID: {task.id})")
 
@@ -584,8 +530,12 @@ def lead_researcher_node(state: LeadResearcherState):
             parsed_result.scratchpad[:200]
             if parsed_result.scratchpad else 'N/A'
         )
+        approach_info = ""
+        if selected_approach:
+            approach_info = f"Selected Approach: {selected_approach[:100]}. "
         planning_content = (
-            f"Iteration {iteration_count + 1}: Created {len(tasks)} tasks. "
+            f"Iteration {iteration_count + 1}: {approach_info}"
+            f"Created {len(tasks)} tasks. "
             f"Key tasks: {task_summary}. "
             f"Plan: {plan_note}"
         )
@@ -627,7 +577,7 @@ def lead_researcher_node(state: LeadResearcherState):
         if parsed_result.scratchpad else ""
     )
 
-    return {
+    result = {
         "research_plan": plan,
         "subagent_tasks": tasks,
         "iteration_count": iteration_count + 1,
@@ -639,4 +589,11 @@ def lead_researcher_node(state: LeadResearcherState):
         "sent_finding_hashes": list(new_sent_hashes),
         "previous_citation_count": new_citation_count
     }
+
+    # Preserve selected approach for future reference
+    if selected_approach:
+        result["selected_approach"] = selected_approach
+        result["selection_reasoning"] = selection_reasoning
+
+    return result
 

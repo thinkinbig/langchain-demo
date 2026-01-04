@@ -39,8 +39,8 @@ class AgentSettings(BaseSettings):
     # Model Names
     # Three models available for autonomous selection based on task complexity:
     #   - MODEL_TURBO: Low cost, fast, suitable for simple tasks
-    #   - MODEL_PLUS: Balanced, suitable for medium and complex tasks
-    #   - MODEL_MAX: Highest quality, expensive, for critical complex tasks
+    #   - MODEL_PLUS: Balanced, suitable for medium tasks
+    #   - MODEL_MAX: High quality, suitable for complex tasks (production)
     MODEL_TURBO: str = "qwen-turbo"
     MODEL_PLUS: str = "qwen-plus"
     MODEL_MAX: str = "qwen-max"
@@ -51,6 +51,11 @@ class AgentSettings(BaseSettings):
 
     # Base URL for API
     LLM_BASE_URL: str = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+
+    # Enable MAX model for complex tasks (only in production)
+    # Set AGENT_ENABLE_MAX_MODEL=true to enable max model for complex tasks
+    # Default: False (use plus model instead to save costs)
+    ENABLE_MAX_MODEL: bool = False
 
     # =========================================================================
     # Budget Controls
@@ -104,21 +109,6 @@ class AgentSettings(BaseSettings):
 
     # Use SCR (Situation-Complication-Resolution) structure for synthesis
     USE_SCR_STRUCTURE: bool = True
-
-    # =========================================================================
-    # ToT (Tree of Thoughts) Mode Configuration
-    # =========================================================================
-
-    # Enable Tree of Thoughts mode for complex tasks
-    # When enabled, complex tasks will generate 3 strategies, evaluate them,
-    # and select the optimal one before generating tasks
-    USE_TOT_MODE: bool = True
-
-    # Enable MAX model for strategy evaluation (production only)
-    # When enabled, complex tasks will use MAX model for strategy evaluation
-    # Set to True only in production environment to avoid high costs
-    # Can be controlled via AGENT_ENABLE_MAX_MODEL environment variable
-    ENABLE_MAX_MODEL: bool = False
 
 
 # Global singleton

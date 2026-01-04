@@ -279,6 +279,43 @@ class SubagentOutput(DictCompatibleModel):
 
 
 
+class ResearchApproach(DictCompatibleModel):
+    """A research approach/strategy for tackling the query"""
+    description: str = Field(
+        ..., description="Clear description of this research approach"
+    )
+    advantages: List[str] = Field(
+        default_factory=list,
+        description="List of advantages of this approach"
+    )
+    disadvantages: List[str] = Field(
+        default_factory=list,
+        description="List of disadvantages or limitations of this approach"
+    )
+    suitability: str = Field(
+        default="",
+        description=(
+            "Assessment of how suitable this approach is for the query"
+        )
+    )
+
+
+class ApproachEvaluation(DictCompatibleModel):
+    """Evaluation of multiple research approaches"""
+    approaches: List[ResearchApproach] = Field(
+        ..., min_length=3, max_length=3,
+        description="Exactly 3 different research approaches to consider"
+    )
+    selected_approach_index: int = Field(
+        ..., ge=0, le=2,
+        description="Index (0-2) of the selected approach"
+    )
+    selection_reasoning: str = Field(
+        ...,
+        description="Detailed reasoning for why this approach was selected"
+    )
+
+
 class ResearchTask(DictCompatibleModel):
     """Detailed research task"""
     id: str = Field(..., description="Unique task ID (e.g., T1)")
@@ -300,61 +337,17 @@ class ResearchTasks(DictCompatibleModel):
     )
 
 
-class ResearchStrategy(DictCompatibleModel):
-    """A research strategy with different approach/angle"""
-    strategy_id: str = Field(..., description="Unique strategy ID (e.g., strategy_1)")
-    description: str = Field(
-        ...,
-        description="Description of the research strategy/approach/angle"
+class ResearchPlanWithApproach(DictCompatibleModel):
+    """Research plan with approach evaluation and tasks"""
+    approach_evaluation: ApproachEvaluation = Field(
+        ..., description="Evaluation of 3 research approaches and selection"
     )
     tasks: List[ResearchTask] = Field(
-        ..., min_length=1, description="Research tasks for this strategy"
-    )
-    rationale: str = Field(
-        ...,
-        description="Why this strategy is effective for the query"
-    )
-
-
-class ResearchStrategies(DictCompatibleModel):
-    """List of research strategies for ToT mode"""
-    strategies: List[ResearchStrategy] = Field(
-        ..., min_length=3, max_length=3, description="Exactly 3 research strategies"
+        ..., min_length=1,
+        description="List of research tasks based on selected approach"
     )
     scratchpad: str = Field(
         default="", description="Updated scratchpad/notes for the agent"
-    )
-
-
-class StrategyEvaluationResult(DictCompatibleModel):
-    """Result of strategy evaluation"""
-    selected_strategy_index: int = Field(
-        ...,
-        ge=0,
-        le=2,
-        description="Index of the selected strategy (0-2)"
-    )
-    evaluation_reasoning: str = Field(
-        ...,
-        description="Detailed explanation of why this strategy was selected"
-    )
-    coverage_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Score for how well the strategy covers the query (0.0-1.0)"
-    )
-    feasibility_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Score for how feasible the tasks are (0.0-1.0)"
-    )
-    efficiency_score: float = Field(
-        ...,
-        ge=0.0,
-        le=1.0,
-        description="Score for task efficiency/balance (0.0-1.0)"
     )
 
 
@@ -383,8 +376,9 @@ class ComplexityAnalysis(DictCompatibleModel):
     recommended_model: str = Field(
         ...,
         description=(
-            "Recommended model to use: 'turbo' (low cost, simple tasks) or "
-            "'plus' (balanced, suitable for medium and complex tasks)"
+            "Recommended model to use: 'turbo' (low cost, simple tasks), "
+            "'plus' (balanced, suitable for medium tasks), or "
+            "'max' (high quality, suitable for complex tasks in production)"
         )
     )
 
@@ -618,18 +612,6 @@ class ResearchState(DictCompatibleModel):
     complexity_analysis: Optional[ComplexityAnalysis] = Field(
         default=None,
         description="Complexity analysis result with recommended workers and iterations"
-    )
-
-    # ToT (Tree of Thoughts) mode: Multiple research strategies
-    strategies: List[ResearchStrategy] = Field(
-        default_factory=list,
-        description="Multiple research strategies generated in ToT mode"
-    )
-    selected_strategy_index: Optional[int] = Field(
-        default=None,
-        ge=0,
-        le=2,
-        description="Index of the selected strategy (0-2) after evaluation"
     )
 
     @field_validator("query")

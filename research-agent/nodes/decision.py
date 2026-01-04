@@ -172,12 +172,20 @@ def decision_node(state: DecisionState):
     if complexity_analysis:
         if hasattr(complexity_analysis, "recommended_model"):
             model = complexity_analysis.recommended_model
-            if model in ["turbo", "plus"]:
-                recommended_model = model
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    recommended_model = "plus"
+                else:
+                    recommended_model = model
         elif isinstance(complexity_analysis, dict):
             model = complexity_analysis.get("recommended_model", "plus")
-            if model in ["turbo", "plus"]:
-                recommended_model = model
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    recommended_model = "plus"
+                else:
+                    recommended_model = model
 
     # Invoke LLM with structured output
     try:

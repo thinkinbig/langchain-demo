@@ -1,5 +1,6 @@
 """Complexity analyzer: Assess query complexity and recommend resources"""
 
+from config import settings
 from graph.utils import process_structured_response
 from langchain_core.messages import HumanMessage, SystemMessage
 from llm.factory import get_subagent_llm
@@ -18,11 +19,44 @@ def complexity_analyzer_node(state: ResearchState):
     if retry_count > 0:
         print(f"   ⚠️  Retry attempt {retry_count}")
 
-    # Build messages
+    # Build messages with environment-aware prompts
+    # If ENABLE_MAX_MODEL is False, modify prompts to exclude max model option
     system_prompt = COMPLEXITY_ANALYZER_SYSTEM
-    messages = [SystemMessage(content=system_prompt)]
-
     prompt_content = COMPLEXITY_ANALYZER_MAIN.format(query=query)
+
+    if not settings.ENABLE_MAX_MODEL:
+        # Remove max model from prompts if not enabled
+        system_prompt = system_prompt.replace(
+            '- recommended_model: "turbo", "plus", or "max" (REQUIRED)',
+            '- recommended_model: "turbo" or "plus" (REQUIRED)'
+        )
+        max_model_desc = (
+            '- "max": Use for complex queries in production environments '
+            'that require the\n  highest quality. Suitable for complex '
+            'multi-faceted research, deep analysis\n  tasks, and production '
+            'scenarios where quality is paramount.\n'
+        )
+        system_prompt = system_prompt.replace(max_model_desc, '')
+        system_prompt = system_prompt.replace(
+            '  "recommended_model": "max"',
+            '  "recommended_model": "plus"'
+        )
+        prompt_content = prompt_content.replace(
+            '5. recommended_model: "turbo", "plus", or "max" (REQUIRED)',
+            '5. recommended_model: "turbo" or "plus" (REQUIRED)'
+        )
+        max_choice_desc = (
+            '- Choose "max" for complex queries in production environments '
+            '(highest quality,\n  suitable for complex multi-faceted research '
+            'and deep analysis tasks)'
+        )
+        prompt_content = prompt_content.replace(max_choice_desc, '')
+        print(
+            "  ℹ️  MAX model disabled (cost optimization), "
+            "using plus for complex tasks"
+        )
+
+    messages = [SystemMessage(content=system_prompt)]
     messages.append(HumanMessage(content=prompt_content))
 
     # Add retry feedback if needed
@@ -73,6 +107,12 @@ def complexity_analyzer_node(state: ResearchState):
     # Success case
     parsed_result = response["parsed"]
     complexity_analysis = parsed_result
+
+    # If max model is disabled but recommended, downgrade to plus
+    if (not settings.ENABLE_MAX_MODEL and
+            complexity_analysis.recommended_model == "max"):
+        print("  ⚠️  MAX model recommended but disabled, downgrading to plus")
+        complexity_analysis.recommended_model = "plus"
 
     print(f"  ✅ Complexity: {complexity_analysis.complexity_level}")
     print(f"     Recommended workers: {complexity_analysis.recommended_workers}")

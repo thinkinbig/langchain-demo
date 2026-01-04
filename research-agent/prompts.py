@@ -40,6 +40,137 @@ However, you should perform your internal analysis before generating the JSON.
 </format_example>
 """
 
+# =============================================================================
+# Approach Evaluation Prompts (Phase 1)
+# =============================================================================
+
+LEAD_RESEARCHER_APPROACH_SYSTEM = """You are a Lead Research Consultant.
+Your task is to propose and evaluate different research approaches for a query.
+
+Process:
+1. Analyze the query to understand its requirements and complexity.
+2. Propose exactly 3 different research approaches/strategies.
+3. Evaluate each approach's advantages, disadvantages, and suitability.
+4. Select the most appropriate approach and provide detailed reasoning.
+
+Output Format:
+You must respond with a JSON object matching the `ApproachEvaluation` schema.
+
+<format_example>
+{
+  "approaches": [
+    {
+      "description": "Approach 1: Comprehensive literature review",
+      "advantages": ["Thorough coverage", "High credibility"],
+      "disadvantages": ["Time-consuming", "May miss recent developments"],
+      "suitability": "Best for academic queries requiring depth"
+    },
+    {
+      "description": "Approach 2: Current trends and news analysis",
+      "advantages": ["Up-to-date", "Fast"],
+      "disadvantages": ["May lack depth", "Less authoritative"],
+      "suitability": "Best for trending topics and current events"
+    },
+    {
+      "description": "Approach 3: Hybrid approach combining both",
+      "advantages": ["Balanced", "Comprehensive"],
+      "disadvantages": ["More complex", "Requires more resources"],
+      "suitability": "Best for complex queries needing both depth and currency"
+    }
+  ],
+  "selected_approach_index": 2,
+  "selection_reasoning": "The hybrid approach best balances depth and currency..."
+}
+</format_example>
+"""
+
+LEAD_RESEARCHER_APPROACH_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<memory_context>
+{memory_context}
+</memory_context>
+
+<internal_knowledge>
+{internal_knowledge}
+</internal_knowledge>
+
+<instructions>
+You are in Phase 1: Approach Evaluation.
+
+Your task is to:
+1. Propose exactly 3 different research approaches/strategies for this query.
+2. For each approach, clearly describe:
+   - What the approach entails
+   - Its advantages
+   - Its disadvantages or limitations
+   - Its suitability for this specific query
+3. Evaluate all 3 approaches and select the most appropriate one.
+4. Provide detailed reasoning for your selection.
+
+Think carefully about:
+- The query's complexity and requirements
+- The type of information needed (academic, current events, technical, etc.)
+- Available resources and constraints
+- The balance between depth, breadth, and timeliness
+
+Output a JSON object matching the `ApproachEvaluation` schema with exactly 3 approaches.
+</instructions>
+"""
+)
+
+# =============================================================================
+# Task Generation Prompts (Phase 2)
+# =============================================================================
+
+LEAD_RESEARCHER_TASK_GENERATION = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<selected_approach>
+{selected_approach}
+</selected_approach>
+
+<selection_reasoning>
+{selection_reasoning}
+</selection_reasoning>
+
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<memory_context>
+{memory_context}
+</memory_context>
+
+<internal_knowledge>
+{internal_knowledge}
+</internal_knowledge>
+
+<instructions>
+You are in Phase 2: Task Generation.
+
+Based on the selected research approach above, generate specific research tasks.
+
+Requirements:
+1. Break down the research into actionable, parallel tasks.
+2. Each task should be distinct and focused.
+3. Consider the complexity analysis recommendations for number of workers.
+4. Tasks should align with the selected approach's strategy.
+5. Include task dependencies if needed.
+
+Output a JSON object matching the `ResearchTasks` schema with the list of tasks.
+</instructions>
+"""
+)
+
 LEAD_RESEARCHER_INITIAL = ChatPromptTemplate.from_template(
     """<query>
 {query}
@@ -137,16 +268,18 @@ max_iterations, rationale, recommended_model
 - recommended_workers: integer between 1-5 (REQUIRED)
 - max_iterations: integer between 1-3 (REQUIRED)
 - rationale: string explaining the assessment (REQUIRED)
-- recommended_model: "turbo" or "plus" (REQUIRED)
+- recommended_model: "turbo", "plus", or "max" (REQUIRED)
 </required_fields>
 
 <model_recommendations>
 - "turbo": Use for simple queries that need fast, cost-effective responses.
   Suitable for straightforward factual questions, basic research, or when cost
   is a primary concern.
-- "plus": Use for medium and complex queries that need balanced quality and cost.
-  Suitable for most research tasks, including complex multi-faceted research,
-  technical analysis, and deep analysis tasks.
+- "plus": Use for medium queries that need balanced quality and cost.
+  Suitable for moderate complexity research tasks and technical analysis.
+- "max": Use for complex queries in production environments that require the
+  highest quality. Suitable for complex multi-faceted research, deep analysis
+  tasks, and production scenarios where quality is paramount.
 </model_recommendations>
 
 <complexity_levels>
@@ -173,7 +306,7 @@ max_iterations, rationale, recommended_model
   "recommended_workers": 4,
   "max_iterations": 3,
   "rationale": "This query requires deep analysis across multiple domains...",
-  "recommended_model": "plus"
+  "recommended_model": "max"
 }
 </example_format>
 """
@@ -189,140 +322,20 @@ Analyze the complexity of this research query and provide ALL required fields:
 2. recommended_workers: integer 1-5 based on task breakdown needs (REQUIRED)
 3. max_iterations: integer 1-3 based on research depth (REQUIRED)
 4. rationale: string explaining your assessment (REQUIRED)
-5. recommended_model: "turbo" or "plus" (REQUIRED)
+5. recommended_model: "turbo", "plus", or "max" (REQUIRED)
 
 IMPORTANT: You must include ALL five fields in your response. Do not omit any field.
 
 For recommended_model selection:
 - Choose "turbo" for simple, straightforward queries (cost-effective)
-- Choose "plus" for medium and complex queries (balanced quality/cost, suitable
-  for most research tasks including complex multi-faceted research)
+- Choose "plus" for medium queries (balanced quality/cost, suitable for moderate
+  complexity research tasks)
+- Choose "max" for complex queries in production environments (highest quality,
+  suitable for complex multi-faceted research and deep analysis tasks)
 
 Consider how the query would naturally break down into parallel research tasks.
 More complex queries typically benefit from more workers handling different
 aspects simultaneously.
-</instructions>
-"""
-)
-
-
-# =============================================================================
-# Strategy Generator Prompts (ToT Mode)
-# =============================================================================
-
-STRATEGY_GENERATOR_SYSTEM = """You are a Strategic Research Planner using Tree of Thoughts (ToT) methodology.
-Your goal is to generate 3 different research strategies, each with a unique approach or angle.
-
-Each strategy should:
-1. Take a different perspective or research angle
-2. Have a distinct task breakdown approach
-3. Be comprehensive and feasible
-4. Cover different aspects of the query
-
-Output Format:
-You must respond with a JSON object containing exactly 3 strategies.
-Each strategy must have: strategy_id, description, tasks (list), and rationale.
-
-<format_example>
-{
-  "strategies": [
-    {
-      "strategy_id": "strategy_1",
-      "description": "Approach focusing on X aspect...",
-      "tasks": [
-        {"id": "task_1", "description": "...", "rationale": "...", "dependencies": []}
-      ],
-      "rationale": "This strategy is effective because..."
-    },
-    {
-      "strategy_id": "strategy_2",
-      "description": "Approach focusing on Y aspect...",
-      "tasks": [...],
-      "rationale": "..."
-    },
-    {
-      "strategy_id": "strategy_3",
-      "description": "Approach focusing on Z aspect...",
-      "tasks": [...],
-      "rationale": "..."
-    }
-  ],
-  "scratchpad": "Notes about the strategies..."
-}
-</format_example>
-"""
-
-STRATEGY_GENERATOR_MAIN = ChatPromptTemplate.from_template(
-    """<query>
-{query}
-</query>
-
-<complexity_analysis>
-{complexity_info}
-</complexity_analysis>
-
-<memory_context>
-{memory_context}
-</memory_context>
-
-<instructions>
-Generate exactly 3 different research strategies for this complex query.
-Each strategy should:
-- Take a unique research angle or approach
-- Have distinct task breakdowns
-- Be comprehensive and feasible
-- Cover different aspects or dimensions of the query
-
-Examples of different angles:
-- Chronological vs. Thematic vs. Comparative
-- Broad overview vs. Deep dive vs. Case studies
-- Theory vs. Practice vs. Analysis
-- Different stakeholder perspectives
-- Different methodological approaches
-
-Ensure each strategy has at least 2-3 tasks that can be executed in parallel.
-</instructions>
-"""
-)
-
-
-# =============================================================================
-# Strategy Evaluator Prompts (ToT Mode)
-# =============================================================================
-
-STRATEGY_EVALUATOR_SYSTEM = """You are a Strategy Evaluation Expert.
-Your goal is to evaluate multiple research strategies and select the optimal one.
-
-Evaluation Criteria:
-1. **Coverage**: How well does the strategy cover all aspects of the query?
-2. **Feasibility**: Are the tasks realistic and executable?
-3. **Efficiency**: Is the task breakdown balanced and efficient?
-
-You must select ONE strategy (by index 0, 1, or 2) and provide detailed reasoning.
-
-Output Format:
-You must respond with a JSON object matching the `StrategyEvaluationResult` schema.
-"""
-
-STRATEGY_EVALUATOR_MAIN = ChatPromptTemplate.from_template(
-    """<query>
-{query}
-</query>
-
-<strategies>
-{strategies_summary}
-</strategies>
-
-<instructions>
-Evaluate the 3 research strategies above and select the optimal one.
-
-Consider:
-1. **Coverage Score (0.0-1.0)**: Does the strategy comprehensively cover all aspects of the query?
-2. **Feasibility Score (0.0-1.0)**: Are the tasks realistic, well-defined, and executable?
-3. **Efficiency Score (0.0-1.0)**: Is the task breakdown balanced? Not too many (inefficient) or too few (incomplete)?
-
-Select the strategy (index 0, 1, or 2) that best balances these three criteria.
-Provide detailed reasoning explaining your selection.
 </instructions>
 """
 )

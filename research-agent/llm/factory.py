@@ -79,28 +79,6 @@ def get_extraction_llm():
     return get_subagent_llm()
 
 
-def get_max_llm():
-    """
-    Get or create the MAX LLM instance (lazy loading).
-    Used for critical tasks requiring highest quality.
-    Only enabled in production environment to control costs.
-
-    Returns:
-        ChatOpenAI instance with MAX model
-    """
-    global _max_llm
-    if _max_llm is None:
-        from config import settings
-        _max_llm = ChatOpenAI(
-            base_url=settings.LLM_BASE_URL,
-            model=settings.MODEL_MAX,
-            temperature=settings.TEMP_PLANNER,
-            max_retries=2,
-            callbacks=get_callbacks(),
-        )
-    return _max_llm
-
-
 def get_llm_by_model_choice(model_choice: str):
     """
     Get LLM instance based on model choice (turbo, plus, or max).
@@ -142,7 +120,16 @@ def get_llm_by_model_choice(model_choice: str):
             )
         return _plus_llm
     elif model_choice == "max":
-        return get_max_llm()
+        global _max_llm
+        if _max_llm is None:
+            _max_llm = ChatOpenAI(
+                base_url=settings.LLM_BASE_URL,
+                model=settings.MODEL_MAX,
+                temperature=settings.TEMP_PLANNER,
+                max_retries=2,
+                callbacks=get_callbacks(),
+            )
+        return _max_llm
     else:
         raise ValueError(
             f"Invalid model_choice: {model_choice}. "

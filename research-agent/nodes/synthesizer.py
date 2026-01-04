@@ -37,23 +37,32 @@ def _compute_finding_hash(finding: dict) -> str:
 def _get_recommended_model(state: SynthesizerState, default: str = "plus") -> str:
     """
     Get recommended model from complexity analysis.
+    Automatically downgrades max to plus if ENABLE_MAX_MODEL is False.
 
     Args:
         state: SynthesizerState containing complexity_analysis
         default: Default model if not found (default: "plus")
 
     Returns:
-        Model choice: "turbo" or "plus"
+        Model choice: "turbo", "plus", or "max" (max only if ENABLE_MAX_MODEL=True)
     """
+    from config import settings
+
     complexity_analysis = state.get("complexity_analysis")
     if complexity_analysis:
         if hasattr(complexity_analysis, "recommended_model"):
             model = complexity_analysis.recommended_model
-            if model in ["turbo", "plus"]:
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    return "plus"
                 return model
         elif isinstance(complexity_analysis, dict):
             model = complexity_analysis.get("recommended_model", default)
-            if model in ["turbo", "plus"]:
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    return "plus"
                 return model
     return default
 
