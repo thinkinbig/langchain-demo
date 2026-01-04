@@ -97,6 +97,13 @@ class AgentSettings(BaseSettings):
     # Format: postgresql://user:password@host:port/database
     CHECKPOINTER_CONNECTION_STRING: str = ""
 
+    # =========================================================================
+    # Synthesis Configuration
+    # =========================================================================
+
+    # Use SCR (Situation-Complication-Resolution) structure for synthesis
+    USE_SCR_STRUCTURE: bool = True
+
 
 # Global singleton
 settings = AgentSettings()

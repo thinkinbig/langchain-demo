@@ -2,12 +2,25 @@
 
 import hashlib
 
+from config import settings
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_lead_llm
 from memory.temporal_memory import TemporalMemory
-from prompts import SYNTHESIZER_MAIN, SYNTHESIZER_RETRY, SYNTHESIZER_SYSTEM
+from prompts import (
+    REFLECTION_MAIN,
+    REFLECTION_SYSTEM,
+    SYNTHESIZER_MAIN,
+    SYNTHESIZER_REFINE,
+    SYNTHESIZER_RETRY,
+    SYNTHESIZER_SCR_MAIN,
+    SYNTHESIZER_SCR_REFINE,
+    SYNTHESIZER_SCR_SYSTEM,
+    SYNTHESIZER_SYSTEM,
+)
 from schemas import (
+    ReflectionResult,
+    SCRResult,
     SynthesisResult,
     SynthesizerState,
     extract_findings_metadata,
@@ -59,15 +72,26 @@ def synthesizer_node(state: SynthesizerState):
     # Build conversation history incrementally
     messages = list(existing_messages) if existing_messages else []
 
+    # Determine if this is incremental or first-time synthesis
     if not messages:
         # First synthesis: Initialize conversation
-        messages.append(SystemMessage(content=SYNTHESIZER_SYSTEM))
         findings_to_process = findings  # Process all on first run
         is_incremental = False
     else:
         # Subsequent synthesis: Only process new findings
         findings_to_process = new_findings
         is_incremental = True
+
+    # Determine if we should use SCR structure
+    # Only use SCR for first-time synthesis, not incremental updates
+    use_scr = settings.USE_SCR_STRUCTURE and not is_incremental
+
+    if not messages:
+        # First synthesis: Initialize conversation with appropriate system
+        if use_scr:
+            messages.append(SystemMessage(content=SYNTHESIZER_SCR_SYSTEM))
+        else:
+            messages.append(SystemMessage(content=SYNTHESIZER_SYSTEM))
 
     if not findings_to_process:
         return {
@@ -140,10 +164,16 @@ def synthesizer_node(state: SynthesizerState):
             "</instructions>"
         )
     else:
-        prompt_content = SYNTHESIZER_MAIN.format(
-            query=query,
-            findings=findings_text + metadata_context
-        )
+        if use_scr:
+            prompt_content = SYNTHESIZER_SCR_MAIN.format(
+                query=query,
+                findings=findings_text + metadata_context
+            )
+        else:
+            prompt_content = SYNTHESIZER_MAIN.format(
+                query=query,
+                findings=findings_text + metadata_context
+            )
 
     if last_error:
         prompt_content = SYNTHESIZER_RETRY.format(
@@ -151,8 +181,14 @@ def synthesizer_node(state: SynthesizerState):
             error=last_error
         )
 
+    # Use appropriate schema based on SCR setting
+    if use_scr:
+        output_schema = SCRResult
+    else:
+        output_schema = SynthesisResult
+
     structured_llm = get_lead_llm().with_structured_output(
-        SynthesisResult, include_raw=True
+        output_schema, include_raw=True
     )
     messages.append(HumanMessage(content=prompt_content))
     response = structured_llm.invoke(messages)
@@ -173,12 +209,186 @@ def synthesizer_node(state: SynthesizerState):
         retry_state["synthesizer_messages"] = messages
         return retry_state
 
-    # Success
+    # Success - Round 1: Initial synthesis
     result = response["parsed"]
-    new_synthesis = result.summary
 
-    # Update conversation history with AI response
-    updated_messages = messages + [AIMessage(content=new_synthesis)]
+    # Extract synthesis text based on schema type
+    if use_scr:
+        scr_result = result
+        initial_synthesis = scr_result.to_formatted_report()
+        print(f"  ✅ Initial SCR synthesis complete "
+              f"(S: {len(scr_result.situation)}, "
+              f"C: {len(scr_result.complication)}, "
+              f"R: {len(scr_result.resolution)} chars)")
+    else:
+        initial_synthesis = result.summary
+        scr_result = None
+        print(f"  ✅ Initial synthesis complete ({len(initial_synthesis)} chars)")
+
+    # Two-pass synthesis: Reflection and Refinement
+    # Only perform reflection for non-incremental synthesis (first time)
+    final_synthesis = initial_synthesis
+    reflection_result = None
+
+    if not is_incremental:
+        # Perform reflection analysis
+        print("\n🔍 [Reflection] Analyzing synthesis quality...")
+        try:
+            reflection_llm = get_lead_llm().with_structured_output(
+                ReflectionResult, include_raw=True
+            )
+
+            # Create a concise findings summary for reflection context
+            findings_summary = "\n".join([
+                f"- {f.get('task', 'Unknown')[:80]}: "
+                f"{f.get('summary', 'No summary')[:200]}"
+                for f in findings_to_process[:5]  # Limit to 5 for context
+            ])
+            if len(findings_to_process) > 5:
+                findings_summary += (
+                    f"\n... and {len(findings_to_process) - 5} more findings"
+                )
+
+            reflection_messages = [
+                SystemMessage(content=REFLECTION_SYSTEM),
+                HumanMessage(content=REFLECTION_MAIN.format(
+                    query=query,
+                    synthesis=initial_synthesis,
+                    findings_summary=findings_summary
+                ))
+            ]
+
+            reflection_response = reflection_llm.invoke(reflection_messages)
+
+            # Process reflection response
+            if reflection_response.get("parsing_error"):
+                error_msg = reflection_response['parsing_error']
+                print(f"  ⚠️  Reflection analysis failed: {error_msg}")
+            else:
+                reflection_result = reflection_response["parsed"]
+                quality = reflection_result.overall_quality
+                print(f"  ✅ Reflection complete - Quality: {quality}")
+                if reflection_result.missing_core_insights:
+                    count = len(reflection_result.missing_core_insights)
+                    print(f"     Missing insights: {count}")
+                if reflection_result.logic_issues:
+                    count = len(reflection_result.logic_issues)
+                    print(f"     Logic issues: {count}")
+
+                # Refinement Round: Improve synthesis based on reflection
+                if reflection_result.overall_quality in ['shallow', 'moderate']:
+                    print(
+                        "\n✨ [Refinement] Improving synthesis based on "
+                        "reflection..."
+                    )
+
+                    # Format reflection analysis for prompt
+                    quality = reflection_result.overall_quality
+                    depth = reflection_result.depth_assessment
+
+                    missing_insights = (
+                        chr(10).join(
+                            '- ' + insight
+                            for insight in reflection_result.missing_core_insights
+                        )
+                        if reflection_result.missing_core_insights
+                        else 'None identified'
+                    )
+
+                    logic_issues_text = (
+                        chr(10).join(
+                            '- ' + issue
+                            for issue in reflection_result.logic_issues
+                        )
+                        if reflection_result.logic_issues
+                        else 'None identified'
+                    )
+
+                    suggestions = (
+                        chr(10).join(
+                            '- ' + suggestion
+                            for suggestion in reflection_result.improvement_suggestions
+                        )
+                        if reflection_result.improvement_suggestions
+                        else 'None provided'
+                    )
+
+                    reflection_text = f"""Quality Assessment: {quality}
+
+Depth Assessment:
+{depth}
+
+Missing Core Insights:
+{missing_insights}
+
+Logic Issues:
+{logic_issues_text}
+
+Improvement Suggestions:
+{suggestions}
+"""
+
+                    # Use appropriate schema and prompt for refinement
+                    if use_scr:
+                        refine_schema = SCRResult
+                        refine_system = SYNTHESIZER_SCR_SYSTEM
+                        refine_prompt_template = SYNTHESIZER_SCR_REFINE
+                    else:
+                        refine_schema = SynthesisResult
+                        refine_system = SYNTHESIZER_SYSTEM
+                        refine_prompt_template = SYNTHESIZER_REFINE
+
+                    refine_llm = get_lead_llm().with_structured_output(
+                        refine_schema, include_raw=True
+                    )
+
+                    refine_messages = [
+                        SystemMessage(content=refine_system),
+                        HumanMessage(
+                            content=refine_prompt_template.format(
+                                query=query,
+                                initial_synthesis=initial_synthesis,
+                                reflection_analysis=reflection_text,
+                                findings=findings_text + metadata_context
+                            )
+                        )
+                    ]
+
+                    refine_response = refine_llm.invoke(refine_messages)
+
+                    if refine_response.get("parsing_error"):
+                        error_msg = refine_response['parsing_error']
+                        print(f"  ⚠️  Refinement failed: {error_msg}")
+                        print("  ⚠️  Using initial synthesis")
+                    else:
+                        refined_result = refine_response["parsed"]
+                        if use_scr:
+                            final_synthesis = refined_result.to_formatted_report()
+                            s_len = len(refined_result.situation)
+                            c_len = len(refined_result.complication)
+                            r_len = len(refined_result.resolution)
+                            print(
+                                f"  ✅ Refinement complete "
+                                f"(S: {s_len}, C: {c_len}, R: {r_len} chars)"
+                            )
+                        else:
+                            final_synthesis = refined_result.summary
+                            print(
+                                f"  ✅ Refinement complete "
+                                f"({len(final_synthesis)} chars)"
+                            )
+                else:
+                    print(
+                        "  ℹ️  Synthesis quality is already 'deep', "
+                        "skipping refinement"
+                    )
+        except Exception as e:
+            print(f"  ⚠️  Reflection/Refinement failed: {e}")
+            print("  ⚠️  Using initial synthesis")
+            # Continue with initial synthesis if reflection fails
+
+    # Update conversation history with final synthesis
+    updated_messages = messages + [AIMessage(content=final_synthesis)]
 
     # Track processed findings
     new_processed_ids = list(processed_finding_ids)
@@ -187,11 +397,7 @@ def synthesizer_node(state: SynthesizerState):
         if f_hash not in new_processed_ids:
             new_processed_ids.append(f_hash)
 
-    # If incremental, the result is already integrated
-    # Otherwise, it's the full synthesis
-    final_synthesis = new_synthesis
-
-    print(f"  ✅ Synthesis complete ({len(final_synthesis)} chars)")
+    print(f"  ✅ Final synthesis complete ({len(final_synthesis)} chars)")
 
     # Store synthesis in long-term memory with conflict detection
     try:
@@ -211,8 +417,9 @@ def synthesizer_node(state: SynthesizerState):
             # If very similar (high relevance), mark for superseding
             if relevance > 0.85:
                 # Get memory ID from document metadata or try to extract from doc
-                # ChromaDB stores IDs separately, so we need to get it from the vector store
-                # For now, we'll use a hash of the content as identifier
+                # ChromaDB stores IDs separately, so we need to get it from
+                # the vector store. For now, we'll use a hash of the content
+                # as identifier
                 doc_id = doc.metadata.get("id") or doc.metadata.get("memory_id")
                 if doc_id:
                     superseded_ids.append(doc_id)
@@ -240,6 +447,7 @@ def synthesizer_node(state: SynthesizerState):
 
     return {
         "synthesized_results": final_synthesis,
+        "reflection_analysis": reflection_result,
         "error": None,
         "retry_count": 0,
         "synthesizer_messages": updated_messages,

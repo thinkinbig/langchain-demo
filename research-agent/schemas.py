@@ -329,6 +329,70 @@ class SynthesisResult(DictCompatibleModel):
     summary: str = Field(..., description="Comprehensive summary of findings")
 
 
+class SCRResult(DictCompatibleModel):
+    """SCR-structured synthesis result (Situation-Complication-Resolution)"""
+    situation: str = Field(
+        ...,
+        description=(
+            "Current state, background, facts, and context. "
+            "Describe what is known, the current situation, and relevant context."
+        )
+    )
+    complication: str = Field(
+        ...,
+        description=(
+            "Problems, challenges, conflicts, tensions, or dilemmas. "
+            "Identify what makes the situation complex, difficult, or problematic."
+        )
+    )
+    resolution: str = Field(
+        ...,
+        description=(
+            "Solutions, recommendations, conclusions, or future directions. "
+            "Present how to address the complications, what can be done, or what "
+            "conclusions can be drawn."
+        )
+    )
+
+    def to_formatted_report(self) -> str:
+        """Format SCR result into markdown report"""
+        return (
+            f"# Situation\n\n{self.situation}\n\n"
+            f"# Complication\n\n{self.complication}\n\n"
+            f"# Resolution\n\n{self.resolution}"
+        )
+
+
+class ReflectionResult(DictCompatibleModel):
+    """Result of reflection analysis on synthesis quality"""
+    depth_assessment: str = Field(
+        ...,
+        description=(
+            "Assessment of synthesis depth - whether it's just "
+            "surface-level information concatenation or deep analysis"
+        )
+    )
+    missing_core_insights: List[str] = Field(
+        default_factory=list,
+        description=(
+            "List of missing core insights or key viewpoints "
+            "that should be highlighted"
+        )
+    )
+    logic_issues: List[str] = Field(
+        default_factory=list,
+        description="List of logical connection problems or structural issues"
+    )
+    improvement_suggestions: List[str] = Field(
+        default_factory=list,
+        description="Specific suggestions for improving the synthesis"
+    )
+    overall_quality: str = Field(
+        ...,
+        description="Overall quality assessment: 'shallow', 'moderate', or 'deep'"
+    )
+
+
 class Citation(DictCompatibleModel):
     """Unified citation entry for both extraction and reporting"""
     title: str = Field(
@@ -423,6 +487,10 @@ class ResearchState(DictCompatibleModel):
     )
     synthesized_results: str = Field(
         default="", description="Synthesized results"
+    )
+    reflection_analysis: Optional[ReflectionResult] = Field(
+        default=None,
+        description="Reflection analysis result for synthesis quality improvement"
     )
     citations: List[Citation] = Field(
         default_factory=list, description="Final list of citations"

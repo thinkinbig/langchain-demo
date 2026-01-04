@@ -336,6 +336,74 @@ SYNTHESIZER_MAIN = ChatPromptTemplate.from_template(
 """
 )
 
+SYNTHESIZER_SCR_SYSTEM = """You are a Senior Research Editor.
+Your goal is to synthesize disparate research findings into a comprehensive,
+deeply informative report using the Situation-Complication-Resolution (SCR)
+framework.
+
+**SCR Framework:**
+1. **Situation**: Describe the current state, background, facts, and context.
+   What is known? What is the current situation? What are the relevant facts?
+2. **Complication**: Identify problems, challenges, conflicts, tensions, or dilemmas.
+   What makes this situation complex or problematic? What are the key issues?
+3. **Resolution**: Present solutions, recommendations, conclusions, or future
+   directions. How can the complications be addressed? What should be done?
+   What conclusions can be drawn?
+
+<instructions>
+1. **Situation Section:**
+   - Provide comprehensive background and context
+   - Include relevant facts, statistics, dates, names, and concrete details
+   - Describe the current state clearly and thoroughly
+   - Use specific information from findings, not generic statements
+
+2. **Complication Section:**
+   - Identify key problems, challenges, or conflicts
+   - Highlight tensions, contradictions, or dilemmas
+   - Explain what makes the situation complex or difficult
+   - Be specific about the nature of complications
+
+3. **Resolution Section:**
+   - Present concrete solutions, recommendations, or conclusions
+   - Address the complications identified
+   - Provide actionable insights or future directions
+   - Be specific and practical
+
+4. **Overall Quality:**
+   - Each section should be well-developed with multiple paragraphs
+   - Include ALL relevant information from findings
+   - Maintain logical flow: Situation → Complication → Resolution
+   - Use clear, professional language
+   - Cite sources when mentioning key facts
+
+5. **Source Attribution:** Note which sources (Internal Knowledge Base vs Web)
+   provided important claims or statistics.
+
+6. **Citations:** Include full context about papers or citations mentioned.
+</instructions>
+"""
+
+SYNTHESIZER_SCR_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<findings>
+{findings}
+</findings>
+
+<instructions>
+Synthesize the findings above into a comprehensive report using the SCR framework.
+Provide detailed, specific content for each section:
+- Situation: Current state, background, and facts
+- Complication: Problems, challenges, conflicts, or tensions
+- Resolution: Solutions, recommendations, or conclusions
+
+Each section should be substantial and well-developed, not just brief summaries.
+</instructions>
+"""
+)
+
 SYNTHESIZER_RETRY = ChatPromptTemplate.from_template(
     """{previous_prompt}
 
@@ -349,6 +417,163 @@ Fix the JSON structure.
 """
 )
 
+
+# =============================================================================
+# Reflection Prompts (for two-pass synthesis)
+# =============================================================================
+
+REFLECTION_SYSTEM = """You are a Senior Research Quality Analyst.
+Your goal is to critically analyze a research synthesis and identify areas
+where it lacks depth, core insights, or logical coherence.
+
+<instructions>
+1. **Depth Assessment:** Evaluate whether the synthesis is just a surface-level
+   concatenation of findings (like a literature summary) or if it provides
+   deep analysis with core viewpoints and logical connections.
+
+2. **Core Insights Identification:** Identify what key insights, conclusions,
+   or viewpoints should be highlighted but are currently missing or understated.
+
+3. **Logic Analysis:** Check if the synthesis has clear logical connections
+   between sections, or if it's just loosely connected information chunks.
+
+4. **SCR Structure Analysis (if applicable):** If the synthesis uses SCR
+   format, evaluate each section:
+   - Situation: Is the background comprehensive? Are facts well-presented?
+   - Complication: Are problems/challenges clearly identified? Is complexity
+     well-explained?
+   - Resolution: Are solutions/recommendations concrete and actionable?
+
+5. **Improvement Suggestions:** Provide specific, actionable suggestions for
+   improving the synthesis to make it more insightful and coherent.
+
+6. **Quality Rating:** Assess overall quality as 'shallow', 'moderate', or 'deep'.
+
+Be critical but constructive. Focus on helping transform a shallow summary
+into a deep, insightful analysis.
+</instructions>
+"""
+
+REFLECTION_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<initial_synthesis>
+{synthesis}
+</initial_synthesis>
+
+<findings_context>
+{findings_summary}
+</findings_context>
+
+<instructions>
+Analyze the initial synthesis above and provide a critical assessment:
+1. Evaluate the depth - is it just information concatenation or true analysis?
+2. Identify missing core insights or key viewpoints that should be emphasized
+3. Check for logical connection issues between sections
+4. Provide specific improvement suggestions
+5. Rate overall quality: 'shallow', 'moderate', or 'deep'
+
+Your analysis should help guide the refinement of this synthesis into a
+deeper, more insightful report.
+</instructions>
+"""
+)
+
+SYNTHESIZER_REFINE = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<initial_synthesis>
+{initial_synthesis}
+</initial_synthesis>
+
+<reflection_analysis>
+{reflection_analysis}
+</reflection_analysis>
+
+<findings>
+{findings}
+</findings>
+
+<instructions>
+You have been provided with an initial synthesis and a reflection analysis
+that identified areas for improvement. Your task is to refine the synthesis
+based on the reflection feedback.
+
+**Key improvements to make:**
+1. **Enhance Core Insights:** Strengthen and highlight the key insights
+   identified in the reflection analysis. Make them more prominent and clear.
+
+2. **Improve Logical Structure:** Reorganize content to create better logical
+   connections between sections. Ensure smooth transitions and coherent flow.
+
+3. **Add Depth:** Transform surface-level information into deeper analysis.
+   Provide context, explanations, and implications rather than just facts.
+
+4. **Address Missing Elements:** Incorporate the missing core insights and
+   viewpoints identified in the reflection analysis.
+
+5. **Maintain Completeness:** Keep all relevant information from the initial
+   synthesis while improving its structure and depth.
+
+The refined synthesis should be a comprehensive, deeply insightful report
+with clear core viewpoints and logical coherence, not just a summary of findings.
+</instructions>
+"""
+)
+
+SYNTHESIZER_SCR_REFINE = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<initial_synthesis>
+{initial_synthesis}
+</initial_synthesis>
+
+<reflection_analysis>
+{reflection_analysis}
+</reflection_analysis>
+
+<findings>
+{findings}
+</findings>
+
+<instructions>
+You have been provided with an initial SCR-structured synthesis and a reflection
+analysis that identified areas for improvement. Your task is to refine the
+synthesis based on the reflection feedback, maintaining the SCR structure.
+
+**Key improvements to make for each SCR section:**
+
+1. **Situation Section:**
+   - Enhance background and context based on reflection feedback
+   - Add missing facts or details identified in the analysis
+   - Strengthen the presentation of current state
+
+2. **Complication Section:**
+   - Clarify and deepen the identification of problems/challenges
+   - Better explain the complexity or tensions
+   - Address any missing complications identified
+
+3. **Resolution Section:**
+   - Strengthen solutions/recommendations to be more concrete and actionable
+   - Better address the complications identified
+   - Enhance conclusions or future directions
+
+4. **Overall Improvements:**
+   - Improve logical flow between Situation → Complication → Resolution
+   - Add depth to all sections based on reflection feedback
+   - Maintain completeness while enhancing quality
+
+The refined synthesis should maintain the SCR structure while being more
+comprehensive, insightful, and coherent.
+</instructions>
+"""
+)
 
 
 # =============================================================================
