@@ -11,6 +11,7 @@ from nodes.complexity_analyzer import complexity_analyzer_node
 from nodes.decision import decision_node
 from nodes.filter_findings import filter_findings_node
 from nodes.lead_researcher import lead_researcher_node
+from nodes.strategy_evaluator import strategy_evaluator_node
 from nodes.subagent.subgraph import subagent_node
 from nodes.synthesizer import synthesizer_node
 from nodes.verifier import verifier_node
@@ -86,6 +87,47 @@ def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"
     return "decision"
 
 
+def route_after_complexity(
+    state: ResearchState,
+) -> Literal["lead_researcher"]:
+    """
+    Route after complexity analysis: Always go to lead_researcher first.
+    Lead researcher will generate strategies if needed, then route to evaluator.
+    """
+    return "lead_researcher"
+
+
+def route_after_lead_researcher(
+    state: ResearchState,
+):
+    """
+    Route after lead_researcher:
+    - If strategies were generated (ToT mode), route to strategy_evaluator
+    - If tasks were generated, use assign_subagents for parallel execution
+    - If retry needed, route back to lead_researcher
+    """
+    # Check for retry condition
+    if should_retry(state):
+        print("  ↺ Routing back to lead_researcher for retry...")
+        return "lead_researcher"
+
+    # Check if strategies were generated (need evaluation)
+    strategies = state.get("strategies", [])
+    selected_strategy_index = state.get("selected_strategy_index")
+
+    if len(strategies) >= 3 and selected_strategy_index is None:
+        print("  🌳 Routing to strategy_evaluator to evaluate strategies...")
+        return "strategy_evaluator"
+
+    # Check if tasks were generated (normal flow) - use assign_subagents
+    tasks = state.get("subagent_tasks", [])
+    if len(tasks) > 0:
+        return assign_subagents(state)
+
+    # Default: retry lead_researcher
+    return "lead_researcher"
+
+
 # ============================================================================
 # Graph Building
 # ============================================================================
@@ -95,6 +137,7 @@ workflow = StateGraph(ResearchState)
 
 # Add nodes
 workflow.add_node("complexity_analyzer", complexity_analyzer_node)
+workflow.add_node("strategy_evaluator", strategy_evaluator_node)
 workflow.add_node("lead_researcher", lead_researcher_node)
 workflow.add_node("subagent", subagent_node)
 workflow.add_node("filter_findings", filter_findings_node)
@@ -108,9 +151,14 @@ workflow.add_edge(START, "complexity_analyzer")
 workflow.add_edge("complexity_analyzer", "lead_researcher")
 workflow.add_conditional_edges(
     "lead_researcher",
-    assign_subagents,
-    ["subagent", "lead_researcher"],
+    route_after_lead_researcher,
+    {
+        "strategy_evaluator": "strategy_evaluator",
+        "subagent": "subagent",
+        "lead_researcher": "lead_researcher",
+    },
 )
+workflow.add_edge("strategy_evaluator", "lead_researcher")
 workflow.add_edge("subagent", "filter_findings")
 workflow.add_edge("filter_findings", "synthesizer")
 workflow.add_conditional_edges(

@@ -37,12 +37,13 @@ class AgentSettings(BaseSettings):
     # =========================================================================
 
     # Model Names
-    # Common options: "qwen-plus", "qwen-turbo", "qwen-max"
-    # Note: Only two LLM instances are used:
-    #   - lead_llm (for planning, synthesis, verification) uses MODEL_PLANNER
-    #   - subagent_llm (for extraction, sub-tasks) uses MODEL_EXTRACTOR
-    MODEL_PLANNER: str = "qwen-plus"
-    MODEL_EXTRACTOR: str = "qwen-turbo"
+    # Three models available for autonomous selection based on task complexity:
+    #   - MODEL_TURBO: Low cost, fast, suitable for simple tasks
+    #   - MODEL_PLUS: Balanced, suitable for medium and complex tasks
+    #   - MODEL_MAX: Highest quality, expensive, for critical complex tasks
+    MODEL_TURBO: str = "qwen-turbo"
+    MODEL_PLUS: str = "qwen-plus"
+    MODEL_MAX: str = "qwen-max"
 
     # Temperatures
     TEMP_PLANNER: float = 0.0      # Determinism for cost optimization
@@ -103,6 +104,21 @@ class AgentSettings(BaseSettings):
 
     # Use SCR (Situation-Complication-Resolution) structure for synthesis
     USE_SCR_STRUCTURE: bool = True
+
+    # =========================================================================
+    # ToT (Tree of Thoughts) Mode Configuration
+    # =========================================================================
+
+    # Enable Tree of Thoughts mode for complex tasks
+    # When enabled, complex tasks will generate 3 strategies, evaluate them,
+    # and select the optimal one before generating tasks
+    USE_TOT_MODE: bool = True
+
+    # Enable MAX model for strategy evaluation (production only)
+    # When enabled, complex tasks will use MAX model for strategy evaluation
+    # Set to True only in production environment to avoid high costs
+    # Can be controlled via AGENT_ENABLE_MAX_MODEL environment variable
+    ENABLE_MAX_MODEL: bool = False
 
 
 # Global singleton

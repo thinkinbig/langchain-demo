@@ -3,7 +3,7 @@
 from config import settings
 from graph.utils import process_structured_response
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_lead_llm
+from llm.factory import get_llm_by_model_choice
 from prompts import DECISION_MAIN, DECISION_SYSTEM
 from schemas import DecisionResult, DecisionState
 
@@ -166,9 +166,23 @@ def decision_node(state: DecisionState):
         ),
     ]
 
+    # Get recommended model from complexity analysis
+    complexity_analysis = state.get("complexity_analysis")
+    recommended_model = "plus"  # Default
+    if complexity_analysis:
+        if hasattr(complexity_analysis, "recommended_model"):
+            model = complexity_analysis.recommended_model
+            if model in ["turbo", "plus"]:
+                recommended_model = model
+        elif isinstance(complexity_analysis, dict):
+            model = complexity_analysis.get("recommended_model", "plus")
+            if model in ["turbo", "plus"]:
+                recommended_model = model
+
     # Invoke LLM with structured output
     try:
-        structured_llm = get_lead_llm().with_structured_output(
+        llm = get_llm_by_model_choice(recommended_model)
+        structured_llm = llm.with_structured_output(
             DecisionResult, include_raw=True
         )
         response = structured_llm.invoke(messages)

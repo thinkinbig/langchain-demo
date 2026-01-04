@@ -5,7 +5,7 @@ import hashlib
 from config import settings
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from llm.factory import get_lead_llm
+from llm.factory import get_llm_by_model_choice
 from memory.temporal_memory import TemporalMemory
 from prompts import (
     REFLECTION_MAIN,
@@ -32,6 +32,30 @@ def _compute_finding_hash(finding: dict) -> str:
     task = finding.get('task', '')
     summary = finding.get('summary', '')
     return hashlib.sha256((task + summary).encode()).hexdigest()[:16]
+
+
+def _get_recommended_model(state: SynthesizerState, default: str = "plus") -> str:
+    """
+    Get recommended model from complexity analysis.
+
+    Args:
+        state: SynthesizerState containing complexity_analysis
+        default: Default model if not found (default: "plus")
+
+    Returns:
+        Model choice: "turbo" or "plus"
+    """
+    complexity_analysis = state.get("complexity_analysis")
+    if complexity_analysis:
+        if hasattr(complexity_analysis, "recommended_model"):
+            model = complexity_analysis.recommended_model
+            if model in ["turbo", "plus"]:
+                return model
+        elif isinstance(complexity_analysis, dict):
+            model = complexity_analysis.get("recommended_model", default)
+            if model in ["turbo", "plus"]:
+                return model
+    return default
 
 
 def synthesizer_node(state: SynthesizerState):
@@ -187,9 +211,10 @@ def synthesizer_node(state: SynthesizerState):
     else:
         output_schema = SynthesisResult
 
-    structured_llm = get_lead_llm().with_structured_output(
-        output_schema, include_raw=True
-    )
+    # Select model based on complexity analysis recommendation
+    recommended_model = _get_recommended_model(state)
+    llm = get_llm_by_model_choice(recommended_model)
+    structured_llm = llm.with_structured_output(output_schema, include_raw=True)
     messages.append(HumanMessage(content=prompt_content))
     response = structured_llm.invoke(messages)
 
@@ -234,7 +259,10 @@ def synthesizer_node(state: SynthesizerState):
         # Perform reflection analysis
         print("\n🔍 [Reflection] Analyzing synthesis quality...")
         try:
-            reflection_llm = get_lead_llm().with_structured_output(
+            # Get recommended model from complexity analysis
+            recommended_model = _get_recommended_model(state)
+            reflection_llm_instance = get_llm_by_model_choice(recommended_model)
+            reflection_llm = reflection_llm_instance.with_structured_output(
                 ReflectionResult, include_raw=True
             )
 
@@ -338,7 +366,10 @@ Improvement Suggestions:
                         refine_system = SYNTHESIZER_SYSTEM
                         refine_prompt_template = SYNTHESIZER_REFINE
 
-                    refine_llm = get_lead_llm().with_structured_output(
+                    # Use recommended model for refinement
+                    recommended_model = _get_recommended_model(state)
+                    refine_llm_instance = get_llm_by_model_choice(recommended_model)
+                    refine_llm = refine_llm_instance.with_structured_output(
                         refine_schema, include_raw=True
                     )
 

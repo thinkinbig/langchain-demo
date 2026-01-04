@@ -57,7 +57,8 @@ def complexity_analyzer_node(state: ResearchState):
                 rationale=(
                     "Fallback: Defaulting to medium complexity "
                     "due to analysis error"
-                )
+                ),
+                recommended_model="plus"  # Default to plus for fallback
             ),
             "error": None,
             "retry_count": 0
@@ -76,6 +77,7 @@ def complexity_analyzer_node(state: ResearchState):
     print(f"  ✅ Complexity: {complexity_analysis.complexity_level}")
     print(f"     Recommended workers: {complexity_analysis.recommended_workers}")
     print(f"     Max iterations: {complexity_analysis.max_iterations}")
+    print(f"     Recommended model: {complexity_analysis.recommended_model}")
     print(f"     Rationale: {complexity_analysis.rationale[:100]}...")
 
     return {

@@ -130,14 +130,24 @@ Analyze the query considering:
 Output Format:
 You MUST respond with a JSON object matching the `ComplexityAnalysis` schema.
 ALL fields are REQUIRED: complexity_level, recommended_workers,
-max_iterations, rationale
+max_iterations, rationale, recommended_model
 
 <required_fields>
 - complexity_level: "simple", "medium", or "complex" (REQUIRED)
 - recommended_workers: integer between 1-5 (REQUIRED)
 - max_iterations: integer between 1-3 (REQUIRED)
 - rationale: string explaining the assessment (REQUIRED)
+- recommended_model: "turbo" or "plus" (REQUIRED)
 </required_fields>
+
+<model_recommendations>
+- "turbo": Use for simple queries that need fast, cost-effective responses.
+  Suitable for straightforward factual questions, basic research, or when cost
+  is a primary concern.
+- "plus": Use for medium and complex queries that need balanced quality and cost.
+  Suitable for most research tasks, including complex multi-faceted research,
+  technical analysis, and deep analysis tasks.
+</model_recommendations>
 
 <complexity_levels>
 - "simple": Single, straightforward query requiring 1-2 workers, 1 iteration
@@ -162,7 +172,8 @@ max_iterations, rationale
   "complexity_level": "complex",
   "recommended_workers": 4,
   "max_iterations": 3,
-  "rationale": "This query requires deep analysis across multiple domains..."
+  "rationale": "This query requires deep analysis across multiple domains...",
+  "recommended_model": "plus"
 }
 </example_format>
 """
@@ -178,12 +189,140 @@ Analyze the complexity of this research query and provide ALL required fields:
 2. recommended_workers: integer 1-5 based on task breakdown needs (REQUIRED)
 3. max_iterations: integer 1-3 based on research depth (REQUIRED)
 4. rationale: string explaining your assessment (REQUIRED)
+5. recommended_model: "turbo" or "plus" (REQUIRED)
 
-IMPORTANT: You must include ALL four fields in your response. Do not omit any field.
+IMPORTANT: You must include ALL five fields in your response. Do not omit any field.
+
+For recommended_model selection:
+- Choose "turbo" for simple, straightforward queries (cost-effective)
+- Choose "plus" for medium and complex queries (balanced quality/cost, suitable
+  for most research tasks including complex multi-faceted research)
 
 Consider how the query would naturally break down into parallel research tasks.
 More complex queries typically benefit from more workers handling different
 aspects simultaneously.
+</instructions>
+"""
+)
+
+
+# =============================================================================
+# Strategy Generator Prompts (ToT Mode)
+# =============================================================================
+
+STRATEGY_GENERATOR_SYSTEM = """You are a Strategic Research Planner using Tree of Thoughts (ToT) methodology.
+Your goal is to generate 3 different research strategies, each with a unique approach or angle.
+
+Each strategy should:
+1. Take a different perspective or research angle
+2. Have a distinct task breakdown approach
+3. Be comprehensive and feasible
+4. Cover different aspects of the query
+
+Output Format:
+You must respond with a JSON object containing exactly 3 strategies.
+Each strategy must have: strategy_id, description, tasks (list), and rationale.
+
+<format_example>
+{
+  "strategies": [
+    {
+      "strategy_id": "strategy_1",
+      "description": "Approach focusing on X aspect...",
+      "tasks": [
+        {"id": "task_1", "description": "...", "rationale": "...", "dependencies": []}
+      ],
+      "rationale": "This strategy is effective because..."
+    },
+    {
+      "strategy_id": "strategy_2",
+      "description": "Approach focusing on Y aspect...",
+      "tasks": [...],
+      "rationale": "..."
+    },
+    {
+      "strategy_id": "strategy_3",
+      "description": "Approach focusing on Z aspect...",
+      "tasks": [...],
+      "rationale": "..."
+    }
+  ],
+  "scratchpad": "Notes about the strategies..."
+}
+</format_example>
+"""
+
+STRATEGY_GENERATOR_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<memory_context>
+{memory_context}
+</memory_context>
+
+<instructions>
+Generate exactly 3 different research strategies for this complex query.
+Each strategy should:
+- Take a unique research angle or approach
+- Have distinct task breakdowns
+- Be comprehensive and feasible
+- Cover different aspects or dimensions of the query
+
+Examples of different angles:
+- Chronological vs. Thematic vs. Comparative
+- Broad overview vs. Deep dive vs. Case studies
+- Theory vs. Practice vs. Analysis
+- Different stakeholder perspectives
+- Different methodological approaches
+
+Ensure each strategy has at least 2-3 tasks that can be executed in parallel.
+</instructions>
+"""
+)
+
+
+# =============================================================================
+# Strategy Evaluator Prompts (ToT Mode)
+# =============================================================================
+
+STRATEGY_EVALUATOR_SYSTEM = """You are a Strategy Evaluation Expert.
+Your goal is to evaluate multiple research strategies and select the optimal one.
+
+Evaluation Criteria:
+1. **Coverage**: How well does the strategy cover all aspects of the query?
+2. **Feasibility**: Are the tasks realistic and executable?
+3. **Efficiency**: Is the task breakdown balanced and efficient?
+
+You must select ONE strategy (by index 0, 1, or 2) and provide detailed reasoning.
+
+Output Format:
+You must respond with a JSON object matching the `StrategyEvaluationResult` schema.
+"""
+
+STRATEGY_EVALUATOR_MAIN = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
+
+<strategies>
+{strategies_summary}
+</strategies>
+
+<instructions>
+Evaluate the 3 research strategies above and select the optimal one.
+
+Consider:
+1. **Coverage Score (0.0-1.0)**: Does the strategy comprehensively cover all aspects of the query?
+2. **Feasibility Score (0.0-1.0)**: Are the tasks realistic, well-defined, and executable?
+3. **Efficiency Score (0.0-1.0)**: Is the task breakdown balanced? Not too many (inefficient) or too few (incomplete)?
+
+Select the strategy (index 0, 1, or 2) that best balances these three criteria.
+Provide detailed reasoning explaining your selection.
 </instructions>
 """
 )

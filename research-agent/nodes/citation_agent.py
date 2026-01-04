@@ -70,16 +70,18 @@ def citation_agent_node(state: CitationAgentState):
         for i, c in enumerate(citations)
     ])
 
-    final_report = f"""# Research Report
+    final_report = f"""
 
-## Query
+
 {query}
 
-## Findings
+
 {synthesized}
 
-## Sources
+
+--------------------------------
 {citations_text}
+--------------------------------
 """
 
     print(f"  ✅ Final report created with {len(citations)} citations")
