@@ -180,6 +180,56 @@ class AgentSettings(BaseSettings):
     # The LLM will decide which sources to use based on the task requirements
     USE_SEMANTIC_SCHOLAR: bool = False
 
+    # =========================================================================
+    # Vector Store Backend Configuration
+    # =========================================================================
+
+    # Vector store backend: "chroma" or "neo4j"
+    VECTOR_STORE_BACKEND: str = "neo4j"
+
+    # =========================================================================
+    # Graph Store Backend Configuration
+    # =========================================================================
+
+    # Graph store backend: "networkx" or "neo4j"
+    GRAPH_STORE_BACKEND: str = "neo4j"
+
+    # =========================================================================
+    # Neo4j Configuration
+    # =========================================================================
+
+    # Neo4j connection URI
+    # Format: neo4j://localhost:7687 or bolt://localhost:7687
+    NEO4J_URI: str = "neo4j://localhost:7687"
+
+    # Neo4j username
+    NEO4J_USERNAME: str = "neo4j"
+
+    # Neo4j password
+    NEO4J_PASSWORD: str = "password"
+
+    # Neo4j database name (optional, defaults to "neo4j")
+    NEO4J_DATABASE: str = "neo4j"
+
+    # =========================================================================
+    # Monitoring and Tracing Configuration
+    # =========================================================================
+
+    # Enable monitoring for RAG and KG operations
+    ENABLE_MONITORING: bool = True
+
+    # Enable detailed tracing (includes full query paths, PPR scores, etc.)
+    ENABLE_DETAILED_TRACING: bool = True
+
+    # Monitoring data storage path
+    MONITORING_STORAGE_PATH: str = "monitoring_data"
+
+    # Enable visualization exports
+    ENABLE_VISUALIZATION: bool = True
+
+    # Visualization output directory
+    VISUALIZATION_OUTPUT_DIR: str = "visualizations"
+
 
 # Global singleton
 settings = AgentSettings()

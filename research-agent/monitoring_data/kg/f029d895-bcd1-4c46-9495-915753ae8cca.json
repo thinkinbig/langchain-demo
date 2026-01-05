@@ -1,0 +1,298 @@
+{
+  "trace_id": "f029d895-bcd1-4c46-9495-915753ae8cca",
+  "timestamp": "2026-01-05T16:58:23.763101",
+  "operation": "index",
+  "start_time": 1767650303.7631044,
+  "parameters": {
+    "text_preview": "2025k), discard low-utility information (Wang et al., 2025q), or restructure memory for efficient re"
+  },
+  "nodes_added": [
+    {
+      "id": "Agent",
+      "type": "Concept"
+    },
+    {
+      "id": "Memory_State",
+      "type": "Concept"
+    },
+    {
+      "id": "Memory_Formation",
+      "type": "Concept"
+    },
+    {
+      "id": "Memory_Evolution",
+      "type": "Concept"
+    },
+    {
+      "id": "Memory_Retrieval",
+      "type": "Concept"
+    },
+    {
+      "id": "Retrieval_Operator_R",
+      "type": "Technology"
+    },
+    {
+      "id": "LLM_Policy",
+      "type": "Technology"
+    },
+    {
+      "id": "Wang_et_al_2025q",
+      "type": "Person"
+    },
+    {
+      "id": "Temporal_Invocation_Pattern",
+      "type": "Concept"
+    },
+    {
+      "id": "Task_Initialization",
+      "type": "Event"
+    }
+  ],
+  "edges_added": [
+    {
+      "source": "Agent",
+      "target": "Memory_State",
+      "relation": "part_of"
+    },
+    {
+      "source": "Memory_Formation",
+      "target": "Memory_State",
+      "relation": "depends_on"
+    },
+    {
+      "source": "Memory_Evolution",
+      "target": "Memory_State",
+      "relation": "depends_on"
+    },
+    {
+      "source": "Memory_Retrieval",
+      "target": "Memory_State",
+      "relation": "uses"
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "Memory_Retrieval",
+      "relation": "enables"
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "Memory_State",
+      "relation": "uses"
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "LLM_Policy",
+      "relation": "enables"
+    },
+    {
+      "source": "Wang_et_al_2025q",
+      "target": "Memory_Formation",
+      "relation": "influences"
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Retrieval",
+      "relation": "inhibits"
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Formation",
+      "relation": "inhibits"
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Evolution",
+      "relation": "inhibits"
+    },
+    {
+      "source": "Task_Initialization",
+      "target": "Memory_Retrieval",
+      "relation": "enables"
+    }
+  ],
+  "entities_extracted": {
+    "text_preview": "2025k), discard low-utility information (Wang et al., 2025q), or restructure memory for efficient retrieval. The\nresulting memory state persists across subsequent decision steps and tasks.\nMemory Retrieval.When selecting an action, agentiretrieves a context-dependent memory signal\nmi\nt =R(M t, oi\nt,Q),\n5\nwhere R denotes a retrieval operator that constructs a task-aware query and returns relevant memory content.\nThe retrieved signalmi\nt is formatted for direct consumption by the LLM policy, for e...",
+    "nodes": [
+      {
+        "id": "Agent",
+        "type": "Concept",
+        "description": "An autonomous entity that processes information and makes decisions using memory mechanisms"
+      },
+      {
+        "id": "Memory_State",
+        "type": "Concept",
+        "description": "The persistent state of information maintained by an agent across decision steps and tasks"
+      },
+      {
+        "id": "Memory_Formation",
+        "type": "Concept",
+        "description": "Process of creating or updating memory, such as retaining high-value information or discarding low-utility data"
+      },
+      {
+        "id": "Memory_Evolution",
+        "type": "Concept",
+        "description": "Process by which memory changes over time, including restructuring for efficient access"
+      },
+      {
+        "id": "Memory_Retrieval",
+        "type": "Concept",
+        "description": "Mechanism for accessing context-dependent memory content during action selection"
+      },
+      {
+        "id": "Retrieval_Operator_R",
+        "type": "Technology",
+        "description": "Function that constructs a task-aware query and returns relevant memory content based on current observation and memory state"
+      },
+      {
+        "id": "LLM_Policy",
+        "type": "Technology",
+        "description": "Large language model used by the agent to generate actions, consuming retrieved memory as input"
+      },
+      {
+        "id": "Wang_et_al_2025q",
+        "type": "Person",
+        "description": "Researcher(s) who proposed methods for discarding low-utility information in agent memory systems"
+      },
+      {
+        "id": "Temporal_Invocation_Pattern",
+        "type": "Concept",
+        "description": "Schedule or condition under which memory operators are applied, influencing agent behavior and efficiency"
+      },
+      {
+        "id": "Task_Initialization",
+        "type": "Event",
+        "description": "Initial phase of a task where setup operations, such as one-time memory retrieval, may occur"
+      }
+    ],
+    "edges": [
+      {
+        "source": "Agent",
+        "target": "Memory_State",
+        "relation": "part_of",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "memory state persists across decision steps and tasks"
+        }
+      },
+      {
+        "source": "Memory_Formation",
+        "target": "Memory_State",
+        "relation": "depends_on",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "formation involves retaining high-value information or discarding low-utility data (Wang et al., 2025q)"
+        }
+      },
+      {
+        "source": "Memory_Evolution",
+        "target": "Memory_State",
+        "relation": "depends_on",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "evolution includes restructuring memory for efficient retrieval"
+        }
+      },
+      {
+        "source": "Memory_Retrieval",
+        "target": "Memory_State",
+        "relation": "uses",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "retrieves context-dependent signal from current memory state M_t"
+        }
+      },
+      {
+        "source": "Retrieval_Operator_R",
+        "target": "Memory_Retrieval",
+        "relation": "enables",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "R constructs task-aware query Q and returns relevant memory content m_i_t"
+        }
+      },
+      {
+        "source": "Retrieval_Operator_R",
+        "target": "Memory_State",
+        "relation": "uses",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "takes M_t and observation o_i_t as inputs"
+        }
+      },
+      {
+        "source": "Retrieval_Operator_R",
+        "target": "LLM_Policy",
+        "relation": "enables",
+        "properties": {
+          "version": "",
+          "confidence": "medium",
+          "context": "formats retrieved signal for direct consumption by LLM policy, e.g., as textual snippets or structured summary"
+        }
+      },
+      {
+        "source": "Wang_et_al_2025q",
+        "target": "Memory_Formation",
+        "relation": "influences",
+        "properties": {
+          "version": "2025q",
+          "confidence": "high",
+          "context": "proposed discarding low-utility information in memory formation"
+        }
+      },
+      {
+        "source": "Temporal_Invocation_Pattern",
+        "target": "Memory_Retrieval",
+        "relation": "inhibits",
+        "properties": {
+          "version": "",
+          "confidence": "medium",
+          "context": "some systems perform retrieval only at task initialization (t=0), not at later steps (t>0)"
+        }
+      },
+      {
+        "source": "Temporal_Invocation_Pattern",
+        "target": "Memory_Formation",
+        "relation": "inhibits",
+        "properties": {
+          "version": "",
+          "confidence": "medium",
+          "context": "lifecycle operators F, E, R need not be invoked at every time step"
+        }
+      },
+      {
+        "source": "Temporal_Invocation_Pattern",
+        "target": "Memory_Evolution",
+        "relation": "inhibits",
+        "properties": {
+          "version": "",
+          "confidence": "medium",
+          "context": "lifecycle operators F, E, R need not be invoked at every time step"
+        }
+      },
+      {
+        "source": "Task_Initialization",
+        "target": "Memory_Retrieval",
+        "relation": "enables",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": "retrieval occurs once at t=0: m_i_t = R(M0, oi_0, Q) when t=0, otherwise ⊥"
+        }
+      }
+    ],
+    "extraction_time": 26.1552574634552
+  },
+  "ppr_calculation": null,
+  "performance": {
+    "operation_time": 26.16050100326538,
+    "nodes_processed": 10,
+    "edges_processed": 12
+  },
+  "document_source": "2512.13564v1.pdf"
+}

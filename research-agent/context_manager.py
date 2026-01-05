@@ -12,10 +12,11 @@ import glob
 import os
 from typing import List, Tuple
 
-from langchain_chroma import Chroma
 from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from memory.factory import create_vector_store
+from memory.vector_store import VectorStore
 
 # Global cache for the loaded knowledge retrieval
 # RAG Implementation
@@ -35,12 +36,12 @@ class EnhancedRetriever:
     - Deduplication
     """
 
-    def __init__(self, vector_store: Chroma):
+    def __init__(self, vector_store: VectorStore):
         """
         Initialize enhanced retriever.
 
         Args:
-            vector_store: Chroma vector store instance
+            vector_store: VectorStore instance (abstract interface)
         """
         self.vector_store = vector_store
 
@@ -274,64 +275,197 @@ class VectorStoreManager:
         self.persist_dir = os.path.join(base_dir, persist_dir)
         self.data_dir = os.path.join(base_dir, data_dir)
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-        self.vector_store = Chroma(
+
+        # Use factory to create vector store
+        self.vector_store = create_vector_store(
             collection_name="enterprise_knowledge",
             embedding_function=self.embeddings,
-            persist_directory=self.persist_dir,
+            persist_directory=self.persist_dir
         )
+
         # Initialize enhanced retriever
         self.enhanced_retriever = EnhancedRetriever(self.vector_store)
 
+    def _is_source_ingested(self, source: str) -> bool:
+        """Check if a document source is already in the vector store."""
+        import json
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested_start", "message": "checking if source ingested", "data": {"source": source}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+        try:
+            # Try to find documents with this source in metadata using filter
+            # Use a simple query to search, then filter by metadata
+            results = self.vector_store.similarity_search(
+                query="document",  # Use a common word instead of empty string
+                k=1000,  # Get many results to check sources
+                filter={"source": source}
+            )
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested_filter", "message": "filter check result", "data": {"source": source, "found_count": len(results)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
+            return len(results) > 0
+        except Exception as e:
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested_filter_error", "message": "filter check failed, trying fallback", "data": {"source": source, "error": str(e), "error_type": type(e).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
+            # If filtering fails, fallback: search and check metadata manually
+            try:
+                results = self.vector_store.similarity_search(query="document", k=1000)
+                # #region debug log
+                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested_fallback", "message": "fallback search result", "data": {"source": source, "total_results": len(results)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                # #endregion
+                for doc in results:
+                    if doc.metadata.get("source") == source:
+                        # #region debug log
+                        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested", "message": "source found via fallback", "data": {"source": source}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                        # #endregion
+                        return True
+            except Exception as e2:
+                # #region debug log
+                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested_fallback_error", "message": "fallback also failed", "data": {"source": source, "error": str(e2), "error_type": type(e2).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                # #endregion
+                pass
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:_is_source_ingested", "message": "source not found, returning False", "data": {"source": source}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
+            return False
+
     def ingest_documents(self):
-        """Check for documents and ingest if DB is likely empty or upon request."""
-        # Simple check: if DB has data, skip (for MVP).
-        # In prod, we'd check file hashes.
-        existing_count = self.vector_store._collection.count()
-        if existing_count > 0:
+        """Check for documents and ingest missing ones."""
+        # #region debug log
+        import json
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:289", "message": "ingest_documents called", "data": {"data_dir": self.data_dir, "persist_dir": self.persist_dir}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+
+        existing_count = self.vector_store.get_collection_count()
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:293", "message": "collection count check", "data": {"existing_count": existing_count}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+
+        documents = []
+        files_to_ingest = []
+
+        # 1. Collect all text files
+        text_files = glob.glob(os.path.join(self.data_dir, "*.txt")) + \
+                     glob.glob(os.path.join(self.data_dir, "*.md")) + \
+                     glob.glob(os.path.join(self.data_dir, "*.csv"))
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "context_manager.py:310", "message": "text files found", "data": {"count": len(text_files), "files": text_files}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+
+        # 2. Collect all PDF files
+        pdf_files = glob.glob(os.path.join(self.data_dir, "*.pdf"))
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "context_manager.py:322", "message": "PDF files found", "data": {"count": len(pdf_files), "files": pdf_files, "data_dir": self.data_dir, "glob_pattern": os.path.join(self.data_dir, "*.pdf")}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+
+        # 3. Check which files need to be ingested
+        all_files = [(f, "text") for f in text_files] + [(f, "pdf") for f in pdf_files]
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_start", "message": "starting file check loop", "data": {"total_files": len(all_files)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
+        for file_path, file_type in all_files:
+            source = os.path.basename(file_path)
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_loop", "message": "checking file", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
+            try:
+                is_ingested = self._is_source_ingested(source)
+                # #region debug log
+                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_result", "message": "check result", "data": {"source": source, "is_ingested": is_ingested}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                # #endregion
+                if not is_ingested:
+                    files_to_ingest.append((file_path, file_type, source))
+                    # #region debug log
+                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files", "message": "file needs ingestion", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                    # #endregion
+                else:
+                    # #region debug log
+                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files", "message": "file already ingested", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                    # #endregion
+            except Exception as e:
+                # #region debug log
+                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_error", "message": "error checking file", "data": {"file_path": file_path, "source": source, "error": str(e), "error_type": type(e).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                # #endregion
+                # If check fails, assume file needs ingestion to be safe
+                files_to_ingest.append((file_path, file_type, source))
+
+        if not files_to_ingest:
             msg = (
                 f"  📚 Knowledge Base loaded from persistence "
                 f"({existing_count} chunks)."
             )
             print(msg)
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:no_new_files", "message": "all files already ingested", "data": {"existing_count": existing_count}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
             return
 
-        print("  📚 Ingesting documents into Vector Store (First Run)...")
-        documents = []
+        print(f"  📚 Ingesting {len(files_to_ingest)} new document(s) into Vector Store...")
 
-        # 1. Load Texts
-        text_files = glob.glob(os.path.join(self.data_dir, "*.txt")) + \
-                     glob.glob(os.path.join(self.data_dir, "*.md")) + \
-                     glob.glob(os.path.join(self.data_dir, "*.csv"))
-
-        for file_path in text_files:
+        # 4. Load files that need ingestion
+        for file_path, file_type, source in files_to_ingest:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    text = f.read()
+                if file_type == "text":
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        text = f.read()
                     documents.append(Document(
                         page_content=text,
-                        metadata={"source": os.path.basename(file_path)}
+                        metadata={"source": source}
+                    ))
+                elif file_type == "pdf":
+                    # #region debug log
+                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:325", "message": "PDF extraction started", "data": {"file_path": file_path, "file_exists": os.path.exists(file_path)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                    # #endregion
+                    from pypdf import PdfReader
+                    reader = PdfReader(file_path)
+                    text = ""
+                    for page in reader.pages:
+                        text += page.extract_text() + "\n"
+                    # #region debug log
+                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:330", "message": "PDF extraction completed", "data": {"file_path": file_path, "text_length": len(text), "pages": len(reader.pages)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                    # #endregion
+                    documents.append(Document(
+                        page_content=text,
+                        metadata={"source": source}
                     ))
             except Exception as e:
                 print(f"  ❌ Failed to load {file_path}: {e}")
+                # #region debug log
+                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:335", "message": "file extraction failed", "data": {"file_path": file_path, "error": str(e), "error_type": type(e).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
+                # #endregion
 
-        # 2. Load PDFs
-        pdf_files = glob.glob(os.path.join(self.data_dir, "*.pdf"))
-        for file_path in pdf_files:
-            try:
-                from pypdf import PdfReader
-                reader = PdfReader(file_path)
-                text = ""
-                for page in reader.pages:
-                    text += page.extract_text() + "\n"
-                documents.append(Document(
-                    page_content=text,
-                    metadata={"source": os.path.basename(file_path)}
-                ))
-            except Exception as e:
-                print(f"  ❌ Failed to load PDF {file_path}: {e}")
-
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:337", "message": "documents before split", "data": {"count": len(documents), "sources": [d.metadata.get("source") for d in documents]}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
         if not documents:
             print("  ⚠️  No documents found to ingest.")
+            # #region debug log
+            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:339", "message": "no documents to ingest", "data": {}, "timestamp": __import__("time").time() * 1000}) + "\n")
+            # #endregion
             return
 
         # 3. Split
@@ -341,9 +475,17 @@ class VectorStoreManager:
         )
         splits = text_splitter.split_documents(documents)
         print(f"  🧩 Split {len(documents)} docs into {len(splits)} chunks.")
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:347", "message": "documents after split", "data": {"original_count": len(documents), "chunks_count": len(splits)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
 
         # 4. Index into vector store
         self.vector_store.add_documents(splits)
+        # #region debug log
+        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
+            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "D", "location": "context_manager.py:351", "message": "documents added to vector store", "data": {"chunks_added": len(splits)}, "timestamp": __import__("time").time() * 1000}) + "\n")
+        # #endregion
         print("  ✅ Vector store ingestion complete.")
 
         # 5. Index into Knowledge Graph (if enabled)
@@ -399,7 +541,18 @@ class VectorStoreManager:
 
         from config import settings
 
+        # Start monitoring if enabled
+        rag_monitor = None
+        if settings.ENABLE_MONITORING:
+            from monitoring.tracer import get_tracer
+            tracer = get_tracer()
+            rag_trace_context = tracer.trace_rag_retrieval(query, k)
+            rag_monitor = rag_trace_context.__enter__()
+
         # Step 1: Vector search (always performed)
+        import time
+        vector_start = time.time()
+
         if use_reranking:
             # Use enhanced retrieval with reranking
             vector_results = self.enhanced_retriever.retrieve_with_reranking(
@@ -411,6 +564,7 @@ class VectorStoreManager:
 
             # Convert to document list (results are already reranked)
             relevant_results = [doc for doc, score in vector_results]
+            scores = [score for _, score in vector_results]
         else:
             # Fallback to original retrieval method
             results_with_score = self.vector_store.similarity_search_with_score(
@@ -418,17 +572,31 @@ class VectorStoreManager:
             )
 
             relevant_results = []
+            scores = []
             for doc, score in results_with_score:
                 if score < settings.RETRIEVAL_L2_THRESHOLD:
                     relevant_results.append(doc)
+                    scores.append(score)
+
+        vector_time = time.time() - vector_start
+
+        # Record vector search
+        if rag_monitor:
+            rag_monitor.record_vector_search(relevant_results, scores, "similarity_search")
 
         # Step 2: PPR-based graph retrieval (if enabled)
         ppr_document_sources = set()
         ppr_context = ""
+        ppr_time = None
+        query_entities = []
+        top_nodes = []
+
         if settings.GRAPH_ENABLED and settings.USE_PPR_RETRIEVAL:
             try:
                 from memory.graph_rag import GraphRAGManager
                 graph_rag_manager = GraphRAGManager()
+
+                ppr_start = time.time()
 
                 # Get PPR-based retrieval results
                 ppr_context = graph_rag_manager.retrieve_with_ppr(
@@ -461,6 +629,17 @@ class VectorStoreManager:
                             )
                         )
 
+                ppr_time = time.time() - ppr_start
+
+                # Record PPR retrieval
+                if rag_monitor:
+                    rag_monitor.record_ppr_retrieval(
+                        query_entities,
+                        top_nodes,
+                        list(ppr_document_sources),
+                        ppr_context
+                    )
+
             except Exception as e:
                 print(f"  ⚠️  PPR retrieval failed: {e}")
                 # Graceful degradation: continue without PPR
@@ -486,10 +665,8 @@ class VectorStoreManager:
             for source in list(ppr_only_sources)[:settings.PPR_TOP_K_DOCS]:
                 try:
                     # Search for documents containing the source name
-                    source_results = (
-                        self.vector_store.similarity_search_with_score(
-                            source, k=2
-                        )
+                    source_results = self.vector_store.similarity_search_with_score(
+                        source, k=2
                     )
                     for doc, _ in source_results:
                         if doc.metadata.get("source") == source:
@@ -526,23 +703,38 @@ class VectorStoreManager:
 
         # Step 6: Format output
         if not all_results:
-            return "(No relevant internal documents found)", []
+            result_context = "(No relevant internal documents found)"
+            result_sources = []
+        else:
+            context_parts = []
+            sources = set()
+            for doc in all_results[:k]:  # Limit to k results
+                source = doc.metadata.get("source", "Unknown")
+                sources.add(source)
+                context_parts.append(f"Source: {source}\nContent:\n{doc.page_content}\n---")
 
-        context_parts = []
-        sources = set()
-        for doc in all_results[:k]:  # Limit to k results
-            source = doc.metadata.get("source", "Unknown")
-            sources.add(source)
-            context_parts.append(f"Source: {source}\nContent:\n{doc.page_content}\n---")
+            # Add PPR context as additional information (if available)
+            if ppr_context and settings.USE_PPR_RETRIEVAL:
+                context_parts.append(
+                    f"\n--- Knowledge Graph Context (PPR-based) ---\n"
+                    f"{ppr_context}"
+                )
 
-        # Add PPR context as additional information (if available)
-        if ppr_context and settings.USE_PPR_RETRIEVAL:
-            context_parts.append(
-                f"\n--- Knowledge Graph Context (PPR-based) ---\n"
-                f"{ppr_context}"
+            result_context = "\n".join(context_parts)
+            result_sources = list(sources)
+
+        # Record final results and performance
+        if rag_monitor:
+            rerank_time = None  # Could be tracked separately if needed
+            rag_monitor.record_final_results(all_results[:k], result_sources, result_context)
+            rag_monitor.record_performance(
+                vector_search_time=vector_time,
+                ppr_time=ppr_time,
+                rerank_time=rerank_time
             )
+            rag_monitor.end_trace()
 
-        return "\n".join(context_parts), list(sources)
+        return result_context, result_sources
 
 
 def get_vector_manager():

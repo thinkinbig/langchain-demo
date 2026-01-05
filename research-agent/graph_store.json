@@ -1,0 +1,6479 @@
+{
+  "nodes": [
+    {
+      "id": "Project Alpha",
+      "type": "Product",
+      "description": "Next-generation Context Engineering engine designed to optimize LLM memory usage, currently in Phase 2 development"
+    },
+    {
+      "id": "DeepBlue",
+      "type": "Product",
+      "description": "Code name for Project Alpha, used internally during development"
+    },
+    {
+      "id": "Dr. Emily Chen",
+      "type": "Person",
+      "description": "Lead researcher and project lead for Project Alpha"
+    },
+    {
+      "id": "Team Z",
+      "type": "Organization",
+      "description": "Engineering team responsible for developing Project Alpha"
+    },
+    {
+      "id": "Sarah Jones",
+      "type": "Person",
+      "description": "Product manager overseeing the product direction of Project Alpha"
+    },
+    {
+      "id": "Context Engineering",
+      "type": "Concept",
+      "description": "The practice of structuring and optimizing input contexts for LLMs to enhance performance and consistency"
+    },
+    {
+      "id": "Long-Term Memory",
+      "type": "Concept",
+      "description": "Component of Project Alpha that caches system prompts for reuse across sessions"
+    },
+    {
+      "id": "Scratchpad",
+      "type": "Concept",
+      "description": "Iterative working memory module enabling temporary data storage during LLM reasoning processes"
+    },
+    {
+      "id": "State Isolation",
+      "type": "Concept",
+      "description": "Technique used to prevent context leakage or pollution between different tasks or user sessions"
+    },
+    {
+      "id": "Prompt Caching",
+      "type": "Technology",
+      "description": "Optimization strategy to reduce time-to-first-token (TTFT) by reusing previously processed prompts"
+    },
+    {
+      "id": "API Latency",
+      "type": "Metric",
+      "description": "Performance metric measuring delay in API responses; currently at 200ms, higher than desired threshold"
+    },
+    {
+      "id": "Yuyang Hu",
+      "type": "Person",
+      "description": "Researcher affiliated with Renmin University of China, contact author of the survey"
+    },
+    {
+      "id": "Shichun Liu",
+      "type": "Person",
+      "description": "Researcher affiliated with Fudan University, maintainer of the GitHub repository for the paper list"
+    },
+    {
+      "id": "Yanwei Yue",
+      "type": "Person",
+      "description": "Core contributor to the survey on memory in AI agents, listed alphabetically among contributors"
+    },
+    {
+      "id": "Guibin Zhang",
+      "type": "Person",
+      "description": "Researcher affiliated with National University of Singapore, contact author of the survey"
+    },
+    {
+      "id": "Boyang Liu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Fangyi Zhu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Jiahang Lin",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Honglin Guo",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Shihan Dou",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhiheng Xi",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Senjie Jin",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Jiejun Tan",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yanbin Yin",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Jiongnan Liu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zeyu Zhang",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhongxiang Sun",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yutao Zhu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Hao Sun",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Boci Peng",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhenrong Cheng",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Xuanbo Fan",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Jiaxin Guo",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Xinlei Yu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhenhong Zhou",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zewen Hu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Jiahao Huo",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Junhao Wang",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yuwei Niu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yu Wang",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhenfei Yin",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Xiaobin Hu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yue Liao",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Qiankun Li",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Kun Wang",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Wangchunshu Zhou",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Yixin Liu",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Dawei Cheng",
+      "type": "Person",
+      "description": "Contributor to the survey on memory in AI agents"
+    },
+    {
+      "id": "Qi Zhang",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Tao Gui",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Shirui Pan",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Yan Zhang",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Philip Torr",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Zhicheng Dou",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Ji-Rong Wen",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Xuanjing Huang",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Yu-Gang Jiang",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Shuicheng Yan",
+      "type": "Person",
+      "description": "Core supervisor of the survey on memory in AI agents"
+    },
+    {
+      "id": "Memory in the Age of AI Agents: A Survey",
+      "type": "Concept",
+      "description": "Survey paper exploring the forms, functions, and dynamics of memory in AI agents"
+    },
+    {
+      "id": "National University of Singapore",
+      "type": "Organization",
+      "description": "Public research university in Singapore where Guibin Zhang is affiliated"
+    },
+    {
+      "id": "Renmin University of China",
+      "type": "Organization",
+      "description": "National university in Beijing, China where Yuyang Hu is affiliated"
+    },
+    {
+      "id": "Fudan University",
+      "type": "Organization",
+      "description": "Public university in Shanghai, China where Shichun Liu is affiliated"
+    },
+    {
+      "id": "Peking University",
+      "type": "Organization",
+      "description": "Public university in Beijing, China where Yue Wang is affiliated"
+    },
+    {
+      "id": "Nanyang Technological University",
+      "type": "Organization",
+      "description": "Singapore-based research-intensive university with strong AI and machine learning programs"
+    },
+    {
+      "id": "Tongji University",
+      "type": "Organization",
+      "description": "Chinese university contributing to technological and computational research, including AI systems"
+    },
+    {
+      "id": "University of California",
+      "type": "Organization",
+      "description": "Affiliated institution of some contributors to the survey on memory in AI agents"
+    },
+    {
+      "id": "University of California San Diego",
+      "type": "Organization",
+      "description": "American public research university known for contributions to cognitive science and AI"
+    },
+    {
+      "id": "Hong Kong University of Science and Technology (Guangzhou)",
+      "type": "Organization",
+      "description": "Research university in China focusing on interdisciplinary science and technology, including AI"
+    },
+    {
+      "id": "Griffith University",
+      "type": "Organization",
+      "description": "Australian university involved in AI ethics and cognitive modeling research"
+    },
+    {
+      "id": "Georgia Institute of Technology",
+      "type": "Organization",
+      "description": "U.S. research university with strong programs in robotics, AI, and agent architectures"
+    },
+    {
+      "id": "OPPO",
+      "type": "Organization",
+      "description": "Chinese technology company investing in AI research, particularly in mobile and edge intelligence"
+    },
+    {
+      "id": "Oxford University",
+      "type": "Organization",
+      "description": "World-renowned UK university conducting foundational research in AI, reasoning, and agent memory"
+    },
+    {
+      "id": "Agent Memory",
+      "type": "Concept",
+      "description": "A core component of agentic systems that enables storage, retrieval, and use of information over time to support autonomous behavior and learning"
+    },
+    {
+      "id": "Foundation Model-Based Agents",
+      "type": "Technology",
+      "description": "AI agents built upon large-scale foundation models that leverage memory for complex decision-making and learning over time"
+    },
+    {
+      "id": "Long-Horizon Reasoning",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Continual Adaptation",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Complex Environment Interaction",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "agent memory",
+      "type": "Concept",
+      "description": "The general notion of memory in autonomous agents, encompassing storage, retrieval, and utilization of information"
+    },
+    {
+      "id": "long/short-term memory",
+      "type": "Concept",
+      "description": "Traditional cognitive-inspired memory classification based on duration of retention; often used in neural network architectures like LSTMs."
+    },
+    {
+      "id": "LLM memory",
+      "type": "Concept",
+      "description": "Refers to the implicit or explicit mechanisms by which large language models retain and use knowledge, often conflated with agent memory but distinct in scope."
+    },
+    {
+      "id": "retrieval augmented generation",
+      "type": "Technology",
+      "description": "A technique that enhances language model outputs by retrieving external knowledge at inference time; sometimes confused with agent memory systems."
+    },
+    {
+      "id": "context engineering",
+      "type": "Concept",
+      "description": "The practice of designing and managing contextual information to improve agent performance and decision-making"
+    },
+    {
+      "id": "token-level memory",
+      "type": "Technology",
+      "description": "A memory implementation that stores information at the token level, often within model inputs or context windows"
+    },
+    {
+      "id": "parametric memory",
+      "type": "Technology",
+      "description": "Memory stored implicitly in model parameters, updated via training or fine-tuning processes"
+    },
+    {
+      "id": "latent memory",
+      "type": "Technology",
+      "description": "Memory represented in latent vector spaces, enabling compact and structured storage of learned experiences"
+    },
+    {
+      "id": "agent memory forms",
+      "type": "Concept",
+      "description": "The structural realizations of memory in agents, categorized into token-level, parametric, and latent memory."
+    },
+    {
+      "id": "agent memory functions",
+      "type": "Concept",
+      "description": "The functional roles of agent memory, such as recall, adaptation, planning, and learning, going beyond simple temporal categorizations."
+    },
+    {
+      "id": "agent memory dynamics",
+      "type": "Concept",
+      "description": "The temporal and behavioral characteristics of how agent memory evolves, including updating, forgetting, and retrieval patterns over time."
+    },
+    {
+      "id": "factual memory",
+      "type": "Concept",
+      "description": "Functional type of agent memory that records factual knowledge from user and environmental interactions"
+    },
+    {
+      "id": "experiential memory",
+      "type": "Concept",
+      "description": "Functional memory that accumulates experience over time to enhance an agent’s problem-solving capabilities"
+    },
+    {
+      "id": "working memory",
+      "type": "Concept",
+      "description": "Short-term workspace memory used by agents to manage information during active task execution"
+    },
+    {
+      "id": "memory dynamics",
+      "type": "Concept",
+      "description": "The study of how memory is formed, updated, evolved, and retrieved over time as agents interact with environments"
+    },
+    {
+      "id": "benchmarks",
+      "type": "Technology",
+      "description": "Standardized evaluation tasks used to measure the performance and capabilities of memory systems in agents"
+    },
+    {
+      "id": "open source memory frameworks",
+      "type": "Technology",
+      "description": "Publicly available software libraries and platforms designed to implement and experiment with agent memory systems"
+    },
+    {
+      "id": "automation-oriented memory design",
+      "type": "Concept",
+      "description": "An emerging research direction focusing on designing memory systems optimized for autonomous operation and task automation"
+    },
+    {
+      "id": "reinforcement learning",
+      "type": "Technology",
+      "description": "A machine learning paradigm where agents learn optimal behaviors through environmental feedback and reward signals"
+    },
+    {
+      "id": "multimodal memory",
+      "type": "Concept",
+      "description": "Memory systems capable of integrating and retrieving information across multiple modalities such as text, vision, and audio"
+    },
+    {
+      "id": "shared memory",
+      "type": "Concept",
+      "description": "A memory architecture in multi-agent systems where agents can access or contribute to a common memory space"
+    },
+    {
+      "id": "multi-agent systems",
+      "type": "Technology",
+      "description": "Systems composed of multiple interacting agents that may collaborate or compete to achieve individual or collective goals"
+    },
+    {
+      "id": "trustworthiness issues",
+      "type": "Concept",
+      "description": "Challenges related to the reliability, safety, interpretability, and ethical use of memory systems in AI agents"
+    },
+    {
+      "id": "formed",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "evolved",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "retrieved",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Reinforcement Learning",
+      "type": "Technology",
+      "description": "Machine learning paradigm used to internalize reasoning and tool-use within agent models"
+    },
+    {
+      "id": "Memory Systems",
+      "type": "Concept",
+      "description": "Mechanisms that store and retrieve information for use in decision-making and learning processes in intelligent agents"
+    },
+    {
+      "id": "Multimodal Memory",
+      "type": "Concept",
+      "description": "Memory systems capable of handling and integrating multiple data modalities such as text, image, and audio"
+    },
+    {
+      "id": "Shared Memory",
+      "type": "Concept",
+      "description": "Memory infrastructure enabling information sharing among multiple agents in collaborative environments"
+    },
+    {
+      "id": "Multi-Agent Systems",
+      "type": "Technology",
+      "description": "Systems composed of multiple interacting intelligent agents working collectively or competitively toward goals"
+    },
+    {
+      "id": "Trustworthiness Issues",
+      "type": "Concept",
+      "description": "Challenges related to reliability, safety, interpretability, and ethical behavior in AI systems, especially involving memory"
+    },
+    {
+      "id": "Agentic Intelligence",
+      "type": "Concept",
+      "description": "Autonomous, goal-directed intelligence capable of reasoning, planning, and acting with agency over time"
+    },
+    {
+      "id": "Large Language Models",
+      "type": "Technology",
+      "description": "Deep learning models trained on vast text corpora to understand and generate human-like language"
+    },
+    {
+      "id": "Yue Wang",
+      "type": "Person",
+      "description": "Researcher affiliated with Peking University, contact author of the survey"
+    },
+    {
+      "id": "Agent-Memory-Paper-List",
+      "type": "Product",
+      "description": "GitHub repository curating research papers on agent memory systems"
+    },
+    {
+      "id": "Survey on Agent Memory",
+      "type": "Product",
+      "description": "Academic survey paper synthesizing research on memory in agentic AI systems"
+    },
+    {
+      "id": "LLMs",
+      "type": "Technology",
+      "description": "Large Language Models serving as the foundation for AI agents"
+    },
+    {
+      "id": "AI agents",
+      "type": "Technology",
+      "description": "Intelligent systems powered by foundation models, capable of performing complex tasks autonomously"
+    },
+    {
+      "id": "Matarazzo and Torlone",
+      "type": "Person",
+      "description": "Researchers who contributed to the development or understanding of AI agents in 2025"
+    },
+    {
+      "id": "Minaee et al.",
+      "type": "Person",
+      "description": "Research group led by Minaee that contributed to AI agent advancements in 2025"
+    },
+    {
+      "id": "Luo et al.",
+      "type": "Person",
+      "description": "Research group led by Luo that contributed to AI agent developments in 2025"
+    },
+    {
+      "id": "Xu and Peng",
+      "type": "Person",
+      "description": "Researchers who applied AI agents to deep research in 2025"
+    },
+    {
+      "id": "Zhang et al.",
+      "type": "Person",
+      "description": "Researcher or group of researchers contributing to the study of agentic faculties and memory in AI agents"
+    },
+    {
+      "id": "Wang et al.",
+      "type": "Person",
+      "description": "Contributor to research on navigation in embodied settings"
+    },
+    {
+      "id": "Wei et al.",
+      "type": "Person",
+      "description": "Research group led by Wei that contributed to scientific discovery using AI agents in 2025"
+    },
+    {
+      "id": "unified taxonomy",
+      "type": "Concept",
+      "description": "A classification framework organizing agent memory by form, function, and dynamics as presented in Section 3, 4, and 5 of the paper"
+    },
+    {
+      "id": "arXiv:2512.13564v1",
+      "type": "Event",
+      "description": "Academic preprint publication on arXiv dated December 15, 2025, in the field of Computation and Language (cs.CL)"
+    },
+    {
+      "id": "GitHub",
+      "type": "Organization",
+      "description": "Web-based platform used for version control and issue tracking, referenced here as a channel for feedback on the paper"
+    },
+    {
+      "id": "deep research",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "software engineering",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "scientific discovery",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Wei et al., 2025c",
+      "type": "Concept",
+      "description": "A scientific discovery contributing to the advancement toward artificial general intelligence"
+    },
+    {
+      "id": "Artificial General Intelligence",
+      "type": "Concept",
+      "description": "Hypothetical form of AI capable of understanding, learning, and applying knowledge across diverse domains"
+    },
+    {
+      "id": "Fang et al., 2025a",
+      "type": "Concept",
+      "description": "Research work supporting progress toward artificial general intelligence"
+    },
+    {
+      "id": "Durante et al., 2024",
+      "type": "Concept",
+      "description": "Research contributing to foundational understanding in the path toward AGI"
+    },
+    {
+      "id": "Agent",
+      "type": "Concept",
+      "description": "An autonomous entity that processes information and makes decisions using memory mechanisms"
+    },
+    {
+      "id": "LLM backbone",
+      "type": "Technology",
+      "description": "Large language model serving as the foundational component for intelligent agents"
+    },
+    {
+      "id": "Reasoning",
+      "type": "Concept",
+      "description": "Cognitive capability enabling logical inference and problem-solving in agents"
+    },
+    {
+      "id": "Planning",
+      "type": "Concept",
+      "description": "Ability of agents to formulate sequences of actions to achieve goals"
+    },
+    {
+      "id": "Perception",
+      "type": "Concept",
+      "description": "Capability allowing agents to interpret and understand environmental inputs"
+    },
+    {
+      "id": "Memory",
+      "type": "Concept",
+      "description": "A core agentic faculty enabling AI systems to retain and use historical information for adaptation"
+    },
+    {
+      "id": "Tool-use",
+      "type": "Concept",
+      "description": "Ability of agents to interact with external tools and APIs to extend functionality"
+    },
+    {
+      "id": "Wang et al., 2025l",
+      "type": "Concept",
+      "description": "Research demonstrating internalization of agent capabilities via reinforcement learning"
+    },
+    {
+      "id": "Qu et al., 2025b",
+      "type": "Concept",
+      "description": "Study showing how reinforcement learning embeds tool-use skills into model parameters"
+    },
+    {
+      "id": "Agentic Scaffold",
+      "type": "Technology",
+      "description": "External architectural support structure that provides capabilities not fully internalized in the model"
+    },
+    {
+      "id": "Learnable Policy",
+      "type": "Concept",
+      "description": "Framework transforming LLMs into adaptive systems that evolve through interaction with environments"
+    },
+    {
+      "id": "Zhang et al., 2025f",
+      "type": "Concept",
+      "description": "Research illustrating how agents become learnable policies through environmental interaction"
+    },
+    {
+      "id": "Wu et al.",
+      "type": "Person",
+      "description": "Researcher contributing to advancements in natural-language generation"
+    },
+    {
+      "id": "Chhikara et al.",
+      "type": "Person",
+      "description": "Researchers focused on personalized chatbots requiring persistent memory in agents"
+    },
+    {
+      "id": "Li et al.",
+      "type": "Person",
+      "description": "Researcher involved in studies on natural-language generation and tool invocation"
+    },
+    {
+      "id": "Liu et al.",
+      "type": "Person",
+      "description": "Researcher contributing to planning actions in autonomous agents"
+    },
+    {
+      "id": "Park et al.",
+      "type": "Person",
+      "description": "Researchers developing social simulations using agents with memory capabilities"
+    },
+    {
+      "id": "Yang et al.",
+      "type": "Person",
+      "description": "Researchers applying memory-enabled agents in social simulation contexts"
+    },
+    {
+      "id": "Hendrycks et al.",
+      "type": "Person",
+      "description": "Researchers advancing AGI goals, particularly continual evolution through environmental interaction"
+    },
+    {
+      "id": "LLM",
+      "type": "Technology",
+      "description": "Large Language Models, static in parameters but made adaptive through memory mechanisms"
+    },
+    {
+      "id": "Adaptive Agent",
+      "type": "Concept",
+      "description": "An AI agent capable of continual adaptation via environmental interaction, enabled by memory"
+    },
+    {
+      "id": "Personalized Chatbot",
+      "type": "Product",
+      "description": "Conversational AI application requiring proactive memory management for user personalization"
+    },
+    {
+      "id": "Recommender System",
+      "type": "Product",
+      "description": "System that uses historical user data and interactions to provide tailored recommendations"
+    },
+    {
+      "id": "Social Simulation",
+      "type": "Application",
+      "description": "Domain where agents simulate human-like behaviors over time using stored experiences"
+    },
+    {
+      "id": "Financial Investigation",
+      "type": "Application",
+      "description": "Use case relying on agents’ ability to process and recall complex transaction histories"
+    },
+    {
+      "id": "AGI Research",
+      "type": "Concept",
+      "description": "Field aiming to create artificial general intelligence with capacities like continual learning"
+    },
+    {
+      "id": "Continual Evolution",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Hendrycks et al., 2025",
+      "type": "Person",
+      "description": "Researchers who contributed to the understanding of continual evolution in AI agents through environment interactions, emphasizing the role of memory"
+    },
+    {
+      "id": "Taxonomy",
+      "type": "Concept",
+      "description": "A classification system for organizing agent memory research; current work argues for an updated version due to recent advances"
+    },
+    {
+      "id": "Zhang et al., 2025r",
+      "type": "Person",
+      "description": "Researchers who conducted a prior survey on agent memory systems, providing foundational taxonomies now considered outdated"
+    },
+    {
+      "id": "Wu et al., 2025g",
+      "type": "Person",
+      "description": "Researchers who contributed earlier comprehensive overviews of agent memory, whose frameworks preceded key methodological advances"
+    },
+    {
+      "id": "Memory Frameworks",
+      "type": "Technology",
+      "description": "Systems that structure how agents store, retrieve, and utilize memories, including recent methods that extract reusable tools from past experiences"
+    },
+    {
+      "id": "Qiu et al., 2025a",
+      "type": "Concept",
+      "description": "Reference to prior work on reusable tools in agentic systems, indicating established but underrepresented approaches"
+    },
+    {
+      "id": "Qiu et al., 2025c",
+      "type": "Concept",
+      "description": "Reference to additional work by Qiu et al. on reusable tools, contributing to cumulative knowledge on tool reuse"
+    },
+    {
+      "id": "Zhao et al., 2025c",
+      "type": "Concept",
+      "description": "Reference to research on reusable tools from past experiences, reinforcing the theme of underutilized methodologies"
+    },
+    {
+      "id": "Test-Time Scaling",
+      "type": "Concept",
+      "description": "An emerging technique where memory augmentation improves agent performance during inference or deployment by dynamically leveraging past experiences"
+    },
+    {
+      "id": "Zhang et al., 2025g",
+      "type": "Concept",
+      "description": "Research on memory-augmented test-time scaling methods, representing emerging trends in agent memory"
+    },
+    {
+      "id": "Suzgun et al., 2025",
+      "type": "Concept",
+      "description": "Study on memory-augmented test-time scaling, highlighting advanced techniques for dynamic reasoning in agents"
+    },
+    {
+      "id": "reusable tools",
+      "type": "Technology",
+      "description": "Software or methodological components designed for repeated use across tasks or agents, derived from prior experiences"
+    },
+    {
+      "id": "memory-augmented test-time scaling methods",
+      "type": "Technology",
+      "description": "Techniques that enhance agent performance during inference by dynamically accessing and utilizing memory"
+    },
+    {
+      "id": "declarative memory",
+      "type": "Concept",
+      "description": "Type of memory storing factual knowledge, often used in agents to retain explicit data"
+    },
+    {
+      "id": "episodic memory",
+      "type": "Concept",
+      "description": "Memory system capturing sequences of events or experiences, applied in agents for temporal reasoning"
+    },
+    {
+      "id": "semantic memory",
+      "type": "Concept",
+      "description": "Memory for generalized knowledge and meaning, distinct from specific instances, used in higher-level agent cognition"
+    },
+    {
+      "id": "Conceptual Fragmentation",
+      "type": "Concept",
+      "description": "The problem of increasing divergence and lack of coherence in the definition and implementation of agent memory concepts"
+    },
+    {
+      "id": "taxonomy",
+      "type": "Concept",
+      "description": "A systematic classification framework intended to unify diverse concepts and terminologies in agent memory research"
+    },
+    {
+      "id": "systematic framework",
+      "type": "Concept",
+      "description": "Proposed structured approach to reconcile definitions, integrate trends, and clarify foundational principles of agent memory"
+    },
+    {
+      "id": "LLM-based Agent",
+      "type": "Technology",
+      "description": "An autonomous agent built on large language models capable of perceiving, reasoning, acting, and adapting in dynamic environments"
+    },
+    {
+      "id": "LLM Memory",
+      "type": "Concept",
+      "description": "Mechanisms enabling large language models to retain and utilize information across interactions or within context windows"
+    },
+    {
+      "id": "Retrieval-Augmented Generation",
+      "type": "Technology",
+      "description": "A framework combining generative models with external retrieval mechanisms to improve factual accuracy and context utilization"
+    },
+    {
+      "id": "Forms–Functions–Dynamics Triangle",
+      "type": "Concept",
+      "description": "A conceptual framework for analyzing agent memory through its architectural forms, functional roles, and temporal dynamics"
+    },
+    {
+      "id": "memory",
+      "type": "Concept",
+      "description": "A core component in agent systems that stores and manages information across interactions and tasks"
+    },
+    {
+      "id": "RAG",
+      "type": "Technology",
+      "description": "Retrieval-Augmented Generation, a framework combining retrieval and generation for improved reasoning and knowledge use in agents"
+    },
+    {
+      "id": "Forms–Functions–Dynamics triangle",
+      "type": "Concept",
+      "description": "A conceptual framework used to analyze agent memory through three dimensions: architectural forms, functional roles, and operational dynamics"
+    },
+    {
+      "id": "memory formulation",
+      "type": "Concept",
+      "description": "The process by which new memories are created and encoded in agent systems"
+    },
+    {
+      "id": "memory retrieval",
+      "type": "Concept",
+      "description": "The process of accessing stored memories when needed for reasoning or action"
+    },
+    {
+      "id": "memory evolution",
+      "type": "Concept",
+      "description": "The dynamic updating and refinement of memory over time through learning and experience"
+    },
+    {
+      "id": "Agent Memory Research",
+      "type": "Concept",
+      "description": "Research domain focused on how artificial agents store, retrieve, and evolve memory over time"
+    },
+    {
+      "id": "Forms–Functions–Dynamics",
+      "type": "Concept",
+      "description": "A multidimensional framework for analyzing agent memory through its structure, purpose, and temporal evolution"
+    },
+    {
+      "id": "Taxonomy of Agent Memory",
+      "type": "Concept",
+      "description": "A structured classification system for agent memory based on forms, functions, and dynamics"
+    },
+    {
+      "id": "Memory Formulation",
+      "type": "Concept",
+      "description": "The process by which agents encode and structure information into memory representations"
+    },
+    {
+      "id": "Memory Retrieval",
+      "type": "Concept",
+      "description": "The process of accessing stored memory for use in decision-making or task execution, implied as part of the memory lifecycle"
+    },
+    {
+      "id": "Memory Evolution",
+      "type": "Concept",
+      "description": "The process of integrating memory candidates into the existing memory base through consolidation, conflict resolution, and restructuring"
+    },
+    {
+      "id": "Automation-Oriented Memory Design",
+      "type": "Concept",
+      "description": "An emerging research direction focusing on memory systems optimized for automated decision-making"
+    },
+    {
+      "id": "Reinforcement Learning Integration",
+      "type": "Technology",
+      "description": "Incorporation of reinforcement learning techniques to improve memory formation and usage in agents"
+    },
+    {
+      "id": "Trustworthy Issues",
+      "type": "Concept",
+      "description": "Challenges related to the reliability, safety, privacy, and ethical aspects of agent memory systems"
+    },
+    {
+      "id": "Benchmark Resources",
+      "type": "Product",
+      "description": "Standardized evaluation tools and datasets used to assess agent memory performance"
+    },
+    {
+      "id": "Framework Resources",
+      "type": "Technology",
+      "description": "Software or architectural frameworks supporting the development of agent memory systems"
+    },
+    {
+      "id": "LLM-based agents",
+      "type": "Concept",
+      "description": "Autonomous systems powered by large language models that perform tasks and make decisions based on inputs and memory"
+    },
+    {
+      "id": "Agent memory systems",
+      "type": "Concept",
+      "description": "Mechanisms that store, retrieve, and manage information within LLM-based agents to support learning and decision-making over time"
+    },
+    {
+      "id": "Memory forms",
+      "type": "Concept",
+      "description": "Structural representations of memory such as episodic, semantic, and working memory in agent architectures"
+    },
+    {
+      "id": "Memory functions",
+      "type": "Concept",
+      "description": "Functional purposes of memory including reasoning, planning, personalization, and long-term adaptation in agents"
+    },
+    {
+      "id": "Memory dynamics",
+      "type": "Concept",
+      "description": "Temporal and adaptive behaviors of memory such as updating, retrieval strategies, forgetting mechanisms, and evolution over time"
+    },
+    {
+      "id": "Research directions",
+      "type": "Concept",
+      "description": "Emerging trends and open challenges in agent memory research guiding future innovation"
+    },
+    {
+      "id": "Benchmarks",
+      "type": "Technology",
+      "description": "Standardized evaluation frameworks used to measure performance and capabilities of agent memory systems"
+    },
+    {
+      "id": "Open-source frameworks",
+      "type": "Technology",
+      "description": "Publicly available software tools and platforms supporting development, testing, and deployment of agent memory solutions"
+    },
+    {
+      "id": "Researchers",
+      "type": "Person",
+      "description": "Individuals conducting academic or industrial research on AI agent systems and memory architectures"
+    },
+    {
+      "id": "Practitioners",
+      "type": "Person",
+      "description": "Developers and engineers applying agent memory technologies in real-world applications"
+    },
+    {
+      "id": "Section 4",
+      "type": "Concept",
+      "description": "Part of the survey that examines the forms of agent memory"
+    },
+    {
+      "id": "Section 5",
+      "type": "Concept",
+      "description": "Part of the survey that examines the functions and dynamics of agent memory"
+    },
+    {
+      "id": "Section 6",
+      "type": "Concept",
+      "description": "Part of the survey that summarizes representative benchmarks and framework resources for agent systems"
+    },
+    {
+      "id": "Section 7",
+      "type": "Concept",
+      "description": "Part of the survey that discusses emerging research frontiers and future directions in agent memory"
+    },
+    {
+      "id": "Section 8",
+      "type": "Concept",
+      "description": "Conclusion section summarizing key insights from the survey on agent memory"
+    },
+    {
+      "id": "LLM-based Agent Systems",
+      "type": "Concept",
+      "description": "Systems that use large language models as agents to perform tasks in an environment through interactions and decision-making"
+    },
+    {
+      "id": "Memory System",
+      "type": "Technology",
+      "description": "Component coupled to an LLM agent’s decision process through read/write interactions, supporting short-term and long-term memory functions"
+    },
+    {
+      "id": "Short-term Memory",
+      "type": "Concept",
+      "description": "Agent memory function operating within a single task or trial, also referred to as inside-trial memory"
+    },
+    {
+      "id": "Long-term Memory",
+      "type": "Concept",
+      "description": "Agent memory function operating across multiple tasks or trials, also known as cross-trial memory"
+    },
+    {
+      "id": "Emerging Research Frontiers",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Key Insights",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "Environment",
+      "type": "Concept",
+      "description": "The external context or system in which agents operate, characterized by states and transitions influenced by agent actions"
+    },
+    {
+      "id": "State Space",
+      "type": "Concept",
+      "description": "The set of all possible states the environment can be in, denoted as S, forming the basis for state transitions"
+    },
+    {
+      "id": "Stochastic Transition Model",
+      "type": "Concept",
+      "description": "A probabilistic model Ψ that defines how the environment state evolves from one time step to the next based on current state and action"
+    },
+    {
+      "id": "Action",
+      "type": "Concept",
+      "description": "A decision or operation performed by an agent at a given time step that influences the environment's state transition"
+    },
+    {
+      "id": "Observation",
+      "type": "Concept",
+      "description": "The information perceived by an agent from the environment at a given time step, dependent on the current state and history"
+    },
+    {
+      "id": "Interaction History",
+      "type": "Concept",
+      "description": "The record of past interactions accessible to an agent, influencing its observations and decisions over time"
+    },
+    {
+      "id": "Single-agent System",
+      "type": "Concept",
+      "description": "An agent system with only one agent (N=1), such as ReAct, making decisions independently"
+    },
+    {
+      "id": "Multi-agent System",
+      "type": "Concept",
+      "description": "A system involving multiple agents (N>1) that may interact through debate or planner-executor architectures"
+    },
+    {
+      "id": "ReAct",
+      "type": "Technology",
+      "description": "A single-agent framework that combines reasoning and acting for task-solving using LLMs"
+    },
+    {
+      "id": "Debate",
+      "type": "Concept",
+      "description": "A multi-agent interaction paradigm where agents argue or discuss to reach better decisions"
+    },
+    {
+      "id": "Planner–Executor Architecture",
+      "type": "Concept",
+      "description": "A multi-agent design where one agent plans actions and another executes them, improving task decomposition"
+    },
+    {
+      "id": "Li et al., 2024c",
+      "type": "Event",
+      "description": "Research work by Li et al. published in 2024 presenting debate-style multi-agent systems"
+    },
+    {
+      "id": "Wan et al., 2025",
+      "type": "Event",
+      "description": "Research study by Wan et al. published in 2025 introducing planner–executor multi-agent frameworks"
+    },
+    {
+      "id": "Sequential Decision-making",
+      "type": "Concept",
+      "description": "A process where decisions are made one after another, often used in agent systems where one agent acts per time step"
+    },
+    {
+      "id": "Implicit Coordination",
+      "type": "Concept",
+      "description": "Coordination among agents achieved indirectly through changes in the shared environment rather than direct communication"
+    },
+    {
+      "id": "LLM-based agent",
+      "type": "Concept",
+      "description": "An artificial intelligence agent powered by large language models capable of performing complex tasks through reasoning and interaction"
+    },
+    {
+      "id": "interaction history",
+      "type": "Concept",
+      "description": "The record of past interactions accessible to an agent, including messages, tool outputs, reasoning traces, and shared states"
+    },
+    {
+      "id": "task specification",
+      "type": "Concept",
+      "description": "The formal definition of a task, including user instructions, goals, or constraints, treated as fixed during execution"
+    },
+    {
+      "id": "Action Space",
+      "type": "Concept",
+      "description": "The set of possible actions an agent can perform, which in LLM-based agents is often heterogeneous and structured"
+    },
+    {
+      "id": "Natural-language generation",
+      "type": "Technology",
+      "description": "AI capability to generate human-like text for reasoning, explanations, responses, or instructions"
+    },
+    {
+      "id": "Li et al., 2023b",
+      "type": "Event",
+      "description": "Academic publication by Li et al. in 2023 contributing to research on natural-language generation in agent systems"
+    },
+    {
+      "id": "Wu et al., 2024b",
+      "type": "Event",
+      "description": "Academic publication by Wu et al. in 2024 contributing to research on natural-language generation in agent systems"
+    },
+    {
+      "id": "Hong et al., 2024",
+      "type": "Event",
+      "description": "Academic publication by Hong et al. in 2024 contributing to research on natural-language generation in agent systems"
+    },
+    {
+      "id": "Qian et al., 2024",
+      "type": "Event",
+      "description": "Research publication by Qian et al. in 2024 describing collaborative agentic systems for software development"
+    },
+    {
+      "id": "Tool invocation actions",
+      "type": "Technology",
+      "description": "Actions that involve calling external tools such as APIs, calculators, databases, or code execution environments"
+    },
+    {
+      "id": "Planning actions",
+      "type": "Technology",
+      "description": "AI-generated task decompositions, execution plans, or subgoal specifications to guide future behavior"
+    },
+    {
+      "id": "Environment-control actions",
+      "type": "Technology",
+      "description": "Actions where an agent directly manipulates the external environment, such as navigation, code editing, or memory modification"
+    },
+    {
+      "id": "Communication actions",
+      "type": "Concept",
+      "description": "Structured message-based interactions enabling collaboration or negotiation between agents"
+    },
+    {
+      "id": "Hong et al.",
+      "type": "Person",
+      "description": "Researcher in the field of natural-language generation"
+    },
+    {
+      "id": "Qian et al.",
+      "type": "Person",
+      "description": "Researcher working on natural-language generation systems"
+    },
+    {
+      "id": "Qin et al.",
+      "type": "Person",
+      "description": "Researcher focused on tool invocation mechanisms in AI agents"
+    },
+    {
+      "id": "Zhou et al.",
+      "type": "Person",
+      "description": "Researcher studying tool invocation across multiple publications"
+    },
+    {
+      "id": "CAMEL-AI",
+      "type": "Organization",
+      "description": "Research group or project focused on AI planning and agent communication"
+    },
+    {
+      "id": "Pan et al.",
+      "type": "Person",
+      "description": "Researcher in the domain of task planning and decomposition for AI systems"
+    },
+    {
+      "id": "Shridhar et al.",
+      "type": "Person",
+      "description": "Researcher in embodied AI and environmental interaction"
+    },
+    {
+      "id": "Jimenez et al.",
+      "type": "Person",
+      "description": "Researcher studying software repository manipulation by AI agents"
+    },
+    {
+      "id": "Aleithan et al.",
+      "type": "Person",
+      "description": "Researcher in the area of environment control via code editing"
+    },
+    {
+      "id": "Marro et al.",
+      "type": "Person",
+      "description": "Researcher focused on inter-agent communication and structured messaging"
+    },
+    {
+      "id": "APIs",
+      "type": "Technology",
+      "description": "Application Programming Interfaces used as external tools by AI systems"
+    },
+    {
+      "id": "Search engines",
+      "type": "Technology",
+      "description": "External information retrieval systems invoked by AI agents"
+    },
+    {
+      "id": "Calculators",
+      "type": "Technology",
+      "description": "Tools used by AI agents for mathematical computation"
+    },
+    {
+      "id": "Databases",
+      "type": "Technology",
+      "description": "External data storage systems accessed through tool invocation"
+    },
+    {
+      "id": "Simulators",
+      "type": "Technology",
+      "description": "Virtual environments used for testing or interacting with AI agents"
+    },
+    {
+      "id": "Code execution environments",
+      "type": "Technology",
+      "description": "Sandboxed runtimes enabling AI agents to execute generated code"
+    },
+    {
+      "id": "Navigation",
+      "type": "Concept",
+      "description": "Task of moving through physical or virtual embodied environments"
+    },
+    {
+      "id": "Software repository editing",
+      "type": "Concept",
+      "description": "Modification of source code or project files within a version-controlled repository"
+    },
+    {
+      "id": "Shared memory buffer",
+      "type": "Technology",
+      "description": "Collaborative memory space that can be modified by agents for state sharing"
+    },
+    {
+      "id": "Marro et al., 2024",
+      "type": "Person",
+      "description": "Authors of a study on agent communication and collaboration through structured messages using LLMs"
+    },
+    {
+      "id": "Collaboration",
+      "type": "Concept",
+      "description": "Joint effort between agents to achieve shared goals through interaction"
+    },
+    {
+      "id": "Negotiation",
+      "type": "Concept",
+      "description": "Process by which agents reach agreements through structured communication"
+    },
+    {
+      "id": "Autoregressive LLM",
+      "type": "Technology",
+      "description": "Large language model that generates outputs sequentially based on previous tokens and context"
+    },
+    {
+      "id": "Policy",
+      "type": "Concept",
+      "description": "Decision-making function π that maps observations and memory to actions for an agent"
+    },
+    {
+      "id": "Memory-derived signal",
+      "type": "Concept",
+      "description": "Internal representation mi_t derived from an agent's memory, used in policy computation"
+    },
+    {
+      "id": "Multi-step reasoning",
+      "type": "Concept",
+      "description": "Internal cognitive process where agents perform sequential logical or computational steps before acting"
+    },
+    {
+      "id": "Latent deliberation",
+      "type": "Concept",
+      "description": "Unobserved internal decision-making process within an agent prior to action emission"
+    },
+    {
+      "id": "Scratchpad computations",
+      "type": "Concept",
+      "description": "Internal working memory operations used during reasoning, not exposed in final output"
+    },
+    {
+      "id": "Interaction Process",
+      "type": "Concept",
+      "description": "Sequence of steps involving observation, memory retrieval, and action execution in multi-agent systems"
+    },
+    {
+      "id": "Trajectory",
+      "type": "Concept",
+      "description": "Complete sequence of states, observations, and actions over time: τ = (s0, o0, a0, s1, o1, a1, ..., sT)"
+    },
+    {
+      "id": "Environment observation",
+      "type": "Concept",
+      "description": "Perceptual input ot received by an agent from its environment at time t"
+    },
+    {
+      "id": "Memory retrieval",
+      "type": "Concept",
+      "description": "Optional process by which an agent accesses stored information to inform current decisions"
+    },
+    {
+      "id": "System execution",
+      "type": "Event",
+      "description": "Full run of the multi-agent system resulting in a complete interaction trajectory"
+    },
+    {
+      "id": "Agentic System",
+      "type": "Concept",
+      "description": "A class of systems characterized by autonomous behavior, involving observation, reasoning, memory, and action to achieve goals"
+    },
+    {
+      "id": "Environment Observation",
+      "type": "Concept",
+      "description": "The process by which an agent perceives its current state or context, serving as input for decision-making"
+    },
+    {
+      "id": "LLM-based Computation",
+      "type": "Technology",
+      "description": "Reasoning and processing performed by large language models as part of an agent's cognitive loop"
+    },
+    {
+      "id": "Action Execution",
+      "type": "Concept",
+      "description": "The execution of decisions that affect the environment and drive transitions to new states"
+    },
+    {
+      "id": "State Transition",
+      "type": "Concept",
+      "description": "The change in an agent's environment or internal condition resulting from action execution"
+    },
+    {
+      "id": "Agent Memory System",
+      "type": "Technology",
+      "description": "A unified system that maintains and updates a memory state over time, integrating past experiences into agent decision-making"
+    },
+    {
+      "id": "Prior Interactions",
+      "type": "Concept",
+      "description": "Historical engagements of the agent within current or previous tasks, forming the basis of memory"
+    },
+    {
+      "id": "Decision-making",
+      "type": "Concept",
+      "description": "The cognitive process of selecting actions based on observations, memory, and reasoning"
+    },
+    {
+      "id": "Wang et al., 2025k",
+      "type": "Event",
+      "description": "Research publication by Wang et al. in 2025 (variant k) on agentic collaboration in complex tasks"
+    },
+    {
+      "id": "Weng et al., 2025",
+      "type": "Event",
+      "description": "Research by Weng et al. in 2025 on agentic systems applied to scientific inquiry"
+    },
+    {
+      "id": "unifiedagent memory system",
+      "type": "Technology",
+      "description": "A flexible memory system for agents that maintains an evolving memory state across tasks, supporting both cross-trial and task-specific information"
+    },
+    {
+      "id": "Mt",
+      "type": "Concept",
+      "description": "The memory state at time t, representing the current configuration of the unified agent memory system"
+    },
+    {
+      "id": "M",
+      "type": "Concept",
+      "description": "The space of admissible memory configurations, defining valid states the memory system can occupy"
+    },
+    {
+      "id": "text buffer",
+      "type": "Technology",
+      "description": "A possible representation format for the memory state, storing information sequentially as text"
+    },
+    {
+      "id": "key–value store",
+      "type": "Technology",
+      "description": "A data structure that may be used to implement the memory system, allowing efficient storage and retrieval via keys"
+    },
+    {
+      "id": "vector database",
+      "type": "Technology",
+      "description": "A type of database that stores data as vectors, enabling similarity-based retrieval in the memory system"
+    },
+    {
+      "id": "graph structure",
+      "type": "Technology",
+      "description": "A structural representation that can model relationships within memory, potentially used in hybrid memory forms"
+    },
+    {
+      "id": "cross-trial memory",
+      "type": "Concept",
+      "description": "Information in the memory state derived from prior task executions, enabling knowledge transfer across trials"
+    },
+    {
+      "id": "short-term, task-specific memory",
+      "type": "Concept",
+      "description": "Newly acquired information during task execution, relevant only to the current task context"
+    },
+    {
+      "id": "Memory Lifecycle",
+      "type": "Concept",
+      "description": "The conceptual framework describing how memory is formed, evolves, and is retrieved in the system"
+    },
+    {
+      "id": "Formation",
+      "type": "Concept",
+      "description": "The initial creation or initialization of memory entries, either from prior experience or new inputs"
+    },
+    {
+      "id": "Evolution",
+      "type": "Concept",
+      "description": "The process by which memory changes over time through accumulation and updates during task execution"
+    },
+    {
+      "id": "Retrieval",
+      "type": "Concept",
+      "description": "The act of accessing stored memory content when needed for decision-making or reasoning"
+    },
+    {
+      "id": "Memory Formation",
+      "type": "Concept",
+      "description": "The process by which an agent transforms informational artifacts into memory candidates for potential future use"
+    },
+    {
+      "id": "Informational Artifacts",
+      "type": "Concept",
+      "description": "Outputs generated by an agent at time t, including tool outputs, reasoning traces, plans, evaluations, or feedback"
+    },
+    {
+      "id": "Formation Operator",
+      "type": "Technology",
+      "description": "Function F that selectively transforms informational artifacts into memory candidates based on potential utility"
+    },
+    {
+      "id": "Evolution Operator",
+      "type": "Technology",
+      "description": "Function E that integrates memory candidates into the memory base by consolidating, resolving conflicts, or discarding low-utility content"
+    },
+    {
+      "id": "M_t",
+      "type": "Concept",
+      "description": "The memory state at time step t, representing the agent's accumulated knowledge before update"
+    },
+    {
+      "id": "M_form_t+1",
+      "type": "Concept",
+      "description": "The set of memory candidates formed at time t+1 after applying the formation operator"
+    },
+    {
+      "id": "M_t+1",
+      "type": "Concept",
+      "description": "The updated memory state at time t+1 after evolution and integration of new memory candidates"
+    },
+    {
+      "id": "Zhao et al., 2024",
+      "type": "Person",
+      "description": "Researchers who contributed to understanding memory consolidation in AI systems"
+    },
+    {
+      "id": "Rasmussen et al., 2025",
+      "type": "Person",
+      "description": "Researchers who studied conflict resolution in memory systems"
+    },
+    {
+      "id": "Li et al., 2025k",
+      "type": "Person",
+      "description": "Researchers who investigated conflict resolution mechanisms in evolving memory structures"
+    },
+    {
+      "id": "Wang et al., 2025q",
+      "type": "Person",
+      "description": "Researchers who explored methods for discarding low-utility information in memory management"
+    },
+    {
+      "id": "Memory_State",
+      "type": "Concept",
+      "description": "The persistent state of information maintained by an agent across decision steps and tasks"
+    },
+    {
+      "id": "Memory_Formation",
+      "type": "Concept",
+      "description": "Process of creating or updating memory, such as retaining high-value information or discarding low-utility data"
+    },
+    {
+      "id": "Memory_Evolution",
+      "type": "Concept",
+      "description": "Process by which memory changes over time, including restructuring for efficient access"
+    },
+    {
+      "id": "Memory_Retrieval",
+      "type": "Concept",
+      "description": "Mechanism for accessing context-dependent memory content during action selection"
+    },
+    {
+      "id": "Retrieval_Operator_R",
+      "type": "Technology",
+      "description": "Function that constructs a task-aware query and returns relevant memory content based on current observation and memory state"
+    },
+    {
+      "id": "LLM_Policy",
+      "type": "Technology",
+      "description": "Large language model used by the agent to generate actions, consuming retrieved memory as input"
+    },
+    {
+      "id": "Wang_et_al_2025q",
+      "type": "Person",
+      "description": "Researcher(s) who proposed methods for discarding low-utility information in agent memory systems"
+    },
+    {
+      "id": "Temporal_Invocation_Pattern",
+      "type": "Concept",
+      "description": "Schedule or condition under which memory operators are applied, influencing agent behavior and efficiency"
+    },
+    {
+      "id": "Task_Initialization",
+      "type": "Event",
+      "description": "Initial phase of a task where setup operations, such as one-time memory retrieval, may occur"
+    },
+    {
+      "id": "retrieval",
+      "type": "Concept",
+      "description": "The process of accessing memory, performed only at task initialization in some systems"
+    },
+    {
+      "id": "task initialization",
+      "type": "Event",
+      "description": "The beginning phase of a task where setup processes, including initial memory retrieval, occur"
+    },
+    {
+      "id": "memory formation",
+      "type": "Concept",
+      "description": "The process by which observations are accumulated or transformed into patterns in memory"
+    },
+    {
+      "id": "raw observations",
+      "type": "Concept",
+      "description": "Basic, unprocessed data points collected during task execution and potentially stored in memory"
+    },
+    {
+      "id": "reusable patterns",
+      "type": "Concept",
+      "description": "Abstracted or refined knowledge derived from raw observations for efficient reuse across tasks"
+    },
+    {
+      "id": "short-term memory",
+      "type": "Concept",
+      "description": "Temporary memory effects arising from recent interactions, either through logging or iterative refinement"
+    },
+    {
+      "id": "long-term memory",
+      "type": "Concept",
+      "description": "Persistent memory updated episodically or continuously, supporting learning and adaptation over time"
+    },
+    {
+      "id": "lightweight logging",
+      "type": "Technology",
+      "description": "A simple method of recording interactions to support short-term memory, as used in Yao et al. (2023b) and Chen et al. (2023a)"
+    },
+    {
+      "id": "iterative refinement",
+      "type": "Technology",
+      "description": "An advanced memory mechanism involving repeated improvement of representations, as in Hu et al. (2025a)"
+    },
+    {
+      "id": "Yao et al. (2023b)",
+      "type": "Person",
+      "description": "Researchers who studied lightweight logging approaches for short-term memory in AI systems"
+    },
+    {
+      "id": "Chen et al. (2023a)",
+      "type": "Person",
+      "description": "Researchers contributing to the understanding of short-term memory via logging mechanisms"
+    },
+    {
+      "id": "Hu et al. (2025a)",
+      "type": "Person",
+      "description": "Researchers developing iterative refinement methods for memory evolution in intelligent agents"
+    },
+    {
+      "id": "temporal patterns",
+      "type": "Concept",
+      "description": "Time-based dynamics governing when and how memory is formed, retrieved, and updated"
+    },
+    {
+      "id": "episodic update",
+      "type": "Unknown",
+      "description": ""
+    },
+    {
+      "id": "continuous update",
+      "type": "Unknown",
+      "description": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "Project Alpha",
+      "target": "DeepBlue",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "DeepBlue is the internal code name for Project Alpha"
+      }
+    },
+    {
+      "source": "Project Alpha",
+      "target": "Context Engineering",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Project Alpha is an implementation of Context Engineering principles"
+      }
+    },
+    {
+      "source": "Project Alpha",
+      "target": "Long-Term Memory",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Project Alpha",
+      "target": "Scratchpad",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Project Alpha",
+      "target": "State Isolation",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Project Alpha",
+      "target": "API Latency",
+      "relation": "inhibits",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "current performance issue with 200ms latency affecting system responsiveness"
+      }
+    },
+    {
+      "source": "Dr. Emily Chen",
+      "target": "Project Alpha",
+      "relation": "works_for",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "serves as Lead"
+      }
+    },
+    {
+      "source": "Team Z",
+      "target": "Project Alpha",
+      "relation": "develops",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "responsible for engineering implementation"
+      }
+    },
+    {
+      "source": "Sarah Jones",
+      "target": "Project Alpha",
+      "relation": "works_for",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "serves as Product Manager"
+      }
+    },
+    {
+      "source": "Prompt Caching",
+      "target": "Project Alpha",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "planned strategy to reduce TTFT and improve API Latency"
+      }
+    },
+    {
+      "source": "Yuyang Hu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core contributor"
+      }
+    },
+    {
+      "source": "Yuyang Hu",
+      "target": "National University of Singapore",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Yuyang Hu",
+      "target": "Renmin University of China",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high"
+      }
+    },
+    {
+      "source": "Yuyang Hu",
+      "target": "Survey on Agent Memory",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high",
+        "context": "listed as main contact for the survey"
+      }
+    },
+    {
+      "source": "Shichun Liu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core contributor"
+      }
+    },
+    {
+      "source": "Shichun Liu",
+      "target": "Renmin University of China",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Shichun Liu",
+      "target": "Fudan University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high"
+      }
+    },
+    {
+      "source": "Shichun Liu",
+      "target": "Agent-Memory-Paper-List",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "maintains the GitHub repository listed in the contact section"
+      }
+    },
+    {
+      "source": "Shichun Liu",
+      "target": "Survey on Agent Memory",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high",
+        "context": "listed as main contact and repository maintainer"
+      }
+    },
+    {
+      "source": "Yanwei Yue",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core contributor"
+      }
+    },
+    {
+      "source": "Yanwei Yue",
+      "target": "Fudan University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Guibin Zhang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core contributor and project organizer"
+      }
+    },
+    {
+      "source": "Guibin Zhang",
+      "target": "Peking University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Guibin Zhang",
+      "target": "National University of Singapore",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high"
+      }
+    },
+    {
+      "source": "Guibin Zhang",
+      "target": "Survey on Agent Memory",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high",
+        "context": "listed as main contact for the survey"
+      }
+    },
+    {
+      "source": "Boyang Liu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Fangyi Zhu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Jiahang Lin",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Honglin Guo",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Shihan Dou",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Shihan Dou",
+      "target": "Nanyang Technological University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Zhiheng Xi",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Senjie Jin",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Jiejun Tan",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Yanbin Yin",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Jiongnan Liu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zeyu Zhang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zhongxiang Sun",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zhongxiang Sun",
+      "target": "Tongji University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Yutao Zhu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Hao Sun",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Boci Peng",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zhenrong Cheng",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Xuanbo Fan",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Jiaxin Guo",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Xinlei Yu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zhenhong Zhou",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zewen Hu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Jiahao Huo",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Junhao Wang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Yuwei Niu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Yu Wang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Zhenfei Yin",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Xiaobin Hu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Yue Liao",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Qiankun Li",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Kun Wang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Wangchunshu Zhou",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Yixin Liu",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Dawei Cheng",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "contributor"
+      }
+    },
+    {
+      "source": "Qi Zhang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Tao Gui",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Shirui Pan",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Yan Zhang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Philip Torr",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Zhicheng Dou",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Ji-Rong Wen",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Xuanjing Huang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Yu-Gang Jiang",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "Yu-Gang Jiang",
+      "target": "University of California",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "medium",
+        "context": "affiliation inferred from author list and institutional listing"
+      }
+    },
+    {
+      "source": "Shuicheng Yan",
+      "target": "Memory in the Age of AI Agents: A Survey",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "core supervisor"
+      }
+    },
+    {
+      "source": "National University of Singapore",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Renmin University of China",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Fudan University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Peking University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Nanyang Technological University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Tongji University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "University of California San Diego",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Hong Kong University of Science and Technology (Guangzhou)",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Griffith University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Georgia Institute of Technology",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "OPPO",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Oxford University",
+      "target": "Agent Memory",
+      "relation": "collaborates_with",
+      "properties": {
+        "confidence": "medium",
+        "context": "listed as affiliation in research on agent memory"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Long-Horizon Reasoning",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "explicitly stated to underpin long-horizon reasoning"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Continual Adaptation",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "explicitly stated as supporting continual adaptation"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Complex Environment Interaction",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "explicitly stated to support effective interaction with complex environments"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Hendrycks et al., 2025",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "agent memory is fundamental to continual evolution as described by Hendrycks et al."
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "LLM Memory",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "comparison presented in Section 2 to clarify distinctions and overlaps"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Retrieval-Augmented Generation",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "comparison presented in Section 2 to delineate conceptual boundaries"
+      }
+    },
+    {
+      "source": "Agent Memory",
+      "target": "Context Engineering",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "comparison presented in Section 2 to differentiate from memory mechanisms"
+      }
+    },
+    {
+      "source": "Foundation Model-Based Agents",
+      "target": "Agent Memory",
+      "relation": "requires",
+      "properties": {
+        "confidence": "high",
+        "context": "memory is described as a core capability underpinning long-horizon reasoning and adaptation"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "long/short-term memory",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "medium",
+        "context": "traditional taxonomy found insufficient for modern agent memory systems"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "LLM memory",
+      "relation": "distinguishes_from",
+      "properties": {
+        "confidence": "high",
+        "context": "scope clarification in survey"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "retrieval augmented generation",
+      "relation": "distinguishes_from",
+      "properties": {
+        "confidence": "high",
+        "context": "RAG is a related but distinct mechanism from agent memory"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "context engineering",
+      "relation": "distinguishes_from",
+      "properties": {
+        "confidence": "high",
+        "context": "context engineering does not involve persistent memory updates"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "agent memory forms",
+      "relation": "examined_through",
+      "properties": {
+        "confidence": "high",
+        "context": "survey uses forms, functions, and dynamics as unified lenses"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "agent memory functions",
+      "relation": "examined_through",
+      "properties": {
+        "confidence": "high",
+        "context": "functional perspective moves beyond coarse temporal divisions"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "agent memory dynamics",
+      "relation": "examined_through",
+      "properties": {
+        "confidence": "high",
+        "context": "dynamics refer to how memory changes over time"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "token-level memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of forms"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "parametric memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "one of several types categorized under agent memory"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "latent memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of forms"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "factual memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of functions"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "experiential memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of functions"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "working memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of functions"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "memory dynamics",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "from the perspective of dynamics"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "benchmarks",
+      "relation": "evaluated_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "to support empirical research"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "open source memory frameworks",
+      "relation": "implemented_in",
+      "properties": {
+        "confidence": "medium",
+        "context": "for practical development"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "automation-oriented memory design",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "emerging research frontier"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "multimodal memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "as an extension toward multimodal capabilities"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "shared memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "for coordination in multi-agent systems"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "trustworthiness issues",
+      "relation": "inhibits",
+      "properties": {
+        "confidence": "medium",
+        "context": "presents challenges to safe and reliable deployment"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "unified taxonomy",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "Agent memory is organized according to the unified taxonomy across Sections 3, 4, and 5"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "Conceptual Fragmentation",
+      "relation": "inhibits",
+      "properties": {
+        "confidence": "high",
+        "context": "fragmentation arises due to inconsistent use of the concept"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "declarative memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "one of several types categorized under agent memory"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "episodic memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "one of several types categorized under agent memory"
+      }
+    },
+    {
+      "source": "agent memory",
+      "target": "semantic memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "one of several types categorized under agent memory"
+      }
+    },
+    {
+      "source": "agent memory forms",
+      "target": "token-level memory",
+      "relation": "identifies",
+      "properties": {
+        "confidence": "high",
+        "context": "one of three dominant realizations"
+      }
+    },
+    {
+      "source": "agent memory forms",
+      "target": "parametric memory",
+      "relation": "identifies",
+      "properties": {
+        "confidence": "high",
+        "context": "one of three dominant realizations"
+      }
+    },
+    {
+      "source": "agent memory forms",
+      "target": "latent memory",
+      "relation": "identifies",
+      "properties": {
+        "confidence": "high",
+        "context": "one of three dominant realizations"
+      }
+    },
+    {
+      "source": "memory dynamics",
+      "target": "formed",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "how memory is formed over time"
+      }
+    },
+    {
+      "source": "memory dynamics",
+      "target": "evolved",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "how memory evolves through interaction"
+      }
+    },
+    {
+      "source": "memory dynamics",
+      "target": "retrieved",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "how memory is retrieved over time"
+      }
+    },
+    {
+      "source": "reinforcement learning",
+      "target": "agent memory",
+      "relation": "deeply integrated with",
+      "properties": {
+        "confidence": "high",
+        "context": "emerging research frontier on integration"
+      }
+    },
+    {
+      "source": "shared memory",
+      "target": "multi-agent systems",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "used in multi-agent contexts"
+      }
+    },
+    {
+      "source": "Reinforcement Learning",
+      "target": "Memory Systems",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "reinforcement learning leverages memory for experience retention and policy improvement"
+      }
+    },
+    {
+      "source": "Memory Systems",
+      "target": "Multimodal Memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "multimodal memory is a specialized form of memory systems handling diverse data types"
+      }
+    },
+    {
+      "source": "Memory Systems",
+      "target": "Agentic Intelligence",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "memory is proposed as a first-class primitive in designing future agentic systems"
+      }
+    },
+    {
+      "source": "Shared Memory",
+      "target": "Multi-Agent Systems",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "shared memory facilitates coordination and communication among agents"
+      }
+    },
+    {
+      "source": "Trustworthiness Issues",
+      "target": "Memory Systems",
+      "relation": "inhibits",
+      "properties": {
+        "confidence": "medium",
+        "context": "trust challenges may limit safe deployment of memory-augmented agents"
+      }
+    },
+    {
+      "source": "Large Language Models",
+      "target": "Agentic Intelligence",
+      "relation": "contributes_to",
+      "properties": {
+        "confidence": "high",
+        "context": "advancements in LLMs enable more capable and autonomous agents"
+      }
+    },
+    {
+      "source": "Yue Wang",
+      "target": "Peking University",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high"
+      }
+    },
+    {
+      "source": "Yue Wang",
+      "target": "Survey on Agent Memory",
+      "relation": "works_for",
+      "properties": {
+        "confidence": "high",
+        "context": "listed as main contact for the survey"
+      }
+    },
+    {
+      "source": "Survey on Agent Memory",
+      "target": "Memory Systems",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "the survey focuses on memory systems in intelligent agents"
+      }
+    },
+    {
+      "source": "LLMs",
+      "target": "AI agents",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "LLMs serve as the foundational technology powering AI agents"
+      }
+    },
+    {
+      "source": "Matarazzo and Torlone",
+      "target": "AI agents",
+      "relation": "influences",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Cited contribution to AI agent research"
+      }
+    },
+    {
+      "source": "Minaee et al.",
+      "target": "AI agents",
+      "relation": "influences",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Cited contribution to AI agent advancements"
+      }
+    },
+    {
+      "source": "Luo et al.",
+      "target": "AI agents",
+      "relation": "influences",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Cited contribution to AI agent developments"
+      }
+    },
+    {
+      "source": "Xu and Peng",
+      "target": "deep research",
+      "relation": "applies_to",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Applied AI agents to deep research"
+      }
+    },
+    {
+      "source": "Zhang et al.",
+      "target": "deep research",
+      "relation": "applies_to",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Contributed to AI applications in deep research"
+      }
+    },
+    {
+      "source": "Zhang et al.",
+      "target": "Memory",
+      "relation": "studies",
+      "properties": {
+        "version": "2025f, 2024, 2025r",
+        "confidence": "high",
+        "context": "highlight memory as cornerstone for transforming LLMs into adaptive agents"
+      }
+    },
+    {
+      "source": "Wang et al.",
+      "target": "software engineering",
+      "relation": "applies_to",
+      "properties": {
+        "version": "2024",
+        "confidence": "high",
+        "context": "Applied AI agents to software engineering"
+      }
+    },
+    {
+      "source": "Wei et al.",
+      "target": "scientific discovery",
+      "relation": "applies_to",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "Used AI agents in scientific discovery"
+      }
+    },
+    {
+      "source": "unified taxonomy",
+      "target": "agent memory",
+      "relation": "describes",
+      "properties": {
+        "confidence": "high",
+        "context": "The taxonomy categorizes memory artifacts by dominant form and primary function"
+      }
+    },
+    {
+      "source": "arXiv:2512.13564v1",
+      "target": "unified taxonomy",
+      "relation": "presents",
+      "properties": {
+        "version": "2025-12-15",
+        "confidence": "high",
+        "context": "The preprint introduces the unified taxonomy of agent memory"
+      }
+    },
+    {
+      "source": "GitHub",
+      "target": "arXiv:2512.13564v1",
+      "relation": "provides_feedback_channel_for",
+      "properties": {
+        "confidence": "high",
+        "context": "Readers are invited to raise issues on GitHub regarding omissions in the paper"
+      }
+    },
+    {
+      "source": "Wei et al., 2025c",
+      "target": "Artificial General Intelligence",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "continuously advancing the trajectory toward AGI"
+      }
+    },
+    {
+      "source": "Fang et al., 2025a",
+      "target": "Artificial General Intelligence",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "contributing to progress toward AGI"
+      }
+    },
+    {
+      "source": "Durante et al., 2024",
+      "target": "Artificial General Intelligence",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "contributing to foundational progress toward AGI"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "LLM backbone",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "beyond a pure LLM backbone"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Reasoning",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "an agent is typically equipped with capabilities such as reasoning"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Planning",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "an agent is typically equipped with capabilities such as planning"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Perception",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "an agent is typically equipped with capabilities such as perception"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "an agent is typically equipped with capabilities such as memory"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Tool-use",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "an agent is typically equipped with capabilities such as tool-use"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Learnable Policy",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "components transform LLMs into learnable policies that adaptively evolve"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Observation",
+      "relation": "receives",
+      "properties": {
+        "confidence": "high",
+        "context": "observation o_i^t is a function of state and history"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Single-agent System",
+      "relation": "instance_of",
+      "properties": {
+        "confidence": "medium",
+        "context": "when N=1"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Multi-agent System",
+      "relation": "instance_of",
+      "properties": {
+        "confidence": "medium",
+        "context": "when N>1"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Policy",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "each agent i follows policy πi(oi_t, mi_t, Q)"
+      }
+    },
+    {
+      "source": "Agent",
+      "target": "Memory_State",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "memory state persists across decision steps and tasks"
+      }
+    },
+    {
+      "source": "LLM backbone",
+      "target": "Learnable Policy",
+      "relation": "transforms_into",
+      "properties": {
+        "confidence": "high",
+        "context": "transform LLMs from static conditional generators into learnable policies"
+      }
+    },
+    {
+      "source": "Reasoning",
+      "target": "Reinforcement Learning",
+      "relation": "enabled_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "internalized within model parameters through reinforcement learning"
+      }
+    },
+    {
+      "source": "Reasoning",
+      "target": "Agentic Scaffold",
+      "relation": "inhibits",
+      "properties": {
+        "confidence": "medium",
+        "context": "some abilities still depend heavily on external agentic scaffolds"
+      }
+    },
+    {
+      "source": "Memory",
+      "target": "Agent",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "memory stands out as a cornerstone, explicitly enabling the transformation"
+      }
+    },
+    {
+      "source": "Memory",
+      "target": "Adaptive Agent",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "explicitly enables transformation from static LLMs to adaptive agents"
+      }
+    },
+    {
+      "source": "Memory",
+      "target": "LLM",
+      "relation": "transforms",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "converts static LLMs into adaptive agents through environmental interaction"
+      }
+    },
+    {
+      "source": "Memory",
+      "target": "Continual Evolution",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "fundamental to achieving continual evolution in AGI research"
+      }
+    },
+    {
+      "source": "Tool-use",
+      "target": "Reinforcement Learning",
+      "relation": "enabled_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "internalized within model parameters through reinforcement learning"
+      }
+    },
+    {
+      "source": "Tool-use",
+      "target": "Agentic Scaffold",
+      "relation": "inhibits",
+      "properties": {
+        "confidence": "medium",
+        "context": "some abilities still depend heavily on external agentic scaffolds"
+      }
+    },
+    {
+      "source": "Wang et al., 2025l",
+      "target": "Reinforcement Learning",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "demonstrating internalization via reinforcement learning"
+      }
+    },
+    {
+      "source": "Qu et al., 2025b",
+      "target": "Reinforcement Learning",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "showing reinforcement learning embedding tool-use"
+      }
+    },
+    {
+      "source": "Zhang et al., 2025f",
+      "target": "Learnable Policy",
+      "relation": "describes",
+      "properties": {
+        "confidence": "high",
+        "context": "illustrates how agents become learnable policies through interaction"
+      }
+    },
+    {
+      "source": "Wu et al.",
+      "target": "Memory",
+      "relation": "studies",
+      "properties": {
+        "version": "2025g",
+        "confidence": "high",
+        "context": "contribute to understanding memory's role in enabling adaptive agents"
+      }
+    },
+    {
+      "source": "Chhikara et al.",
+      "target": "Personalized Chatbot",
+      "relation": "develops",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Li et al.",
+      "target": "Personalized Chatbot",
+      "relation": "develops",
+      "properties": {
+        "version": "2025b",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Liu et al.",
+      "target": "Recommender System",
+      "relation": "develops",
+      "properties": {
+        "version": "2025b",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Park et al.",
+      "target": "Social Simulation",
+      "relation": "develops",
+      "properties": {
+        "version": "2023",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Yang et al.",
+      "target": "Social Simulation",
+      "relation": "develops",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Hendrycks et al.",
+      "target": "AGI Research",
+      "relation": "advances",
+      "properties": {
+        "version": "2025",
+        "confidence": "high",
+        "context": "focused on endowing agents with continual evolution capacity"
+      }
+    },
+    {
+      "source": "Personalized Chatbot",
+      "target": "Memory",
+      "relation": "requires",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "demands proactive memory management instead of ephemeral behaviors"
+      }
+    },
+    {
+      "source": "Recommender System",
+      "target": "Memory",
+      "relation": "requires",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "relies on processing, storing, and managing historical user information"
+      }
+    },
+    {
+      "source": "Social Simulation",
+      "target": "Memory",
+      "relation": "requires",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "depends on agents' ability to maintain and utilize past interactions"
+      }
+    },
+    {
+      "source": "Financial Investigation",
+      "target": "Memory",
+      "relation": "requires",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "necessitates storage and retrieval of complex historical data"
+      }
+    },
+    {
+      "source": "AGI Research",
+      "target": "Continual Evolution",
+      "relation": "aspires_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "defining aspiration is to enable agents to evolve continually through environment interactions"
+      }
+    },
+    {
+      "source": "Hendrycks et al., 2025",
+      "target": "Agent Memory",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "highlighted the importance of memory for continual evolution through interaction"
+      }
+    },
+    {
+      "source": "Taxonomy",
+      "target": "Agent Memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "the proposed taxonomy is specifically for categorizing agent memory research"
+      }
+    },
+    {
+      "source": "Zhang et al., 2025r",
+      "target": "Taxonomy",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "authored prior taxonomies on agent memory systems"
+      }
+    },
+    {
+      "source": "Wu et al., 2025g",
+      "target": "Taxonomy",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "contributed earlier taxonomic frameworks for agent memory"
+      }
+    },
+    {
+      "source": "Memory Frameworks",
+      "target": "Agent Memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "modern memory frameworks enhance agent memory with tool reuse and test-time scaling"
+      }
+    },
+    {
+      "source": "Memory Frameworks",
+      "target": "Test-Time Scaling",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "memory augmentation allows improved reasoning and behavior during inference"
+      }
+    },
+    {
+      "source": "Qiu et al., 2025a",
+      "target": "Memory Frameworks",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "research focuses on distilling reusable tools from past experiences"
+      }
+    },
+    {
+      "source": "Qiu et al., 2025c",
+      "target": "Memory Frameworks",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "contributes to frameworks that leverage historical experience for generalization"
+      }
+    },
+    {
+      "source": "Zhao et al., 2025c",
+      "target": "Memory Frameworks",
+      "relation": "develops",
+      "properties": {
+        "confidence": "high",
+        "context": "works on memory-augmented test-time approaches and experience-based learning"
+      }
+    },
+    {
+      "source": "reusable tools",
+      "target": "Qiu et al., 2025a",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "introduced or discussed in this work"
+      }
+    },
+    {
+      "source": "reusable tools",
+      "target": "Qiu et al., 2025c",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "introduced or discussed in this work"
+      }
+    },
+    {
+      "source": "reusable tools",
+      "target": "Zhao et al., 2025c",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "introduced or discussed in this work"
+      }
+    },
+    {
+      "source": "memory-augmented test-time scaling methods",
+      "target": "Zhang et al., 2025g",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "introduced or discussed in this work"
+      }
+    },
+    {
+      "source": "memory-augmented test-time scaling methods",
+      "target": "Suzgun et al., 2025",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "high",
+        "context": "introduced or discussed in this work"
+      }
+    },
+    {
+      "source": "Conceptual Fragmentation",
+      "target": "taxonomy",
+      "relation": "requires",
+      "properties": {
+        "confidence": "high",
+        "context": "a coherent taxonomy is needed to address fragmentation"
+      }
+    },
+    {
+      "source": "taxonomy",
+      "target": "systematic framework",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "the taxonomy is a core component of the proposed framework"
+      }
+    },
+    {
+      "source": "systematic framework",
+      "target": "agent memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "clarifies and unifies the foundational principles of agent memory"
+      }
+    },
+    {
+      "source": "systematic framework",
+      "target": "Conceptual Fragmentation",
+      "relation": "addresses",
+      "properties": {
+        "confidence": "high",
+        "context": "aims to resolve the issue of conceptual fragmentation"
+      }
+    },
+    {
+      "source": "LLM-based Agent",
+      "target": "Agent Memory",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "medium",
+        "context": "agent memory is foundational for sustained autonomy and learning in LLM-based agents"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics Triangle",
+      "target": "Agent Memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "used as organizing framework for surveying agent memory characteristics"
+      }
+    },
+    {
+      "source": "memory",
+      "target": "RAG",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "medium",
+        "context": "discussed together in the context of enhancing agent intelligence"
+      }
+    },
+    {
+      "source": "memory",
+      "target": "context engineering",
+      "relation": "related_to",
+      "properties": {
+        "confidence": "medium",
+        "context": "both are key aspects of improving agent context management"
+      }
+    },
+    {
+      "source": "memory",
+      "target": "Forms–Functions–Dynamics triangle",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "the triangle is applied as a framework to understand memory"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "token-level memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "architectural form dimension discussed in Section 3"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "parametric memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "architectural form dimension discussed in Section 3"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "latent memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "architectural form dimension discussed in Section 3"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "factual memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "functional role dimension discussed in Section 4"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "experiential memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "functional role dimension discussed in Section 4"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "working memory",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "functional role dimension discussed in Section 4"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "memory formulation",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "operational dynamics dimension discussed sequentially"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "memory retrieval",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "operational dynamics dimension discussed sequentially"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics triangle",
+      "target": "memory evolution",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "operational dynamics dimension discussed sequentially"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Memory Formulation",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "core aspect of agent memory research"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Memory Retrieval",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "core aspect of agent memory research"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Memory Evolution",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "core aspect of agent memory research"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Automation-Oriented Memory Design",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "emerging yet underdeveloped frontier"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Reinforcement Learning Integration",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "emerging research frontier"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Multimodal Memory",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "emerging research frontier"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Shared Memory",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "for multi-agent systems"
+      }
+    },
+    {
+      "source": "Agent Memory Research",
+      "target": "Trustworthy Issues",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "pertains to reliability and ethical concerns"
+      }
+    },
+    {
+      "source": "Forms–Functions–Dynamics",
+      "target": "Taxonomy of Agent Memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "provides structured lens for understanding developments"
+      }
+    },
+    {
+      "source": "Taxonomy of Agent Memory",
+      "target": "Agent Memory Research",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "offers a classification system to organize research"
+      }
+    },
+    {
+      "source": "Memory Retrieval",
+      "target": "Memory Lifecycle",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "Implied final stage of the memory lifecycle"
+      }
+    },
+    {
+      "source": "Memory Evolution",
+      "target": "Evolution Operator",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "The evolution operator implements the memory evolution process"
+      }
+    },
+    {
+      "source": "Memory Evolution",
+      "target": "Memory Lifecycle",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "Second stage in the memory lifecycle following formation"
+      }
+    },
+    {
+      "source": "Benchmark Resources",
+      "target": "Agent Memory Research",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "facilitates knowledge sharing and future development"
+      }
+    },
+    {
+      "source": "Framework Resources",
+      "target": "Agent Memory Research",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "supports implementation and experimentation"
+      }
+    },
+    {
+      "source": "LLM-based agents",
+      "target": "Agent memory systems",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "agent functionality relies on memory for persistence and learning"
+      }
+    },
+    {
+      "source": "Agent memory systems",
+      "target": "Memory forms",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "forms represent structural components of memory systems"
+      }
+    },
+    {
+      "source": "Agent memory systems",
+      "target": "Memory functions",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "functions define the operational roles of memory"
+      }
+    },
+    {
+      "source": "Agent memory systems",
+      "target": "Memory dynamics",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "dynamics describe how memory changes and evolves"
+      }
+    },
+    {
+      "source": "Memory forms",
+      "target": "Memory functions",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "certain memory structures better support specific functional objectives"
+      }
+    },
+    {
+      "source": "Research directions",
+      "target": "Agent memory systems",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "emerging research shapes future development of memory systems"
+      }
+    },
+    {
+      "source": "Benchmarks",
+      "target": "Agent memory systems",
+      "relation": "evaluates",
+      "properties": {
+        "confidence": "high",
+        "context": "used to assess effectiveness and progress in memory system design"
+      }
+    },
+    {
+      "source": "Open-source frameworks",
+      "target": "Agent memory systems",
+      "relation": "supports",
+      "properties": {
+        "confidence": "high",
+        "context": "enables implementation, experimentation, and deployment"
+      }
+    },
+    {
+      "source": "Researchers",
+      "target": "Agent memory systems",
+      "relation": "studies",
+      "properties": {
+        "confidence": "high",
+        "context": "conduct analysis and contribute to theoretical understanding"
+      }
+    },
+    {
+      "source": "Practitioners",
+      "target": "Agent memory systems",
+      "relation": "implements",
+      "properties": {
+        "confidence": "high",
+        "context": "applies memory systems in practical applications and products"
+      }
+    },
+    {
+      "source": "Section 4",
+      "target": "Memory System",
+      "relation": "examines",
+      "properties": {
+        "confidence": "high",
+        "context": "focuses on forms of agent memory"
+      }
+    },
+    {
+      "source": "Section 5",
+      "target": "Memory System",
+      "relation": "examines",
+      "properties": {
+        "confidence": "high",
+        "context": "focuses on functions and dynamics of agent memory"
+      }
+    },
+    {
+      "source": "Section 6",
+      "target": "Framework Resources",
+      "relation": "summarizes",
+      "properties": {
+        "confidence": "high",
+        "context": "covers benchmarks and available frameworks"
+      }
+    },
+    {
+      "source": "Section 6",
+      "target": "Benchmarks",
+      "relation": "summarizes",
+      "properties": {
+        "confidence": "high",
+        "context": "covers evaluation benchmarks for agent systems"
+      }
+    },
+    {
+      "source": "Section 7",
+      "target": "Emerging Research Frontiers",
+      "relation": "discusses",
+      "properties": {
+        "confidence": "high",
+        "context": "covers future directions in agent memory research"
+      }
+    },
+    {
+      "source": "Section 8",
+      "target": "Key Insights",
+      "relation": "summarizes",
+      "properties": {
+        "confidence": "high",
+        "context": "presents concluding takeaways from the survey"
+      }
+    },
+    {
+      "source": "LLM-based Agent Systems",
+      "target": "Memory System",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "memory is coupled to agent decision process via read/write interactions"
+      }
+    },
+    {
+      "source": "LLM-based Agent Systems",
+      "target": "Agent",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "LLM-based Agent Systems",
+      "target": "Environment",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Memory System",
+      "target": "Short-term Memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "supports inside-trial memory during task execution"
+      }
+    },
+    {
+      "source": "Memory System",
+      "target": "Long-term Memory",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "supports cross-trial memory across multiple tasks"
+      }
+    },
+    {
+      "source": "Environment",
+      "target": "State Space",
+      "relation": "has",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Environment",
+      "target": "Stochastic Transition Model",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "controls state evolution"
+      }
+    },
+    {
+      "source": "Stochastic Transition Model",
+      "target": "Action",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "state transition depends on action a_t"
+      }
+    },
+    {
+      "source": "Stochastic Transition Model",
+      "target": "State Space",
+      "relation": "operates_on",
+      "properties": {
+        "confidence": "high",
+        "context": "transitions between states s_t and s_{t+1}"
+      }
+    },
+    {
+      "source": "Observation",
+      "target": "Interaction History",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "o_i^t = O_i(s_t, h_i^t, Q)"
+      }
+    },
+    {
+      "source": "Observation",
+      "target": "State Space",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "o_i^t depends on current state s_t"
+      }
+    },
+    {
+      "source": "Single-agent System",
+      "target": "ReAct",
+      "relation": "exemplified_by",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Multi-agent System",
+      "target": "Debate",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "as in Li et al., 2024c"
+      }
+    },
+    {
+      "source": "Multi-agent System",
+      "target": "Planner–Executor Architecture",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "as in Wan et al., 2025"
+      }
+    },
+    {
+      "source": "Multi-agent System",
+      "target": "Sequential Decision-making",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "where a single agent acts at each step"
+      }
+    },
+    {
+      "source": "Multi-agent System",
+      "target": "Implicit Coordination",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "through environment-mediated effects"
+      }
+    },
+    {
+      "source": "Debate",
+      "target": "Li et al., 2024c",
+      "relation": "introduced_in",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Planner–Executor Architecture",
+      "target": "Wan et al., 2025",
+      "relation": "introduced_in",
+      "properties": {
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "LLM-based agent",
+      "target": "interaction history",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "agent uses visible portion of interaction history for decision-making"
+      }
+    },
+    {
+      "source": "LLM-based agent",
+      "target": "task specification",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "task specification guides agent behavior and is treated as fixed within a task"
+      }
+    },
+    {
+      "source": "LLM-based agent",
+      "target": "Action Space",
+      "relation": "has",
+      "properties": {
+        "confidence": "high",
+        "context": "defines the range of actions available to the agent"
+      }
+    },
+    {
+      "source": "Action Space",
+      "target": "Natural-language generation",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "one of the key modalities within the agent's action space"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Li et al., 2023b",
+      "relation": "influenced_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "cited as a reference supporting the use of natural-language generation in agents"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Wu et al., 2024b",
+      "relation": "influenced_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "cited as a reference supporting the use of natural-language generation in agents"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Hong et al., 2024",
+      "relation": "influenced_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "cited as a reference supporting the use of natural-language generation in agents"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Qian et al., 2024",
+      "relation": "influenced_by",
+      "properties": {
+        "confidence": "medium",
+        "context": "cited as a reference supporting the use of natural-language generation in agents"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Li et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Li et al., 2023b"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Wu et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Wu et al., 2024b"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Hong et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Hong et al., 2024"
+      }
+    },
+    {
+      "source": "Natural-language generation",
+      "target": "Qian et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Qian et al., 2024"
+      }
+    },
+    {
+      "source": "Qian et al., 2024",
+      "target": "Agentic System",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "describes teams of agents for software development"
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Qin et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Qin et al., 2025"
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Li et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Li et al., 2025g"
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Zhou et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Zhou et al., 2023c, 2024c"
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "APIs",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Search engines",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Calculators",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Databases",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Simulators",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Tool invocation actions",
+      "target": "Code execution environments",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Planning actions",
+      "target": "CAMEL-AI",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "CAMEL-AI, 2025"
+      }
+    },
+    {
+      "source": "Planning actions",
+      "target": "Liu et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Liu et al., 2025f"
+      }
+    },
+    {
+      "source": "Planning actions",
+      "target": "Pan et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Pan et al., 2024"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Shridhar et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Shridhar et al., 2021"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Wang et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Wang et al., 2022a"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Jimenez et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Jimenez et al., 2024"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Aleithan et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Aleithan et al., 2024"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Navigation",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "in embodied settings"
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Software repository editing",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Environment-control actions",
+      "target": "Shared memory buffer",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "modification of shared memory"
+      }
+    },
+    {
+      "source": "Communication actions",
+      "target": "Marro et al.",
+      "relation": "related_to",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Marro et al., 2024"
+      }
+    },
+    {
+      "source": "Communication actions",
+      "target": "Collaboration",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "structured messages facilitate joint problem-solving"
+      }
+    },
+    {
+      "source": "Communication actions",
+      "target": "Negotiation",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "agents use messages to negotiate outcomes"
+      }
+    },
+    {
+      "source": "Marro et al., 2024",
+      "target": "Communication actions",
+      "relation": "describes",
+      "properties": {
+        "confidence": "high",
+        "context": "cited as source for definition"
+      }
+    },
+    {
+      "source": "Autoregressive LLM",
+      "target": "Communication actions",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "LLM backbone generates structured messages"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Autoregressive LLM",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "policy is implemented via LLM generation"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Memory-derived signal",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "mi_t is an input to the policy function"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Environment observation",
+      "relation": "uses",
+      "properties": {
+        "confidence": "high",
+        "context": "oi_t is part of policy input"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Multi-step reasoning",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "internal reasoning may occur before action emission"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Latent deliberation",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "abstracted internal process during decision-making"
+      }
+    },
+    {
+      "source": "Policy",
+      "target": "Scratchpad computations",
+      "relation": "enables",
+      "properties": {
+        "confidence": "medium",
+        "context": "used internally but not explicitly modeled"
+      }
+    },
+    {
+      "source": "Interaction Process",
+      "target": "Trajectory",
+      "relation": "results_in",
+      "properties": {
+        "confidence": "high",
+        "context": "full execution induces trajectory τ"
+      }
+    },
+    {
+      "source": "Interaction Process",
+      "target": "Environment observation",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "first component of each step in the process"
+      }
+    },
+    {
+      "source": "Interaction Process",
+      "target": "Memory retrieval",
+      "relation": "includes",
+      "properties": {
+        "confidence": "high",
+        "context": "optional second component of interaction step"
+      }
+    },
+    {
+      "source": "System execution",
+      "target": "Trajectory",
+      "relation": "produces",
+      "properties": {
+        "confidence": "high",
+        "context": "τ = (s0, o0, a0, s1, o1, a1, ..., sT)"
+      }
+    },
+    {
+      "source": "Agentic System",
+      "target": "Environment Observation",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "first component in the agent loop"
+      }
+    },
+    {
+      "source": "Agentic System",
+      "target": "Memory Retrieval",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "optional second component in the agent loop"
+      }
+    },
+    {
+      "source": "Agentic System",
+      "target": "LLM-based Computation",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "third component in the agent loop"
+      }
+    },
+    {
+      "source": "Agentic System",
+      "target": "Action Execution",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "fourth component in the agent loop"
+      }
+    },
+    {
+      "source": "Agentic System",
+      "target": "Agent Memory System",
+      "relation": "incorporates",
+      "properties": {
+        "confidence": "high",
+        "context": "memory integrates into the agent loop"
+      }
+    },
+    {
+      "source": "Environment Observation",
+      "target": "Decision-making",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "instantaneous observation informs decisions"
+      }
+    },
+    {
+      "source": "LLM-based Computation",
+      "target": "Decision-making",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "reasoning contributes to decision-making"
+      }
+    },
+    {
+      "source": "Action Execution",
+      "target": "State Transition",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "drives the next state transition"
+      }
+    },
+    {
+      "source": "Agent Memory System",
+      "target": "Prior Interactions",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "memory derived from prior interactions within and across tasks"
+      }
+    },
+    {
+      "source": "Agent Memory System",
+      "target": "Memory Retrieval",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "supports optional retrieval during agent loop"
+      }
+    },
+    {
+      "source": "Agent Memory System",
+      "target": "Decision-making",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "provides historical context for effective decisions"
+      }
+    },
+    {
+      "source": "Wang et al., 2025k",
+      "target": "Agentic System",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "describes role-specialized agents in collaborative tasks"
+      }
+    },
+    {
+      "source": "Weng et al., 2025",
+      "target": "Agentic System",
+      "relation": "influences",
+      "properties": {
+        "confidence": "high",
+        "context": "applies agentic systems to scientific inquiry"
+      }
+    },
+    {
+      "source": "unifiedagent memory system",
+      "target": "Mt",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Mt represents the current state of the system"
+      }
+    },
+    {
+      "source": "unifiedagent memory system",
+      "target": "text buffer",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "the memory may take the form of a text buffer"
+      }
+    },
+    {
+      "source": "unifiedagent memory system",
+      "target": "key–value store",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "a possible internal representation of the memory system"
+      }
+    },
+    {
+      "source": "unifiedagent memory system",
+      "target": "vector database",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "a potential implementation choice for similarity-based memory access"
+      }
+    },
+    {
+      "source": "unifiedagent memory system",
+      "target": "graph structure",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "can be used as a standalone or hybrid memory representation"
+      }
+    },
+    {
+      "source": "Mt",
+      "target": "M",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "Mt ∈ M denotes that the memory state belongs to the space of admissible configurations"
+      }
+    },
+    {
+      "source": "Mt",
+      "target": "cross-trial memory",
+      "relation": "contains",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "at the beginning of a task, Mt may contain information from prior trajectories"
+      }
+    },
+    {
+      "source": "Mt",
+      "target": "short-term, task-specific memory",
+      "relation": "contains",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "during task execution, new information accumulates as short-term memory"
+      }
+    },
+    {
+      "source": "Memory Lifecycle",
+      "target": "Formation",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "one of the three core operators in the lifecycle"
+      }
+    },
+    {
+      "source": "Memory Lifecycle",
+      "target": "Evolution",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "a key phase describing how memory changes over time"
+      }
+    },
+    {
+      "source": "Memory Lifecycle",
+      "target": "Retrieval",
+      "relation": "part_of",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "the process of accessing stored memory when needed"
+      }
+    },
+    {
+      "source": "Formation",
+      "target": "Mt",
+      "relation": "influences",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "initialization of Mt involves formation of memory content"
+      }
+    },
+    {
+      "source": "Evolution",
+      "target": "Mt",
+      "relation": "influences",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "memory evolves during task execution, modifying Mt"
+      }
+    },
+    {
+      "source": "Retrieval",
+      "target": "Mt",
+      "relation": "depends_on",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "retrieval operations require access to the current memory state Mt"
+      }
+    },
+    {
+      "source": "Memory Formation",
+      "target": "Formation Operator",
+      "relation": "enables",
+      "properties": {
+        "confidence": "high",
+        "context": "The formation operator implements the memory formation process"
+      }
+    },
+    {
+      "source": "Memory Formation",
+      "target": "Memory Lifecycle",
+      "relation": "part_of",
+      "properties": {
+        "confidence": "high",
+        "context": "One of three core stages in the memory lifecycle"
+      }
+    },
+    {
+      "source": "Informational Artifacts",
+      "target": "Formation Operator",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "Formation operator requires input from informational artifacts produced at time t"
+      }
+    },
+    {
+      "source": "Formation Operator",
+      "target": "M_form_t+1",
+      "relation": "produces",
+      "properties": {
+        "confidence": "high",
+        "context": "Output of the formation operator is the set of memory candidates M_form_t+1"
+      }
+    },
+    {
+      "source": "Evolution Operator",
+      "target": "M_t+1",
+      "relation": "produces",
+      "properties": {
+        "confidence": "high",
+        "context": "The output of the evolution operator is the updated memory state M_t+1"
+      }
+    },
+    {
+      "source": "M_t",
+      "target": "Formation Operator",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "The current memory state M_t is used as input to the formation operator"
+      }
+    },
+    {
+      "source": "M_form_t+1",
+      "target": "Evolution Operator",
+      "relation": "depends_on",
+      "properties": {
+        "confidence": "high",
+        "context": "Evolution operator takes memory candidates as input"
+      }
+    },
+    {
+      "source": "Zhao et al., 2024",
+      "target": "Memory Evolution",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "Contributed research on consolidation of redundant entries in memory"
+      }
+    },
+    {
+      "source": "Rasmussen et al., 2025",
+      "target": "Memory Evolution",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "Studied conflict resolution in memory systems"
+      }
+    },
+    {
+      "source": "Li et al., 2025k",
+      "target": "Memory Evolution",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "Investigated conflict resolution within memory evolution processes"
+      }
+    },
+    {
+      "source": "Wang et al., 2025q",
+      "target": "Memory Evolution",
+      "relation": "influences",
+      "properties": {
+        "confidence": "medium",
+        "context": "Researched discarding low-utility information during memory evolution"
+      }
+    },
+    {
+      "source": "Memory_Formation",
+      "target": "Memory_State",
+      "relation": "depends_on",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "formation involves retaining high-value information or discarding low-utility data (Wang et al., 2025q)"
+      }
+    },
+    {
+      "source": "Memory_Evolution",
+      "target": "Memory_State",
+      "relation": "depends_on",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "evolution includes restructuring memory for efficient retrieval"
+      }
+    },
+    {
+      "source": "Memory_Retrieval",
+      "target": "Memory_State",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "retrieves context-dependent signal from current memory state M_t"
+      }
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "Memory_Retrieval",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "R constructs task-aware query Q and returns relevant memory content m_i_t"
+      }
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "Memory_State",
+      "relation": "uses",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "takes M_t and observation o_i_t as inputs"
+      }
+    },
+    {
+      "source": "Retrieval_Operator_R",
+      "target": "LLM_Policy",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "formats retrieved signal for direct consumption by LLM policy, e.g., as textual snippets or structured summary"
+      }
+    },
+    {
+      "source": "Wang_et_al_2025q",
+      "target": "Memory_Formation",
+      "relation": "influences",
+      "properties": {
+        "version": "2025q",
+        "confidence": "high",
+        "context": "proposed discarding low-utility information in memory formation"
+      }
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Retrieval",
+      "relation": "inhibits",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "some systems perform retrieval only at task initialization (t=0), not at later steps (t>0)"
+      }
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Formation",
+      "relation": "inhibits",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "lifecycle operators F, E, R need not be invoked at every time step"
+      }
+    },
+    {
+      "source": "Temporal_Invocation_Pattern",
+      "target": "Memory_Evolution",
+      "relation": "inhibits",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "lifecycle operators F, E, R need not be invoked at every time step"
+      }
+    },
+    {
+      "source": "Task_Initialization",
+      "target": "Memory_Retrieval",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "retrieval occurs once at t=0: m_i_t = R(M0, oi_0, Q) when t=0, otherwise ⊥"
+      }
+    },
+    {
+      "source": "retrieval",
+      "target": "task initialization",
+      "relation": "requires",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "performed only once at t=0"
+      }
+    },
+    {
+      "source": "retrieval",
+      "target": "memory",
+      "relation": "depends_on",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "when retrieval is null (⊥) for t > 0, no further access occurs"
+      }
+    },
+    {
+      "source": "memory formation",
+      "target": "raw observations",
+      "relation": "starts_with",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "minimal accumulation involves direct union with observations"
+      }
+    },
+    {
+      "source": "memory formation",
+      "target": "reusable patterns",
+      "relation": "enables",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "sophisticated formation extracts abstractions from data"
+      }
+    },
+    {
+      "source": "short-term memory",
+      "target": "lightweight logging",
+      "relation": "realized_by",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "as demonstrated in Yao et al. (2023b); Chen et al. (2023a)"
+      }
+    },
+    {
+      "source": "short-term memory",
+      "target": "iterative refinement",
+      "relation": "realized_by",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "as shown in Hu et al. (2025a)"
+      }
+    },
+    {
+      "source": "short-term memory",
+      "target": "temporal patterns",
+      "relation": "emerges_from",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "due to timing of retrieval, formation, and evolution"
+      }
+    },
+    {
+      "source": "long-term memory",
+      "target": "episodic update",
+      "relation": "updated_by",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "updates occur at task boundaries"
+      }
+    },
+    {
+      "source": "long-term memory",
+      "target": "continuous update",
+      "relation": "updated_by",
+      "properties": {
+        "version": "",
+        "confidence": "medium",
+        "context": "updates happen throughout operation"
+      }
+    },
+    {
+      "source": "long-term memory",
+      "target": "temporal patterns",
+      "relation": "emerges_from",
+      "properties": {
+        "version": "",
+        "confidence": "high",
+        "context": "shaped by frequency and timing of updates across tasks"
+      }
+    },
+    {
+      "source": "Yao et al. (2023b)",
+      "target": "lightweight logging",
+      "relation": "develops",
+      "properties": {
+        "version": "2023b",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Chen et al. (2023a)",
+      "target": "lightweight logging",
+      "relation": "develops",
+      "properties": {
+        "version": "2023a",
+        "confidence": "high",
+        "context": ""
+      }
+    },
+    {
+      "source": "Hu et al. (2025a)",
+      "target": "iterative refinement",
+      "relation": "develops",
+      "properties": {
+        "version": "2025a",
+        "confidence": "high",
+        "context": ""
+      }
+    }
+  ],
+  "node_to_documents": {
+    "Project Alpha": [
+      "internal_alpha.txt"
+    ],
+    "DeepBlue": [
+      "internal_alpha.txt"
+    ],
+    "Dr. Emily Chen": [
+      "internal_alpha.txt"
+    ],
+    "Team Z": [
+      "internal_alpha.txt"
+    ],
+    "Sarah Jones": [
+      "internal_alpha.txt"
+    ],
+    "Context Engineering": [
+      "2512.13564v1.pdf",
+      "internal_alpha.txt"
+    ],
+    "Long-Term Memory": [
+      "internal_alpha.txt"
+    ],
+    "Scratchpad": [
+      "internal_alpha.txt"
+    ],
+    "State Isolation": [
+      "internal_alpha.txt"
+    ],
+    "Prompt Caching": [
+      "internal_alpha.txt"
+    ],
+    "API Latency": [
+      "internal_alpha.txt"
+    ],
+    "Yuyang Hu": [
+      "2512.13564v1.pdf"
+    ],
+    "Shichun Liu": [
+      "2512.13564v1.pdf"
+    ],
+    "Yanwei Yue": [
+      "2512.13564v1.pdf"
+    ],
+    "Guibin Zhang": [
+      "2512.13564v1.pdf"
+    ],
+    "Boyang Liu": [
+      "2512.13564v1.pdf"
+    ],
+    "Fangyi Zhu": [
+      "2512.13564v1.pdf"
+    ],
+    "Jiahang Lin": [
+      "2512.13564v1.pdf"
+    ],
+    "Honglin Guo": [
+      "2512.13564v1.pdf"
+    ],
+    "Shihan Dou": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhiheng Xi": [
+      "2512.13564v1.pdf"
+    ],
+    "Senjie Jin": [
+      "2512.13564v1.pdf"
+    ],
+    "Jiejun Tan": [
+      "2512.13564v1.pdf"
+    ],
+    "Yanbin Yin": [
+      "2512.13564v1.pdf"
+    ],
+    "Jiongnan Liu": [
+      "2512.13564v1.pdf"
+    ],
+    "Zeyu Zhang": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhongxiang Sun": [
+      "2512.13564v1.pdf"
+    ],
+    "Yutao Zhu": [
+      "2512.13564v1.pdf"
+    ],
+    "Hao Sun": [
+      "2512.13564v1.pdf"
+    ],
+    "Boci Peng": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhenrong Cheng": [
+      "2512.13564v1.pdf"
+    ],
+    "Xuanbo Fan": [
+      "2512.13564v1.pdf"
+    ],
+    "Jiaxin Guo": [
+      "2512.13564v1.pdf"
+    ],
+    "Xinlei Yu": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhenhong Zhou": [
+      "2512.13564v1.pdf"
+    ],
+    "Zewen Hu": [
+      "2512.13564v1.pdf"
+    ],
+    "Jiahao Huo": [
+      "2512.13564v1.pdf"
+    ],
+    "Junhao Wang": [
+      "2512.13564v1.pdf"
+    ],
+    "Yuwei Niu": [
+      "2512.13564v1.pdf"
+    ],
+    "Yu Wang": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhenfei Yin": [
+      "2512.13564v1.pdf"
+    ],
+    "Xiaobin Hu": [
+      "2512.13564v1.pdf"
+    ],
+    "Yue Liao": [
+      "2512.13564v1.pdf"
+    ],
+    "Qiankun Li": [
+      "2512.13564v1.pdf"
+    ],
+    "Kun Wang": [
+      "2512.13564v1.pdf"
+    ],
+    "Wangchunshu Zhou": [
+      "2512.13564v1.pdf"
+    ],
+    "Yixin Liu": [
+      "2512.13564v1.pdf"
+    ],
+    "Dawei Cheng": [
+      "2512.13564v1.pdf"
+    ],
+    "Qi Zhang": [
+      "2512.13564v1.pdf"
+    ],
+    "Tao Gui": [
+      "2512.13564v1.pdf"
+    ],
+    "Shirui Pan": [
+      "2512.13564v1.pdf"
+    ],
+    "Yan Zhang": [
+      "2512.13564v1.pdf"
+    ],
+    "Philip Torr": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhicheng Dou": [
+      "2512.13564v1.pdf"
+    ],
+    "Ji-Rong Wen": [
+      "2512.13564v1.pdf"
+    ],
+    "Xuanjing Huang": [
+      "2512.13564v1.pdf"
+    ],
+    "Yu-Gang Jiang": [
+      "2512.13564v1.pdf"
+    ],
+    "Shuicheng Yan": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory in the Age of AI Agents: A Survey": [
+      "2512.13564v1.pdf"
+    ],
+    "National University of Singapore": [
+      "2512.13564v1.pdf"
+    ],
+    "Renmin University of China": [
+      "2512.13564v1.pdf"
+    ],
+    "Fudan University": [
+      "2512.13564v1.pdf"
+    ],
+    "Peking University": [
+      "2512.13564v1.pdf"
+    ],
+    "Nanyang Technological University": [
+      "2512.13564v1.pdf"
+    ],
+    "Tongji University": [
+      "2512.13564v1.pdf"
+    ],
+    "University of California": [
+      "2512.13564v1.pdf"
+    ],
+    "University of California San Diego": [
+      "2512.13564v1.pdf"
+    ],
+    "Hong Kong University of Science and Technology (Guangzhou)": [
+      "2512.13564v1.pdf"
+    ],
+    "Griffith University": [
+      "2512.13564v1.pdf"
+    ],
+    "Georgia Institute of Technology": [
+      "2512.13564v1.pdf"
+    ],
+    "OPPO": [
+      "2512.13564v1.pdf"
+    ],
+    "Oxford University": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Foundation Model-Based Agents": [
+      "2512.13564v1.pdf"
+    ],
+    "agent memory": [
+      "2512.13564v1.pdf"
+    ],
+    "long/short-term memory": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM memory": [
+      "2512.13564v1.pdf"
+    ],
+    "retrieval augmented generation": [
+      "2512.13564v1.pdf"
+    ],
+    "context engineering": [
+      "2512.13564v1.pdf"
+    ],
+    "token-level memory": [
+      "2512.13564v1.pdf"
+    ],
+    "parametric memory": [
+      "2512.13564v1.pdf"
+    ],
+    "latent memory": [
+      "2512.13564v1.pdf"
+    ],
+    "agent memory forms": [
+      "2512.13564v1.pdf"
+    ],
+    "agent memory functions": [
+      "2512.13564v1.pdf"
+    ],
+    "agent memory dynamics": [
+      "2512.13564v1.pdf"
+    ],
+    "factual memory": [
+      "2512.13564v1.pdf"
+    ],
+    "experiential memory": [
+      "2512.13564v1.pdf"
+    ],
+    "working memory": [
+      "2512.13564v1.pdf"
+    ],
+    "memory dynamics": [
+      "2512.13564v1.pdf"
+    ],
+    "benchmarks": [
+      "2512.13564v1.pdf"
+    ],
+    "open source memory frameworks": [
+      "2512.13564v1.pdf"
+    ],
+    "automation-oriented memory design": [
+      "2512.13564v1.pdf"
+    ],
+    "reinforcement learning": [
+      "2512.13564v1.pdf"
+    ],
+    "multimodal memory": [
+      "2512.13564v1.pdf"
+    ],
+    "shared memory": [
+      "2512.13564v1.pdf"
+    ],
+    "multi-agent systems": [
+      "2512.13564v1.pdf"
+    ],
+    "trustworthiness issues": [
+      "2512.13564v1.pdf"
+    ],
+    "Reinforcement Learning": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Systems": [
+      "2512.13564v1.pdf"
+    ],
+    "Multimodal Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Shared Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Multi-Agent Systems": [
+      "2512.13564v1.pdf"
+    ],
+    "Trustworthiness Issues": [
+      "2512.13564v1.pdf"
+    ],
+    "Agentic Intelligence": [
+      "2512.13564v1.pdf"
+    ],
+    "Large Language Models": [
+      "2512.13564v1.pdf"
+    ],
+    "Yue Wang": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent-Memory-Paper-List": [
+      "2512.13564v1.pdf"
+    ],
+    "Survey on Agent Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "LLMs": [
+      "2512.13564v1.pdf"
+    ],
+    "AI agents": [
+      "2512.13564v1.pdf"
+    ],
+    "Matarazzo and Torlone": [
+      "2512.13564v1.pdf"
+    ],
+    "Minaee et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Luo et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Xu and Peng": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhang et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Wang et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Wei et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "unified taxonomy": [
+      "2512.13564v1.pdf"
+    ],
+    "arXiv:2512.13564v1": [
+      "2512.13564v1.pdf"
+    ],
+    "GitHub": [
+      "2512.13564v1.pdf"
+    ],
+    "Wei et al., 2025c": [
+      "2512.13564v1.pdf"
+    ],
+    "Artificial General Intelligence": [
+      "2512.13564v1.pdf"
+    ],
+    "Fang et al., 2025a": [
+      "2512.13564v1.pdf"
+    ],
+    "Durante et al., 2024": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM backbone": [
+      "2512.13564v1.pdf"
+    ],
+    "Reasoning": [
+      "2512.13564v1.pdf"
+    ],
+    "Planning": [
+      "2512.13564v1.pdf"
+    ],
+    "Perception": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Tool-use": [
+      "2512.13564v1.pdf"
+    ],
+    "Wang et al., 2025l": [
+      "2512.13564v1.pdf"
+    ],
+    "Qu et al., 2025b": [
+      "2512.13564v1.pdf"
+    ],
+    "Agentic Scaffold": [
+      "2512.13564v1.pdf"
+    ],
+    "Learnable Policy": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhang et al., 2025f": [
+      "2512.13564v1.pdf"
+    ],
+    "Wu et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Chhikara et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Li et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Liu et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Park et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Yang et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Hendrycks et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM": [
+      "2512.13564v1.pdf"
+    ],
+    "Adaptive Agent": [
+      "2512.13564v1.pdf"
+    ],
+    "Personalized Chatbot": [
+      "2512.13564v1.pdf"
+    ],
+    "Recommender System": [
+      "2512.13564v1.pdf"
+    ],
+    "Social Simulation": [
+      "2512.13564v1.pdf"
+    ],
+    "Financial Investigation": [
+      "2512.13564v1.pdf"
+    ],
+    "AGI Research": [
+      "2512.13564v1.pdf"
+    ],
+    "Hendrycks et al., 2025": [
+      "2512.13564v1.pdf"
+    ],
+    "Taxonomy": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhang et al., 2025r": [
+      "2512.13564v1.pdf"
+    ],
+    "Wu et al., 2025g": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Frameworks": [
+      "2512.13564v1.pdf"
+    ],
+    "Qiu et al., 2025a": [
+      "2512.13564v1.pdf"
+    ],
+    "Qiu et al., 2025c": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhao et al., 2025c": [
+      "2512.13564v1.pdf"
+    ],
+    "Test-Time Scaling": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhang et al., 2025g": [
+      "2512.13564v1.pdf"
+    ],
+    "Suzgun et al., 2025": [
+      "2512.13564v1.pdf"
+    ],
+    "reusable tools": [
+      "2512.13564v1.pdf"
+    ],
+    "memory-augmented test-time scaling methods": [
+      "2512.13564v1.pdf"
+    ],
+    "declarative memory": [
+      "2512.13564v1.pdf"
+    ],
+    "episodic memory": [
+      "2512.13564v1.pdf"
+    ],
+    "semantic memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Conceptual Fragmentation": [
+      "2512.13564v1.pdf"
+    ],
+    "taxonomy": [
+      "2512.13564v1.pdf"
+    ],
+    "systematic framework": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM-based Agent": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Retrieval-Augmented Generation": [
+      "2512.13564v1.pdf"
+    ],
+    "Forms–Functions–Dynamics Triangle": [
+      "2512.13564v1.pdf"
+    ],
+    "memory": [
+      "2512.13564v1.pdf"
+    ],
+    "RAG": [
+      "2512.13564v1.pdf"
+    ],
+    "Forms–Functions–Dynamics triangle": [
+      "2512.13564v1.pdf"
+    ],
+    "memory formulation": [
+      "2512.13564v1.pdf"
+    ],
+    "memory retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "memory evolution": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent Memory Research": [
+      "2512.13564v1.pdf"
+    ],
+    "Forms–Functions–Dynamics": [
+      "2512.13564v1.pdf"
+    ],
+    "Taxonomy of Agent Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Formulation": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Evolution": [
+      "2512.13564v1.pdf"
+    ],
+    "Automation-Oriented Memory Design": [
+      "2512.13564v1.pdf"
+    ],
+    "Reinforcement Learning Integration": [
+      "2512.13564v1.pdf"
+    ],
+    "Trustworthy Issues": [
+      "2512.13564v1.pdf"
+    ],
+    "Benchmark Resources": [
+      "2512.13564v1.pdf"
+    ],
+    "Framework Resources": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM-based agents": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent memory systems": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory forms": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory functions": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory dynamics": [
+      "2512.13564v1.pdf"
+    ],
+    "Research directions": [
+      "2512.13564v1.pdf"
+    ],
+    "Benchmarks": [
+      "2512.13564v1.pdf"
+    ],
+    "Open-source frameworks": [
+      "2512.13564v1.pdf"
+    ],
+    "Researchers": [
+      "2512.13564v1.pdf"
+    ],
+    "Practitioners": [
+      "2512.13564v1.pdf"
+    ],
+    "Section 4": [
+      "2512.13564v1.pdf"
+    ],
+    "Section 5": [
+      "2512.13564v1.pdf"
+    ],
+    "Section 6": [
+      "2512.13564v1.pdf"
+    ],
+    "Section 7": [
+      "2512.13564v1.pdf"
+    ],
+    "Section 8": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM-based Agent Systems": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory System": [
+      "2512.13564v1.pdf"
+    ],
+    "Short-term Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Long-term Memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Environment": [
+      "2512.13564v1.pdf"
+    ],
+    "State Space": [
+      "2512.13564v1.pdf"
+    ],
+    "Stochastic Transition Model": [
+      "2512.13564v1.pdf"
+    ],
+    "Action": [
+      "2512.13564v1.pdf"
+    ],
+    "Observation": [
+      "2512.13564v1.pdf"
+    ],
+    "Interaction History": [
+      "2512.13564v1.pdf"
+    ],
+    "Single-agent System": [
+      "2512.13564v1.pdf"
+    ],
+    "Multi-agent System": [
+      "2512.13564v1.pdf"
+    ],
+    "ReAct": [
+      "2512.13564v1.pdf"
+    ],
+    "Debate": [
+      "2512.13564v1.pdf"
+    ],
+    "Planner–Executor Architecture": [
+      "2512.13564v1.pdf"
+    ],
+    "Li et al., 2024c": [
+      "2512.13564v1.pdf"
+    ],
+    "Wan et al., 2025": [
+      "2512.13564v1.pdf"
+    ],
+    "Sequential Decision-making": [
+      "2512.13564v1.pdf"
+    ],
+    "Implicit Coordination": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM-based agent": [
+      "2512.13564v1.pdf"
+    ],
+    "interaction history": [
+      "2512.13564v1.pdf"
+    ],
+    "task specification": [
+      "2512.13564v1.pdf"
+    ],
+    "Action Space": [
+      "2512.13564v1.pdf"
+    ],
+    "Natural-language generation": [
+      "2512.13564v1.pdf"
+    ],
+    "Li et al., 2023b": [
+      "2512.13564v1.pdf"
+    ],
+    "Wu et al., 2024b": [
+      "2512.13564v1.pdf"
+    ],
+    "Hong et al., 2024": [
+      "2512.13564v1.pdf"
+    ],
+    "Qian et al., 2024": [
+      "2512.13564v1.pdf"
+    ],
+    "Tool invocation actions": [
+      "2512.13564v1.pdf"
+    ],
+    "Planning actions": [
+      "2512.13564v1.pdf"
+    ],
+    "Environment-control actions": [
+      "2512.13564v1.pdf"
+    ],
+    "Communication actions": [
+      "2512.13564v1.pdf"
+    ],
+    "Hong et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Qian et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Qin et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhou et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "CAMEL-AI": [
+      "2512.13564v1.pdf"
+    ],
+    "Pan et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Shridhar et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Jimenez et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Aleithan et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "Marro et al.": [
+      "2512.13564v1.pdf"
+    ],
+    "APIs": [
+      "2512.13564v1.pdf"
+    ],
+    "Search engines": [
+      "2512.13564v1.pdf"
+    ],
+    "Calculators": [
+      "2512.13564v1.pdf"
+    ],
+    "Databases": [
+      "2512.13564v1.pdf"
+    ],
+    "Simulators": [
+      "2512.13564v1.pdf"
+    ],
+    "Code execution environments": [
+      "2512.13564v1.pdf"
+    ],
+    "Navigation": [
+      "2512.13564v1.pdf"
+    ],
+    "Software repository editing": [
+      "2512.13564v1.pdf"
+    ],
+    "Shared memory buffer": [
+      "2512.13564v1.pdf"
+    ],
+    "Marro et al., 2024": [
+      "2512.13564v1.pdf"
+    ],
+    "Collaboration": [
+      "2512.13564v1.pdf"
+    ],
+    "Negotiation": [
+      "2512.13564v1.pdf"
+    ],
+    "Autoregressive LLM": [
+      "2512.13564v1.pdf"
+    ],
+    "Policy": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory-derived signal": [
+      "2512.13564v1.pdf"
+    ],
+    "Multi-step reasoning": [
+      "2512.13564v1.pdf"
+    ],
+    "Latent deliberation": [
+      "2512.13564v1.pdf"
+    ],
+    "Scratchpad computations": [
+      "2512.13564v1.pdf"
+    ],
+    "Interaction Process": [
+      "2512.13564v1.pdf"
+    ],
+    "Trajectory": [
+      "2512.13564v1.pdf"
+    ],
+    "Environment observation": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "System execution": [
+      "2512.13564v1.pdf"
+    ],
+    "Agentic System": [
+      "2512.13564v1.pdf"
+    ],
+    "Environment Observation": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM-based Computation": [
+      "2512.13564v1.pdf"
+    ],
+    "Action Execution": [
+      "2512.13564v1.pdf"
+    ],
+    "State Transition": [
+      "2512.13564v1.pdf"
+    ],
+    "Agent Memory System": [
+      "2512.13564v1.pdf"
+    ],
+    "Prior Interactions": [
+      "2512.13564v1.pdf"
+    ],
+    "Decision-making": [
+      "2512.13564v1.pdf"
+    ],
+    "Wang et al., 2025k": [
+      "2512.13564v1.pdf"
+    ],
+    "Weng et al., 2025": [
+      "2512.13564v1.pdf"
+    ],
+    "unifiedagent memory system": [
+      "2512.13564v1.pdf"
+    ],
+    "Mt": [
+      "2512.13564v1.pdf"
+    ],
+    "M": [
+      "2512.13564v1.pdf"
+    ],
+    "text buffer": [
+      "2512.13564v1.pdf"
+    ],
+    "key–value store": [
+      "2512.13564v1.pdf"
+    ],
+    "vector database": [
+      "2512.13564v1.pdf"
+    ],
+    "graph structure": [
+      "2512.13564v1.pdf"
+    ],
+    "cross-trial memory": [
+      "2512.13564v1.pdf"
+    ],
+    "short-term, task-specific memory": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Lifecycle": [
+      "2512.13564v1.pdf"
+    ],
+    "Formation": [
+      "2512.13564v1.pdf"
+    ],
+    "Evolution": [
+      "2512.13564v1.pdf"
+    ],
+    "Retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory Formation": [
+      "2512.13564v1.pdf"
+    ],
+    "Informational Artifacts": [
+      "2512.13564v1.pdf"
+    ],
+    "Formation Operator": [
+      "2512.13564v1.pdf"
+    ],
+    "Evolution Operator": [
+      "2512.13564v1.pdf"
+    ],
+    "M_t": [
+      "2512.13564v1.pdf"
+    ],
+    "M_form_t+1": [
+      "2512.13564v1.pdf"
+    ],
+    "M_t+1": [
+      "2512.13564v1.pdf"
+    ],
+    "Zhao et al., 2024": [
+      "2512.13564v1.pdf"
+    ],
+    "Rasmussen et al., 2025": [
+      "2512.13564v1.pdf"
+    ],
+    "Li et al., 2025k": [
+      "2512.13564v1.pdf"
+    ],
+    "Wang et al., 2025q": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory_State": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory_Formation": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory_Evolution": [
+      "2512.13564v1.pdf"
+    ],
+    "Memory_Retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "Retrieval_Operator_R": [
+      "2512.13564v1.pdf"
+    ],
+    "LLM_Policy": [
+      "2512.13564v1.pdf"
+    ],
+    "Wang_et_al_2025q": [
+      "2512.13564v1.pdf"
+    ],
+    "Temporal_Invocation_Pattern": [
+      "2512.13564v1.pdf"
+    ],
+    "Task_Initialization": [
+      "2512.13564v1.pdf"
+    ],
+    "retrieval": [
+      "2512.13564v1.pdf"
+    ],
+    "task initialization": [
+      "2512.13564v1.pdf"
+    ],
+    "memory formation": [
+      "2512.13564v1.pdf"
+    ],
+    "raw observations": [
+      "2512.13564v1.pdf"
+    ],
+    "reusable patterns": [
+      "2512.13564v1.pdf"
+    ],
+    "short-term memory": [
+      "2512.13564v1.pdf"
+    ],
+    "long-term memory": [
+      "2512.13564v1.pdf"
+    ],
+    "lightweight logging": [
+      "2512.13564v1.pdf"
+    ],
+    "iterative refinement": [
+      "2512.13564v1.pdf"
+    ],
+    "Yao et al. (2023b)": [
+      "2512.13564v1.pdf"
+    ],
+    "Chen et al. (2023a)": [
+      "2512.13564v1.pdf"
+    ],
+    "Hu et al. (2025a)": [
+      "2512.13564v1.pdf"
+    ],
+    "temporal patterns": [
+      "2512.13564v1.pdf"
+    ]
+  },
+  "document_to_nodes": {
+    "internal_alpha.txt": [
+      "Long-Term Memory",
+      "Scratchpad",
+      "DeepBlue",
+      "State Isolation",
+      "Project Alpha",
+      "Dr. Emily Chen",
+      "API Latency",
+      "Sarah Jones",
+      "Team Z",
+      "Prompt Caching",
+      "Context Engineering"
+    ],
+    "2512.13564v1.pdf": [
+      "GitHub",
+      "Retrieval",
+      "Latent deliberation",
+      "Wang_et_al_2025q",
+      "memory retrieval",
+      "cross-trial memory",
+      "Zewen Hu",
+      "Conceptual Fragmentation",
+      "Qian et al.",
+      "Junhao Wang",
+      "Stochastic Transition Model",
+      "short-term, task-specific memory",
+      "Qiu et al., 2025c",
+      "Forms–Functions–Dynamics",
+      "multi-agent systems",
+      "Multi-agent System",
+      "Section 4",
+      "Formation",
+      "retrieval",
+      "Memory Frameworks",
+      "Shichun Liu",
+      "parametric memory",
+      "Yuwei Niu",
+      "Agent Memory System",
+      "Qi Zhang",
+      "Memory dynamics",
+      "Debate",
+      "Jiahao Huo",
+      "interaction history",
+      "Jiejun Tan",
+      "Fangyi Zhu",
+      "Interaction Process",
+      "benchmarks",
+      "RAG",
+      "Oxford University",
+      "Reasoning",
+      "LLM-based Computation",
+      "Tao Gui",
+      "graph structure",
+      "Zhang et al.",
+      "APIs",
+      "Evolution Operator",
+      "Natural-language generation",
+      "Section 7",
+      "Zhang et al., 2025r",
+      "Trustworthiness Issues",
+      "vector database",
+      "Memory-derived signal",
+      "semantic memory",
+      "automation-oriented memory design",
+      "Agent memory systems",
+      "Weng et al., 2025",
+      "Shridhar et al.",
+      "Shuicheng Yan",
+      "Taxonomy of Agent Memory",
+      "Renmin University of China",
+      "Yuyang Hu",
+      "AGI Research",
+      "Simulators",
+      "Marro et al.",
+      "agent memory forms",
+      "Xu and Peng",
+      "Hendrycks et al.",
+      "CAMEL-AI",
+      "ReAct",
+      "Framework Resources",
+      "Hong et al., 2024",
+      "long-term memory",
+      "Autoregressive LLM",
+      "Qiu et al., 2025a",
+      "Section 5",
+      "Action Space",
+      "Hendrycks et al., 2025",
+      "Yao et al. (2023b)",
+      "Observation",
+      "Jiahang Lin",
+      "Wei et al.",
+      "Tool invocation actions",
+      "University of California San Diego",
+      "Zhao et al., 2025c",
+      "System execution",
+      "Memory_Formation",
+      "Scratchpad computations",
+      "Guibin Zhang",
+      "Agent",
+      "Memory System",
+      "memory-augmented test-time scaling methods",
+      "raw observations",
+      "Hong Kong University of Science and Technology (Guangzhou)",
+      "Task_Initialization",
+      "Fang et al., 2025a",
+      "Memory in the Age of AI Agents: A Survey",
+      "LLM Memory",
+      "M_t",
+      "text buffer",
+      "Agent-Memory-Paper-List",
+      "Xiaobin Hu",
+      "task specification",
+      "Memory Formation",
+      "Zhou et al.",
+      "Philip Torr",
+      "memory",
+      "factual memory",
+      "Recommender System",
+      "reusable patterns",
+      "multimodal memory",
+      "Matarazzo and Torlone",
+      "Multi-step reasoning",
+      "temporal patterns",
+      "Yixin Liu",
+      "Calculators",
+      "Griffith University",
+      "Yanbin Yin",
+      "Reinforcement Learning Integration",
+      "Li et al.",
+      "shared memory",
+      "memory formation",
+      "Context Engineering",
+      "Durante et al., 2024",
+      "Policy",
+      "Boyang Liu",
+      "Memory Retrieval",
+      "Evolution",
+      "agent memory dynamics",
+      "University of California",
+      "memory dynamics",
+      "Wu et al., 2025g",
+      "Yue Wang",
+      "Qin et al.",
+      "Liu et al.",
+      "Agentic Scaffold",
+      "Yu Wang",
+      "Tool-use",
+      "latent memory",
+      "Memory_Evolution",
+      "Long-term Memory",
+      "declarative memory",
+      "Memory Systems",
+      "Practitioners",
+      "Retrieval-Augmented Generation",
+      "Memory forms",
+      "Multi-Agent Systems",
+      "Minaee et al.",
+      "Formation Operator",
+      "Databases",
+      "LLM-based agent",
+      "Zhang et al., 2025f",
+      "trustworthiness issues",
+      "Zhang et al., 2025g",
+      "Li et al., 2025k",
+      "experiential memory",
+      "Xinlei Yu",
+      "Financial Investigation",
+      "Shihan Dou",
+      "Memory Evolution",
+      "Xuanjing Huang",
+      "Wu et al., 2024b",
+      "Collaboration",
+      "Negotiation",
+      "Wangchunshu Zhou",
+      "National University of Singapore",
+      "Honglin Guo",
+      "Memory_Retrieval",
+      "Wang et al., 2025k",
+      "Yutao Zhu",
+      "task initialization",
+      "Benchmark Resources",
+      "Test-Time Scaling",
+      "episodic memory",
+      "OPPO",
+      "agent memory",
+      "Prior Interactions",
+      "Planning actions",
+      "Environment observation",
+      "Trustworthy Issues",
+      "Software repository editing",
+      "LLM-based Agent Systems",
+      "Code execution environments",
+      "Senjie Jin",
+      "memory formulation",
+      "Automation-Oriented Memory Design",
+      "LLM-based agents",
+      "Wei et al., 2025c",
+      "Implicit Coordination",
+      "arXiv:2512.13564v1",
+      "Memory functions",
+      "unified taxonomy",
+      "Hao Sun",
+      "Yue Liao",
+      "Agent Memory",
+      "Shared memory buffer",
+      "context engineering",
+      "Open-source frameworks",
+      "Adaptive Agent",
+      "Taxonomy",
+      "Li et al., 2023b",
+      "Xuanbo Fan",
+      "Short-term Memory",
+      "Foundation Model-Based Agents",
+      "Wang et al., 2025l",
+      "Tongji University",
+      "AI agents",
+      "Jiongnan Liu",
+      "Ji-Rong Wen",
+      "Memory Formulation",
+      "taxonomy",
+      "long/short-term memory",
+      "Zhenrong Cheng",
+      "LLM",
+      "Benchmarks",
+      "token-level memory",
+      "Nanyang Technological University",
+      "Memory retrieval",
+      "short-term memory",
+      "LLM_Policy",
+      "Temporal_Invocation_Pattern",
+      "iterative refinement",
+      "Marro et al., 2024",
+      "systematic framework",
+      "LLMs",
+      "reusable tools",
+      "Personalized Chatbot",
+      "Qu et al., 2025b",
+      "Section 6",
+      "Fudan University",
+      "open source memory frameworks",
+      "working memory",
+      "Navigation",
+      "unifiedagent memory system",
+      "Forms–Functions–Dynamics Triangle",
+      "agent memory functions",
+      "Peking University",
+      "Large Language Models",
+      "Learnable Policy",
+      "Environment",
+      "Decision-making",
+      "Agentic Intelligence",
+      "Yanwei Yue",
+      "Park et al.",
+      "Search engines",
+      "Jimenez et al.",
+      "Artificial General Intelligence",
+      "Wang et al.",
+      "M",
+      "Zhiheng Xi",
+      "Trajectory",
+      "Planner–Executor Architecture",
+      "Hong et al.",
+      "reinforcement learning",
+      "Jiaxin Guo",
+      "Retrieval_Operator_R",
+      "Aleithan et al.",
+      "Kun Wang",
+      "Zhicheng Dou",
+      "Zhongxiang Sun",
+      "LLM backbone",
+      "Environment-control actions",
+      "Dawei Cheng",
+      "lightweight logging",
+      "Multimodal Memory",
+      "Wan et al., 2025",
+      "Interaction History",
+      "Memory",
+      "Georgia Institute of Technology",
+      "Luo et al.",
+      "Perception",
+      "Mt",
+      "Zhao et al., 2024",
+      "Planning",
+      "LLM memory",
+      "Agent Memory Research",
+      "Survey on Agent Memory",
+      "Memory Lifecycle",
+      "Zhenhong Zhou",
+      "M_form_t+1",
+      "Zeyu Zhang",
+      "Reinforcement Learning",
+      "Chen et al. (2023a)",
+      "Sequential Decision-making",
+      "Environment Observation",
+      "memory evolution",
+      "Agentic System",
+      "Informational Artifacts",
+      "Shared Memory",
+      "Hu et al. (2025a)",
+      "Rasmussen et al., 2025",
+      "Shirui Pan",
+      "Pan et al.",
+      "Qian et al., 2024",
+      "Action",
+      "Action Execution",
+      "Chhikara et al.",
+      "State Transition",
+      "Qiankun Li",
+      "Yang et al.",
+      "Boci Peng",
+      "Yan Zhang",
+      "Communication actions",
+      "M_t+1",
+      "Wu et al.",
+      "Memory_State",
+      "Researchers",
+      "Forms–Functions–Dynamics triangle",
+      "LLM-based Agent",
+      "Social Simulation",
+      "State Space",
+      "Section 8",
+      "Research directions",
+      "Single-agent System",
+      "key–value store",
+      "Yu-Gang Jiang",
+      "Suzgun et al., 2025",
+      "Zhenfei Yin",
+      "Li et al., 2024c",
+      "retrieval augmented generation",
+      "Wang et al., 2025q"
+    ]
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "trace_id": "53ea0bb7-1b95-41df-a690-4a5bca40ef9a",
+  "timestamp": "2026-01-05T17:05:16.864226",
+  "operation": "index",
+  "start_time": 1767650716.8642337,
+  "parameters": {
+    "text_preview": "agent memory often differ substantially in their motivations, implementations, assumptions, and\neval"
+  },
+  "nodes_added": [
+    {
+      "id": "agent memory",
+      "type": "Concept"
+    },
+    {
+      "id": "long/short-term memory",
+      "type": "Concept"
+    },
+    {
+      "id": "LLM memory",
+      "type": "Concept"
+    },
+    {
+      "id": "retrieval augmented generation",
+      "type": "Technology"
+    },
+    {
+      "id": "context engineering",
+      "type": "Concept"
+    },
+    {
+      "id": "token-level memory",
+      "type": "Technology"
+    },
+    {
+      "id": "parametric memory",
+      "type": "Technology"
+    },
+    {
+      "id": "latent memory",
+      "type": "Technology"
+    },
+    {
+      "id": "agent memory research",
+      "type": "Concept"
+    }
+  ],
+  "edges_added": [
+    {
+      "source": "agent memory",
+      "target": "long/short-term memory",
+      "relation": "inhibits"
+    },
+    {
+      "source": "agent memory research",
+      "target": "agent memory",
+      "relation": "part_of"
+    },
+    {
+      "source": "agent memory",
+      "target": "LLM memory",
+      "relation": "related_to"
+    },
+    {
+      "source": "agent memory",
+      "target": "retrieval augmented generation",
+      "relation": "related_to"
+    },
+    {
+      "source": "agent memory",
+      "target": "context engineering",
+      "relation": "related_to"
+    },
+    {
+      "source": "agent memory",
+      "target": "token-level memory",
+      "relation": "part_of"
+    },
+    {
+      "source": "agent memory",
+      "target": "parametric memory",
+      "relation": "part_of"
+    },
+    {
+      "source": "agent memory",
+      "target": "latent memory",
+      "relation": "part_of"
+    }
+  ],
+  "entities_extracted": {
+    "text_preview": "agent memory often differ substantially in their motivations, implementations, assumptions, and\nevaluation protocols, while the proliferation of loosely defined memory terminologies has further\nobscured conceptual clarity. Traditional taxonomies such as long/short-term memory have proven\ninsufficient to capture the diversity and dynamics of contemporary agent memory systems. This\nsurvey aims to provide an up-to-date and comprehensive landscape of current agent memory research.\nWe begin by clearl...",
+    "nodes": [
+      {
+        "id": "agent memory",
+        "type": "Concept",
+        "description": "A research area focused on how autonomous agents store, retrieve, and utilize information during decision-making and interaction"
+      },
+      {
+        "id": "long/short-term memory",
+        "type": "Concept",
+        "description": "Traditional cognitive-inspired memory classification, often applied to agent systems but insufficient for modern complexities"
+      },
+      {
+        "id": "LLM memory",
+        "type": "Concept",
+        "description": "Memory mechanisms inherent or emergent in large language models, distinct from explicit agent memory architectures"
+      },
+      {
+        "id": "retrieval augmented generation",
+        "type": "Technology",
+        "description": "Technique that enhances language model outputs by retrieving external knowledge at inference time"
+      },
+      {
+        "id": "context engineering",
+        "type": "Concept",
+        "description": "Practice of structuring input prompts or contexts to influence model behavior without modifying internal parameters"
+      },
+      {
+        "id": "token-level memory",
+        "type": "Technology",
+        "description": "Agent memory realization where stored information is represented directly in the token sequence, often via prompt augmentation"
+      },
+      {
+        "id": "parametric memory",
+        "type": "Technology",
+        "description": "Agent memory realization based on learned model parameters, typically updated through fine-tuning or meta-learning"
+      },
+      {
+        "id": "latent memory",
+        "type": "Technology",
+        "description": "Agent memory realization that stores information in latent vector spaces, often using external memory modules or embeddings"
+      },
+      {
+        "id": "agent memory research",
+        "type": "Concept",
+        "description": "The interdisciplinary field studying memory systems in intelligent agents, including their design, function, and evaluation"
+      }
+    ],
+    "edges": [
+      {
+        "source": "agent memory",
+        "target": "long/short-term memory",
+        "relation": "inhibits",
+        "properties": {
+          "confidence": "medium",
+          "context": "Traditional taxonomies obscure clarity due to oversimplification of modern systems"
+        }
+      },
+      {
+        "source": "agent memory research",
+        "target": "agent memory",
+        "relation": "part_of",
+        "properties": {
+          "confidence": "high",
+          "context": "Research aims to map and clarify the landscape of agent memory"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "LLM memory",
+        "relation": "related_to",
+        "properties": {
+          "confidence": "high",
+          "context": "Distinguished as separate but related concepts in the survey"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "retrieval augmented generation",
+        "relation": "related_to",
+        "properties": {
+          "confidence": "high",
+          "context": "RAG is a related but distinct approach to augmenting model knowledge"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "context engineering",
+        "relation": "related_to",
+        "properties": {
+          "confidence": "high",
+          "context": "Context engineering influences behavior similarly but is not considered true memory"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "token-level memory",
+        "relation": "part_of",
+        "properties": {
+          "confidence": "high",
+          "context": "One of three dominant realizations (forms) of agent memory"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "parametric memory",
+        "relation": "part_of",
+        "properties": {
+          "confidence": "high",
+          "context": "One of three dominant realizations (forms) of agent memory"
+        }
+      },
+      {
+        "source": "agent memory",
+        "target": "latent memory",
+        "relation": "part_of",
+        "properties": {
+          "confidence": "high",
+          "context": "One of three dominant realizations (forms) of agent memory"
+        }
+      }
+    ],
+    "extraction_time": 15.446311950683594
+  },
+  "ppr_calculation": null,
+  "performance": {
+    "operation_time": 15.71413803100586,
+    "nodes_processed": 9,
+    "edges_processed": 8
+  },
+  "document_source": "2512.13564v1.pdf"
+}

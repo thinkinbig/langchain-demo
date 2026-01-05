@@ -13,7 +13,8 @@ from typing import Any, Dict, Optional
 from config import settings
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
-from memory.graph_store import GraphStore, NetworkXGraphStore
+from memory.factory import create_graph_store
+from memory.graph_store import GraphStore
 from prompts import (
     GRAPH_ENTITY_EXTRACTION_MAIN,
     GRAPH_ENTITY_EXTRACTION_SYSTEM,
@@ -79,10 +80,8 @@ class GraphRAGManager:
         if graph_store:
             self.graph_store = graph_store
         else:
-            # Default to local NetworkX store
-            self.graph_store = NetworkXGraphStore(
-                persist_path=settings.GRAPH_PERSIST_PATH
-            )
+            # Use factory to create graph store based on configuration
+            self.graph_store = create_graph_store()
 
         # We need an LLM for extraction
         try:
@@ -101,8 +100,22 @@ class GraphRAGManager:
         if not self.extractor or not settings.GRAPH_ENABLED:
             return
 
+        # Start monitoring if enabled
+        kg_monitor = None
+        if settings.ENABLE_MONITORING:
+            from monitoring.tracer import get_tracer
+            tracer = get_tracer()
+            kg_trace_context = tracer.trace_kg_operation("index", text_preview=text[:100])
+            kg_monitor = kg_trace_context.__enter__()
+
         print("  🕸️  Indexing document into Knowledge Graph...")
+        import time
+        extraction_start = time.time()
         data = self.extractor.extract(text)
+        extraction_time = time.time() - extraction_start
+
+        if kg_monitor:
+            kg_monitor.record_entity_extraction(text, data, extraction_time)
 
         nodes = data.get("nodes", [])
         edges = data.get("edges", [])
@@ -146,32 +159,32 @@ class GraphRAGManager:
                 from memory.bibliography_parser import parse_bibliography
                 print("  📚 Parsing potential bibliography in chunk...")
                 citations = parse_bibliography(text, self.llm)
-                
+
                 if citations:
                     print(f"  📚 Found {len(citations)} citations. Adding to graph...")
-                    
+
                     # Create a node for the current document (Source Paper)
                     # We use the document source name as the ID
                     source_doc_id = f"Paper: {document_source}"
                     self.graph_store.add_node(
-                        node_id=source_doc_id, 
-                        node_type="Paper", 
+                        node_id=source_doc_id,
+                        node_type="Paper",
                         description=f"Automated entry for {document_source}"
                     )
-                    
+
                     for cit in citations:
                         # Create node for cited paper
                         cited_doc_id = f"Paper: {cit.title}"
                         desc = f"Paper by {', '.join(cit.authors[:2])}"
                         if cit.year:
                             desc += f" ({cit.year})"
-                            
+
                         self.graph_store.add_node(
                             node_id=cited_doc_id,
                             node_type="Paper",
                             description=desc
                         )
-                        
+
                         # Add 'cites' edge
                         self.graph_store.add_edge(
                             source=source_doc_id,
@@ -181,7 +194,7 @@ class GraphRAGManager:
                         )
                         count_edges += 1
                         count_nodes += 1
-                        
+
             except ImportError:
                 print("  ⚠️  Bibliography parser not available.")
             except Exception as e:
@@ -190,6 +203,24 @@ class GraphRAGManager:
         # Save after batch update
         self.graph_store.save()
         print(f"  ✅ Added {count_nodes} nodes and {count_edges} edges to graph.")
+
+        # Record graph update and end trace
+        if kg_monitor:
+            nodes_added = [
+                {"id": node.get("id"), "type": node.get("type", "Unknown")}
+                for node in nodes
+            ]
+            edges_added = [
+                {"source": edge.get("source"), "target": edge.get("target"), "relation": edge.get("relation", "related_to")}
+                for edge in edges
+            ]
+            kg_monitor.record_graph_update(nodes_added, edges_added, document_source)
+            kg_monitor.record_performance(
+                operation_time=time.time() - extraction_start,
+                nodes_processed=count_nodes,
+                edges_processed=count_edges
+            )
+            kg_monitor.end_trace()
 
     def extract_entities_from_query(self, query: str) -> list[str]:
         """
@@ -329,10 +360,23 @@ class GraphRAGManager:
         if not settings.GRAPH_ENABLED:
             return ""
 
+        # Start monitoring if enabled
+        kg_monitor = None
+        if settings.ENABLE_MONITORING:
+            from monitoring.tracer import get_tracer
+            tracer = get_tracer()
+            kg_trace_context = tracer.trace_kg_operation("ppr", query=query)
+            kg_monitor = kg_trace_context.__enter__()
+
         try:
+            import time
+            ppr_start = time.time()
+
             # 1. Extract entities from query
             seed_nodes = self.extract_entities_from_query(query)
             if not seed_nodes:
+                if kg_monitor:
+                    kg_monitor.end_trace()
                 return ""
 
             # 2. Run PPR to get top-K nodes
@@ -341,6 +385,8 @@ class GraphRAGManager:
                 top_k=top_k_nodes,
                 alpha=alpha
             )
+
+            ppr_time = time.time() - ppr_start
 
             if not top_nodes:
                 return ""
@@ -400,10 +446,31 @@ class GraphRAGManager:
                      desc = node.get("description", "")[:120]
                      context_lines.append(f"  - {node_id} ({node.get('type')}) [PPR: {score:.4f}]: {desc}")
 
+            # Record PPR calculation
+            if kg_monitor:
+                # Get full PPR scores if available
+                ppr_scores = {}
+                try:
+                    ppr_scores = self.graph_store.personalized_pagerank(seed_nodes, alpha=alpha)
+                except Exception:
+                    pass
+
+                kg_monitor.record_ppr_calculation(
+                    query=query,
+                    seed_nodes=seed_nodes,
+                    top_nodes=top_nodes,
+                    ppr_scores=ppr_scores,
+                    calculation_time=ppr_time,
+                    alpha=alpha
+                )
+                kg_monitor.end_trace()
+
             return "\n".join(context_lines)
 
         except Exception as e:
             print(f"  ⚠️  PPR retrieval failed: {e}")
+            if kg_monitor:
+                kg_monitor.end_trace()
             return ""
 
     def get_graph_connectivity_score(
