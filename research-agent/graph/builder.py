@@ -139,11 +139,11 @@ workflow.add_conditional_edges(
     route_decision,  # Uses MessageRouter internally
     {
         "lead_researcher": "lead_researcher",
-        "citation_agent": "verifier",
+        "citation_agent": "citation_agent",  # Changed: go to citation_agent first
     },
 )
-workflow.add_edge("verifier", "citation_agent")
-workflow.add_edge("citation_agent", END)
+workflow.add_edge("citation_agent", "verifier")  # Changed: citation_agent → verifier
+workflow.add_edge("verifier", END)  # Changed: verifier → END
 
 # Compile app
 # Compile app with persistence (configurable via CHECKPOINTER_BACKEND env var)

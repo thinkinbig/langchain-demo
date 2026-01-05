@@ -341,7 +341,11 @@ class ResearchTasks(DictCompatibleModel):
         ..., min_length=1, description="List of research tasks"
     )
     scratchpad: str = Field(
-        default="", description="Updated scratchpad/notes for the agent"
+        default="",
+        max_length=500,
+        description=(
+            "Updated scratchpad/notes for the agent (keep concise, max 500 chars)"
+        )
     )
 
 
@@ -624,6 +628,20 @@ class ResearchState(DictCompatibleModel):
     ] = Field(
         default_factory=list,
         description="All citations extracted across all findings"
+    )
+
+    # Bibliography information (processed by Citation Agent)
+    bibliography_entries: List[dict] = Field(
+        default_factory=list,
+        description="Parsed bibliography entries from RAG (processed by Citation Agent)"
+    )
+    bibliography_text: str = Field(
+        default="",
+        description="Formatted bibliography text (processed by Citation Agent)"
+    )
+    citation_match_results: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Results of matching extracted citations to bibliography (processed by Citation Agent)"
     )
 
     # Retry state

@@ -183,6 +183,11 @@ Requirements:
 5. Tasks should align with the selected approach's strategy.
 6. Include task dependencies if needed, especially when graph relationships indicate prerequisite knowledge.
 
+**IMPORTANT: Response Length Constraints**
+- Keep the `scratchpad` field concise (maximum 200 characters). Only include brief notes about the current iteration.
+- Do not include lengthy explanations or full content in the scratchpad field.
+- Historical context should be in memory_context, not scratchpad.
+
 Output a JSON object matching the `ResearchTasks` schema with the list of tasks.
 </instructions>
 """
@@ -209,6 +214,9 @@ LEAD_RESEARCHER_INITIAL = ChatPromptTemplate.from_template(
 The scratchpad contains only current iteration notes. For historical context,
 refer to the memory_context section above which contains relevant planning history
 from previous iterations.
+
+**IMPORTANT: Keep scratchpad field concise (maximum 200 characters).**
+Only include brief notes about the current iteration, not lengthy explanations.
 </instructions>
 """
 )
@@ -243,7 +251,10 @@ The following research has already been completed:
 3. Review findings and extracted_citations.
 4. {decision_task_guidance}
 5. Identify 1-2 new tasks or return empty if done.
+
+**IMPORTANT: Keep scratchpad field concise (maximum 200 characters).**
 Note: The scratchpad is kept short; historical context is in memory_context.
+Only include brief notes about the current iteration, not lengthy explanations.
 </instructions>
 """
 )
@@ -258,6 +269,12 @@ The previous attempt failed validation:
 
 <instructions>
 Please correct the JSON structure and try again.
+
+**CRITICAL: Response Length Constraints**
+- If the error mentions "EOF", "truncated", or "parsing", your response was too long and got cut off.
+- Keep the `scratchpad` field very concise (maximum 200 characters).
+- Do not include lengthy explanations in any field.
+- Ensure your JSON response is complete and valid.
 </instructions>
 """
 )
@@ -1629,21 +1646,24 @@ source evidence using a "Chain of Verification" process.
    qualify it (e.g., "According to some sources...").
 
 **CITATION VERIFICATION:**
-7. **Check Citation Sources:** Verify that citations mentioned in the report
-   are present in the provided <bibliography> section. If a citation is mentioned
-   in the report but not found in the bibliography, mark it as [Unverified].
+7. **Check Citation Sources:** The <bibliography> section has been processed by
+   the Citation Agent. Verify that citations mentioned in the report are present
+   in the provided <bibliography> section. If a citation is mentioned in the
+   report but not found in the bibliography, mark it as [Unverified].
 8. **Validate Citation Format:** Ensure citations have proper format with:
    - Complete title
    - Author names (if available)
    - Publication year (if available)
    - Venue/journal name (if available)
-9. **Citation Compliance:** Prioritize citations that are extracted from the
-   formal bibliography/reference section. Citations not found in bibliography
-   should be flagged in citation_issues.
+9. **Citation Compliance:** The Citation Agent has already matched extracted
+   citations to the bibliography. Use this information to verify that citations
+   in the report are consistent with the bibliography. Citations not found in
+   bibliography should be flagged in citation_issues.
 10. **Report Citation Issues:** List any citation problems in citation_issues:
-    - Missing citations in bibliography
+    - Missing citations in bibliography (based on Citation Agent's matching)
     - Incomplete citation information
     - Format inconsistencies
+    - Citations in report that don't match the bibliography
 </instructions>
 """
 
@@ -1857,6 +1877,70 @@ answer in JSON format."""),
 
 Research question: {query}""")
 ])
+
+# =============================================================================
+# Citation Agent Prompts
+# =============================================================================
+
+CITATION_AGENT_SYSTEM = """You are a Research Report Formatter.
+Your task is to format a research report with proper structure, including the
+synthesized content and citations.
+
+<instructions>
+1. **Structure**: Create a well-formatted research report with:
+   - A clear title/header
+   - The original query
+   - The synthesized research content
+   - A properly formatted citations section
+
+2. **Citation Formatting**: Format citations clearly with:
+   - Numbered list format
+   - Full title
+   - Authors (if available) - show first 3 authors, then "et al." if more
+   - Year (if available) in brackets
+   - URL (if available) for web sources or internal documents
+
+3. **Professional Format**: Use markdown formatting for clarity:
+   - Use headers for sections
+   - Separate sections with clear dividers
+   - Ensure citations are easy to read and reference
+
+4. **Completeness**: Include all provided citations in the final report.
+</instructions>
+"""
+
+CITATION_AGENT_FORMAT_REPORT = ChatPromptTemplate.from_template(
+    """Format the following research report with proper structure and citations.
+
+<query>
+{query}
+</query>
+
+<synthesized_content>
+{synthesized_content}
+</synthesized_content>
+
+<citations>
+{citations}
+</citations>
+
+<instructions>
+Create a well-formatted research report that includes:
+1. A clear title/header (e.g., "# Research Report")
+2. The original query
+3. The synthesized research content (preserve all formatting and structure)
+4. A properly formatted citations section with all citations listed
+
+Format each citation as:
+- Number. Title (Authors) [Year] - URL (if available)
+
+Example citation format:
+1. Paper Title (Author1, Author2, Author3 et al.) [2024] - https://example.com
+
+Ensure the report is professional, well-structured, and easy to read.
+</instructions>
+"""
+)
 
 # Generic extraction template - can be customized for any extraction task
 GENERIC_EXTRACTION = """Analyze the following content and extract {extraction_type}.

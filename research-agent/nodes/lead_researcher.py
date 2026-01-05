@@ -367,7 +367,32 @@ def lead_researcher_node(state: LeadResearcherState):
         ResearchTasks, include_raw=True
     )
 
-    response = structured_llm.invoke(messages)
+    # Wrap invoke in try-except to catch JSON parsing errors (e.g., truncated responses)
+    try:
+        response = structured_llm.invoke(messages)
+    except Exception as e:
+        # Catch JSON parsing errors (e.g., EOF errors from truncated responses)
+        error_msg = str(e)
+        print(f"  ❌ LLM invoke error: {error_msg[:200]}...")
+
+        # Check if it's a JSON parsing error
+        is_json_error = (
+            "json" in error_msg.lower() or
+            "eof" in error_msg.lower() or
+            "parsing" in error_msg.lower()
+        )
+        if is_json_error:
+            # Create a response dict with parsing_error to trigger retry logic
+            response = {
+                "parsing_error": (
+                    f"JSON parsing error (possibly truncated response): "
+                    f"{error_msg[:500]}"
+                ),
+                "parsed": None
+            }
+        else:
+            # Re-raise if it's a different type of error
+            raise
 
     # Use helper to process retry logic
     retry_state = process_structured_response(response, state)

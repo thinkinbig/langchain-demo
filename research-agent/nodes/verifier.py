@@ -14,54 +14,6 @@ from schemas import (
 from text_utils import clean_report_output
 
 
-def detect_bibliography_section(content: str) -> str:
-    """
-    Detect and extract bibliography/reference section from content.
-    
-    Args:
-        content: Full content text to search
-        
-    Returns:
-        Extracted bibliography section text, or empty string if not found
-    """
-    if not content:
-        return ""
-
-    content_lower = content.lower()
-
-    # Look for bibliography/reference section markers
-    markers = [
-        "references",
-        "bibliography",
-        "works cited",
-        "citations",
-        "reference list"
-    ]
-
-    # Find the start of bibliography section
-    start_idx = -1
-    for marker in markers:
-        idx = content_lower.find(marker)
-        if idx != -1:
-            # Check if it's a section header (usually followed by newline or colon)
-            if idx == 0 or content[idx-1] in ['\n', '#', ' ']:
-                start_idx = idx
-                break
-
-    if start_idx == -1:
-        return ""
-
-    # Extract from start marker to end of content (or reasonable limit)
-    # Look for next major section (usually starts with # or newline followed by capital)
-    bibliography_text = content[start_idx:]
-
-    # Limit to reasonable size (bibliography sections are usually not huge)
-    # Take first 5000 chars to avoid token bloat
-    bibliography_text = bibliography_text[:5000]
-
-    return bibliography_text
-
-
 def validate_citation_format(citation: Dict[str, Any]) -> Tuple[bool, List[str]]:
     """
     Validate a single citation format.
@@ -105,84 +57,6 @@ def validate_citation_format(citation: Dict[str, Any]) -> Tuple[bool, List[str]]
     return is_valid, issues
 
 
-def match_citations_to_bibliography(
-    citations: List[Dict[str, Any]],
-    bibliography: List[Any]
-) -> Dict[str, Any]:
-    """
-    Match extracted citations to bibliography entries.
-    
-    Args:
-        citations: List of extracted citation dictionaries
-        bibliography: List of CitationGraphElement objects from bibliography parser
-        
-    Returns:
-        Dictionary with matching results:
-        - matched: List of citations that match bibliography entries
-        - unmatched: List of citations not found in bibliography
-        - bibliography_only: List of bibliography entries not referenced in citations
-    """
-    matched = []
-    unmatched = []
-    bibliography_only = list(bibliography)  # Start with all, remove as matched
-
-    for citation in citations:
-        citation_title = citation.get("title", "").lower().strip()
-        citation_authors = citation.get("authors", [])
-        citation_year = citation.get("year")
-
-        # Try to find match in bibliography
-        found_match = False
-        for bib_entry in bibliography:
-            bib_title = getattr(bib_entry, "title", "").lower().strip()
-            bib_authors = getattr(bib_entry, "authors", [])
-            bib_year = getattr(bib_entry, "year", None)
-
-            # Match by title (fuzzy - check if titles are similar)
-            title_match = (
-                citation_title and bib_title and
-                (citation_title in bib_title or bib_title in citation_title or
-                 citation_title[:30] == bib_title[:30])  # First 30 chars match
-            )
-
-            # Match by year if both present
-            year_match = (
-                citation_year and bib_year and
-                int(citation_year) == int(bib_year)
-            )
-
-            # Match by authors if both present
-            author_match = False
-            if citation_authors and bib_authors:
-                # Check if any author names overlap
-                citation_author_names = [a.lower() for a in citation_authors]
-                bib_author_names = [a.lower() for a in bib_authors]
-                author_match = any(
-                    ca in ba or ba in ca
-                    for ca in citation_author_names
-                    for ba in bib_author_names
-                )
-
-            # Consider it a match if title matches,
-            # or (year matches and author matches)
-            if title_match or (year_match and author_match):
-                matched.append(citation)
-                # Remove from bibliography_only if present
-                if bib_entry in bibliography_only:
-                    bibliography_only.remove(bib_entry)
-                found_match = True
-                break
-
-        if not found_match:
-            unmatched.append(citation)
-
-    return {
-        "matched": matched,
-        "unmatched": unmatched,
-        "bibliography_only": bibliography_only
-    }
-
-
 def verifier_node(state: ResearchState):
     """Verifier: Cross-check synthesized report against source evidence"""
     report = state.get("synthesized_results", "")
@@ -199,8 +73,6 @@ def verifier_node(state: ResearchState):
 
     # Aggregate evidence from summaries (much smaller than full content)
     evidence_pieces = []
-    # Collect full content for bibliography detection
-    all_content = []
 
     # 1. From Findings (Subagent work) - use summaries instead of full content
     for i, f in enumerate(findings):
@@ -211,10 +83,6 @@ def verifier_node(state: ResearchState):
             evidence_pieces.append(
                 f"Task: {f.task[:50]}\nEvidence: {f.summary[:500]}"
             )
-
-        # Collect full content for bibliography detection
-        if hasattr(f, 'content') and f.content:
-            all_content.append(f.content)
 
     # 2. From RAG (Direct verification)
     print("  🧠 [Verifier] Retrieving verification context...")
@@ -235,7 +103,6 @@ def verifier_node(state: ResearchState):
     rag_evidence, _ = context_manager.retrieve_knowledge(verification_query)
     if rag_evidence:
         evidence_pieces.append(f"Internal Knowledge Base:\n{rag_evidence}")
-        all_content.append(rag_evidence)
 
     if not evidence_pieces:
         print("  ⚠️  No full source text available for verification. Skipping.")
@@ -243,59 +110,18 @@ def verifier_node(state: ResearchState):
 
     evidence_text = "\n\n".join(evidence_pieces)
 
-    # 3. Detect and parse bibliography section (NEW)
-    print("  📚 [Verifier] Detecting bibliography/reference section...")
-    bibliography_text = ""
-    bibliography_entries = []
+    # 2. Get bibliography information from Citation Agent (already processed)
+    print("  📚 [Verifier] Using bibliography information from Citation Agent...")
+    bibliography_text = state.get("bibliography_text", "")
+    bibliography_entries = state.get("bibliography_entries", [])
+    citation_match_results = state.get("citation_match_results")
 
-    # Search for bibliography in all content
-    combined_content = "\n\n".join(all_content)
-    bibliography_raw = detect_bibliography_section(combined_content)
-
-    if bibliography_raw:
-        print("  ✅ Bibliography section detected, parsing...")
-        try:
-            from memory.bibliography_parser import parse_bibliography
-
-            # Use turbo model for bibliography parsing
-            # (lighter than plus)
-            bib_llm = get_llm_by_model_choice("turbo")
-            bibliography_entries = parse_bibliography(
-                bibliography_raw, bib_llm
-            )
-
-            if bibliography_entries:
-                print(f"  ✅ Parsed {len(bibliography_entries)} bibliography entries")
-                # Format bibliography for prompt
-                bib_lines = []
-                for i, entry in enumerate(bibliography_entries, 1):
-                    title = getattr(entry, "title", "Unknown")
-                    authors = getattr(entry, "authors", [])
-                    year = getattr(entry, "year", "")
-                    venue = getattr(entry, "venue", "")
-
-                    bib_line = f"{i}. {title}"
-                    if authors:
-                        bib_line += f" by {', '.join(authors[:3])}"
-                        if len(authors) > 3:
-                            bib_line += " et al."
-                    if year:
-                        bib_line += f" ({year})"
-                    if venue:
-                        bib_line += f" - {venue}"
-                    bib_lines.append(bib_line)
-
-                bibliography_text = "\n".join(bib_lines)
-            else:
-                # Use raw text if parsing failed
-                bibliography_text = bibliography_raw[:1000]
-        except Exception as e:
-            print(f"  ⚠️  Bibliography parsing failed: {e}, using raw text")
-            bibliography_text = bibliography_raw[:1000]
+    if bibliography_text:
+        print(f"  ✅ Using bibliography with {len(bibliography_entries)} entries from Citation Agent")
     else:
-        print("  ⚠️  No bibliography/reference section found in sources")
+        print("  ℹ️  No bibliography found by Citation Agent (this is normal)")
 
-    # 4. Collect extracted citations (NEW)
+    # 3. Collect extracted citations
     print("  📝 [Verifier] Collecting extracted citations...")
     extracted_citations_raw = state.get("all_extracted_citations", [])
     extracted_citations = []
@@ -342,20 +168,11 @@ def verifier_node(state: ResearchState):
     else:
         extracted_citations_text = "(No extracted citations found)"
 
-    # 5. Match citations to bibliography (NEW)
-    citation_match_results = None
-    if bibliography_entries and extracted_citations:
-        print("  🔍 [Verifier] Matching citations to bibliography...")
-        citation_match_results = match_citations_to_bibliography(
-            extracted_citations, bibliography_entries
-        )
-
-        matched_count = len(citation_match_results["matched"])
-        unmatched_count = len(citation_match_results["unmatched"])
-        print(f"  📊 Matched: {matched_count}, Unmatched: {unmatched_count}")
-
-        if unmatched_count > 0:
-            print(f"  ⚠️  {unmatched_count} citations not found in bibliography")
+    # 4. Use citation match results from Citation Agent (if available)
+    if citation_match_results:
+        matched_count = len(citation_match_results.get("matched", []))
+        unmatched_count = len(citation_match_results.get("unmatched", []))
+        print(f"  📊 Citation matching results from Citation Agent: Matched: {matched_count}, Unmatched: {unmatched_count}")
 
     # Invoke Verifier LLM
     bibliography_for_prompt = (
@@ -384,7 +201,7 @@ def verifier_node(state: ResearchState):
         bibliography_found = bool(bibliography_text)
         citation_format_valid = len(citation_format_issues) == 0
 
-        # Add citation issues from matching results
+        # Add citation issues from matching results (from Citation Agent)
         citation_issues = (
             list(response.citation_issues)
             if hasattr(response, "citation_issues")
@@ -396,8 +213,9 @@ def verifier_node(state: ResearchState):
                 [f"Format issue: {issue}" for issue in citation_format_issues]
             )
 
+        # Use citation match results from Citation Agent
         if citation_match_results:
-            unmatched = citation_match_results["unmatched"]
+            unmatched = citation_match_results.get("unmatched", [])
             if unmatched:
                 unmatched_titles = [
                     c.get("title", "Unknown")[:50]
@@ -410,7 +228,7 @@ def verifier_node(state: ResearchState):
 
         if not bibliography_found and extracted_citations:
             citation_issues.append(
-                "Bibliography/reference section not found, "
+                "Bibliography/reference section not found by Citation Agent, "
                 "but citations were extracted"
             )
 
