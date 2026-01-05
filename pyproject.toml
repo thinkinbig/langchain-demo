@@ -24,6 +24,9 @@ dependencies = [
     "sentence-transformers>=5.2.0",
     "langgraph-checkpoint-sqlite>=3.0.1",
     "langmem>=0.0.20,<=0.0.30",
+    "neo4j>=6.0.3",
+    "networkx>=3.6.1",
+    "gliner>=0.2.24",
 ]
 
 [dependency-groups]
