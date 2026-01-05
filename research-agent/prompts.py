@@ -428,13 +428,17 @@ Your summary should:
 - Explain key concepts and provide definitions when relevant
 - Include concrete examples, case studies, or instances from the sources
 - Provide context and background information that helps understand the topic
-- **Highlight Structural Relationships:** Explicitly mention how entities are connected based on the graph (e.g., "As indicated by the dependency relationship between X and Y..." or "The graph shows that A enables B, which explains why..."). When the relationship is explicitly stated in sources, present it as fact. When inferred from graph structure alone, use qualifiers like "Structural inference suggests..." or "Based on graph relationships..."
-- **Connect Fragmented Information:** Use graph relationships to synthesize information from multiple sources that may not explicitly reference each other. However, if you are connecting information that is NOT explicitly stated in the sources, you MUST mark it as an inference: "Structural inference suggests that X and Y are related because the graph shows..."
+Inferred: "Structural inference suggests that X and Y are related because the graph shows..."
 - Be comprehensive: aim for 6-10 sentences for complex topics, ensuring all
   important information is included
 - Use precise terminology from the sources rather than generic paraphrasing
 - Structure information logically, potentially covering: definitions, key
   mechanisms, historical context, current state, and implications
+
+**REF_CHECK**: If an "OFFICIAL REFERENCES SECTION" is provided in the data, YOU MUST:
+1. "Jump" to that section to verify any citations mentioned in the text.
+2. Prioritize extracting citations directly from there to ensure accuracy (no hallucinations).
+3. If a paper is mentioned in the text but not in the References section, mark it as [Unverified].
 </instructions>
 """
 )
@@ -1268,11 +1272,15 @@ CITATION_EXTRACTION = ChatPromptTemplate.from_messages([
     ("system", """Analyze the text provided by the user and extract any academic
 paper citations or references to other research.
 
-For each citation found, provide:
-1. The title field containing the citation as it appears (e.g., "Song et al.,
-   2023", "Zhang et al. (2025q)")
-2. Brief context about what the paper discusses
-3. Why it might be relevant for deeper research
+You are building a Citation Knowledge Graph. For each citation found:
+1. Extract the FULL TITLE of the paper (not just "Author et al.").
+2. Extract the Publication Year.
+3. Extract Author Names (as a list).
+4. Provide brief context.
+5. Provide relevance.
+
+If the text contains a Bibliography/Reference List, prioritize extracting from there
+to get the complete official title and year.
 
 If no citations are found, respond with an empty list. Return your answer
 in JSON format."""),

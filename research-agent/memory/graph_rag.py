@@ -136,6 +136,57 @@ class GraphRAGManager:
                 self.graph_store.add_edge(src, tgt, rel, properties=properties)
                 count_edges += 1
 
+        # Citations / Bibliography processing
+        # Heuristic: Check if this chunk looks like a bibliography
+        # If it contains "references" or "bibliography" case-insensitive, we try to parse it
+        # This is a simplifiction; ideally we'd target the specific "References" chunk
+        lower_text = text.lower()
+        if "references" in lower_text or "bibliography" in lower_text or "citations" in lower_text:
+            try:
+                from memory.bibliography_parser import parse_bibliography
+                print("  📚 Parsing potential bibliography in chunk...")
+                citations = parse_bibliography(text, self.llm)
+                
+                if citations:
+                    print(f"  📚 Found {len(citations)} citations. Adding to graph...")
+                    
+                    # Create a node for the current document (Source Paper)
+                    # We use the document source name as the ID
+                    source_doc_id = f"Paper: {document_source}"
+                    self.graph_store.add_node(
+                        node_id=source_doc_id, 
+                        node_type="Paper", 
+                        description=f"Automated entry for {document_source}"
+                    )
+                    
+                    for cit in citations:
+                        # Create node for cited paper
+                        cited_doc_id = f"Paper: {cit.title}"
+                        desc = f"Paper by {', '.join(cit.authors[:2])}"
+                        if cit.year:
+                            desc += f" ({cit.year})"
+                            
+                        self.graph_store.add_node(
+                            node_id=cited_doc_id,
+                            node_type="Paper",
+                            description=desc
+                        )
+                        
+                        # Add 'cites' edge
+                        self.graph_store.add_edge(
+                            source=source_doc_id,
+                            target=cited_doc_id,
+                            relation="cites",
+                            properties={"context": "bibliography_extraction"}
+                        )
+                        count_edges += 1
+                        count_nodes += 1
+                        
+            except ImportError:
+                print("  ⚠️  Bibliography parser not available.")
+            except Exception as e:
+                print(f"  ⚠️  Bibliography parsing failed: {e}")
+
         # Save after batch update
         self.graph_store.save()
         print(f"  ✅ Added {count_nodes} nodes and {count_edges} edges to graph.")
@@ -338,6 +389,16 @@ class GraphRAGManager:
                             context_lines.append(
                                 f"    - {node_id} (PPR: {score:.4f}): {desc}"
                             )
+
+            # 5. Always include Top-K relevant nodes/papers directly in context
+            # This ensures "stub" nodes (like external citations) are visible even if no document is attached.
+            context_lines.append("\nHighly Relevant Graph Entities (Papers/Concepts):")
+            for node_id, score in top_nodes[:top_k_nodes]:
+                 node = self.graph_store.get_node(node_id)
+                 if node:
+                     # Skip if already shown in a document context (redundancy check?) or just show all for clarity
+                     desc = node.get("description", "")[:120]
+                     context_lines.append(f"  - {node_id} ({node.get('type')}) [PPR: {score:.4f}]: {desc}")
 
             return "\n".join(context_lines)
 

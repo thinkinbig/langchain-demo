@@ -110,9 +110,11 @@ python research-agent/tests/evaluate_agent.py
  
 ## Documentation
  
-1.  **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Comprehensive system architecture and design.
-2.  **[RETROSPECT.md](./RETROSPECT.md)** - Retrospective on the MVP prototype and lessons learned.
-3.  **[CHECKLIST_STATUS.md](./CHECKLIST_STATUS.md)** - Current implementation status.
+1.  **[System Architecture](docs/ARCHITECTURE.md)** - High-level system overview.
+2.  **[Workflow Design](docs/WORKFLOW_DESIGN.md)** - Orchestrator-Worker pattern and parallelization.
+3.  **[Memory System](docs/MEMORY.md)** - Deep dive into GraphRAG, HippoRAG, and PPR.
+4.  **[Retrospective](docs/RETROSPECTIVE.md)** - Learnings and future directions.
+5.  **[CHECKLIST_STATUS.md](./CHECKLIST_STATUS.md)** - Current implementation status.
  
 ## Key Design Decisions
  

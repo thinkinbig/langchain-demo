@@ -3,6 +3,7 @@
 import asyncio
 from typing import List, Tuple
 
+import context_manager
 from context_formatter import ContextFormatter
 from langchain_core.messages import HumanMessage
 from prompts import SUBAGENT_ANALYSIS_RETRY
@@ -94,6 +95,66 @@ async def invoke_llm_with_retry(
     )
 
 
+def enhance_context_with_references(all_sources: List[Source]) -> str:
+    """
+    Enhance context by retrieving "References" sections from internal papers.
+
+    Args:
+        all_sources: List of sources identified in the context
+
+    Returns:
+        String containing retrieved References sections
+    """
+    internal_sources = [
+        s.identifier for s in all_sources
+        if s.source_type == RetrievalSource.INTERNAL
+    ]
+
+    if not internal_sources:
+        return ""
+
+    print(f"  📚 [Analysis] Enhancing context with Reference sections from {len(internal_sources)} papers...")
+    
+    enhanced_content_parts = []
+    
+    # Process each internal source
+    for source_id in internal_sources:
+        # Heavily biased retrieval query to find the references section
+        # We assume the user has ingested papers where "Refeferences" or "Bibliography" 
+        # is a distinct section.
+        query = f"References Bibliography Citations section in {source_id}"
+        
+        try:
+            # We use a direct retrieval call focused on this specific source
+            # Note: The context_manager logic retrieves based on query similarity.
+            # To target a specific file, we rely on the source name being in the chunks
+            # or the query retrieving those specific chunks.
+            # For a more robust solution, we might need a dedicated `retrieve_from_source` method
+            # but for now we'll use the query mechanism with high likelihood of hitting the ref section.
+            
+            # TODO: Improve source filtering in context_manager if this proves unreliable
+            
+            context, _ = context_manager.retrieve_knowledge(
+                query, 
+                k=2  # Just get top 2 chunks which likely contain the refs
+            )
+            
+            if context and "No relevant internal documents" not in context:
+                enhanced_content_parts.append(
+                    f"\n--- OFFICIAL REFERENCES SECTION FROM {source_id} ---\n"
+                    f"{context}\n"
+                    f"--- END REFERENCES FROM {source_id} ---\n"
+                )
+                
+        except Exception as e:
+            print(f"  ⚠️  Failed to retrieve references for {source_id}: {e}")
+
+    if not enhanced_content_parts:
+        return ""
+
+    return "\n".join(enhanced_content_parts)
+
+
 def prepare_analysis_context(
     state: SubagentState
 ) -> Tuple[str, str, List[Source], str]:
@@ -150,6 +211,11 @@ def prepare_analysis_context(
             visited_identifiers=visited_identifiers
         )
     )
+    
+    # ENHANCEMENT: Automatically retrieve References section for internal papers
+    references_context = enhance_context_with_references(all_sources)
+    if references_context:
+        formatted_context += f"\n\n{references_context}"
 
     return formatted_context, citation_instructions, all_sources, task_description
 

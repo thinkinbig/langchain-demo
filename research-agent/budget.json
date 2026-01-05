@@ -15,8 +15,8 @@
     "current_cost": 0.3097316
   },
   "2026-01-04": {
-    "current_tokens": 1379249,
-    "current_queries": 22,
-    "current_cost": 0.7202736000000001
+    "current_tokens": 1675509,
+    "current_queries": 24,
+    "current_cost": 0.8698608000000001
   }
 }

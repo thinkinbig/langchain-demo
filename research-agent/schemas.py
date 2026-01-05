@@ -501,6 +501,12 @@ class Citation(DictCompatibleModel):
     relevance: str = Field(
         default="", description="Why this citation might be relevant"
     )
+    year: Optional[int] = Field(
+        default=None, description="Publication year"
+    )
+    authors: List[str] = Field(
+        default_factory=list, description="List of author names"
+    )
 
 
 class AnalysisOutput(DictCompatibleModel):
