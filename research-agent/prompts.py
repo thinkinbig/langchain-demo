@@ -1838,7 +1838,7 @@ Ensure all fields match the `DecisionResult` schema:
 )
 
 # =============================================================================
-# Extraction Prompts (Unified Pattern for Citations and Web Content)
+# Extraction Prompts (Citation Extraction)
 # =============================================================================
 
 CITATION_EXTRACTION = ChatPromptTemplate.from_messages([
@@ -1859,23 +1859,6 @@ If no citations are found, respond with an empty list. Return your answer
 in JSON format."""),
     ("human", """Text to analyze:
 {text}""")
-])
-
-WEB_CONTENT_EXTRACTION = ChatPromptTemplate.from_messages([
-    ("system", """Analyze the web search results provided by the user and
-extract the most relevant and actionable information.
-
-For each key finding, provide:
-1. The main insight or fact discovered
-2. Which source it came from (URL or title)
-3. Why this information is relevant to the research question
-
-If no relevant information is found, respond with an empty list. Return your
-answer in JSON format."""),
-    ("human", """Search results to analyze:
-{text}
-
-Research question: {query}""")
 ])
 
 # =============================================================================
@@ -1941,18 +1924,6 @@ Ensure the report is professional, well-structured, and easy to read.
 </instructions>
 """
 )
-
-# Generic extraction template - can be customized for any extraction task
-GENERIC_EXTRACTION = """Analyze the following content and extract {extraction_type}.
-
-{extraction_instructions}
-
-Content to analyze:
-{text}
-
-{context_info}
-
-Return your answer in JSON format."""
 
 # =============================================================================
 # GraphRAG Prompts
@@ -2156,3 +2127,24 @@ Entities: ["Microsoft", "Azure", "Kubernetes", "container """
 
 Return ONLY valid JSON, no markdown formatting."""
 )
+
+# =============================================================================
+# HippoRAG Schemaless Mode Prompt
+# =============================================================================
+
+HIPPORAG_SCHEMALESS_PROMPT = """Your task is to extract named entities from the given paragraph. Respond with a JSON list of entities.
+
+Extract all significant named entities including:
+- Organizations (companies, institutions, universities)
+- People (researchers, authors, executives)
+- Technologies (software, frameworks, tools, platforms)
+- Products (applications, services)
+- Locations (places, regions, countries)
+- Concepts (ideas, methodologies, domains)
+- Events (conferences, launches, milestones)
+- Metrics (measurements, statistics)
+
+Return only the entity names as a list, without descriptions or relationships.
+
+Text to analyze:
+{text}"""

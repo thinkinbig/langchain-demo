@@ -130,6 +130,11 @@ class AgentSettings(BaseSettings):
     # Enable/disable GraphRAG (Knowledge Graph integration)
     GRAPH_ENABLED: bool = True
 
+    # Graph extraction mode: "schemaless" or "schema"
+    # - "schemaless": Extract only named entities (simpler, faster)
+    # - "schema": Extract entities and relationships (more detailed)
+    GRAPH_EXTRACTION_MODE: str = "schema"
+
     # Path for graph persistence (relative to research-agent directory)
     GRAPH_PERSIST_PATH: str = "graph_store.json"
 
@@ -176,8 +181,9 @@ class AgentSettings(BaseSettings):
 
     # Enable Semantic Scholar API (requires SEMANTIC_SCHOLAR_API_KEY)
     # When enabled, paper search will also query Semantic Scholar in addition to arXiv
-    # Note: Paper search is automatically performed alongside web search in web_search_node
-    # The LLM will decide which sources to use based on the task requirements
+    # Note: Paper search is automatically performed alongside web search in
+    # web_search_node. The LLM will decide which sources to use based on the task
+    # requirements
     USE_SEMANTIC_SCHOLAR: bool = False
 
     # =========================================================================

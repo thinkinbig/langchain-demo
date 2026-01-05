@@ -962,3 +962,64 @@ class GenericItem(DictCompatibleModel):
 class GenericExtractionResult(DictCompatibleModel):
     """Generic extraction result"""
     items: List[GenericItem] = Field(default_factory=list)
+
+
+# =============================================================================
+# GraphRAG Extraction Schemas (for HippoRAG Schemaless and Schema modes)
+# =============================================================================
+
+
+class EntityNode(DictCompatibleModel):
+    """Single entity node in knowledge graph."""
+    id: str = Field(..., description="Unique entity identifier")
+    type: str = Field(
+        ...,
+        description=(
+            "Entity type: Person, Organization, Technology, Concept, "
+            "Product, Location, Event, or Metric"
+        )
+    )
+    description: str = Field(
+        default="", description="Brief description of the entity"
+    )
+
+
+class EdgeProperties(DictCompatibleModel):
+    """Properties for graph edges."""
+    version: Optional[str] = Field(
+        default=None, description="Version or date information"
+    )
+    confidence: str = Field(
+        default="medium",
+        description="Confidence level: high, medium, or low"
+    )
+    context: Optional[str] = Field(
+        default=None, description="Contextual details"
+    )
+
+
+class GraphEdge(DictCompatibleModel):
+    """Single edge in knowledge graph."""
+    source: str = Field(..., description="Source entity ID")
+    target: str = Field(..., description="Target entity ID")
+    relation: str = Field(..., description="Relationship type")
+    properties: Optional[EdgeProperties] = Field(
+        default=None, description="Edge properties"
+    )
+
+
+class SchemalessEntityList(DictCompatibleModel):
+    """Schemaless mode: Simple list of named entities."""
+    named_entities: List[str] = Field(
+        ..., description="List of extracted named entity names"
+    )
+
+
+class GraphExtractionResult(DictCompatibleModel):
+    """Schema mode: Full graph with nodes and edges."""
+    nodes: List[EntityNode] = Field(
+        ..., description="List of entity nodes"
+    )
+    edges: List[GraphEdge] = Field(
+        default_factory=list, description="List of relationships"
+    )

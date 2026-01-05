@@ -1,0 +1,205 @@
+{
+  "trace_id": "2b01b059-c943-4dce-ae61-144a39ad770b",
+  "timestamp": "2026-01-05T17:50:39.181812",
+  "operation": "index",
+  "start_time": 1767653439.1818228,
+  "parameters": {
+    "text_preview": "CONFIDENTIAL - INTERNAL USE ONLY\n\nProject Name: Project Alpha\nCode Name: DeepBlue\nStatus: Phase 2 (D"
+  },
+  "nodes_added": [
+    {
+      "id": "DeepBlue",
+      "type": "Technology"
+    },
+    {
+      "id": "Team Z",
+      "type": "Organization"
+    },
+    {
+      "id": "Dr. Emily Chen",
+      "type": "Person"
+    },
+    {
+      "id": "Sarah Jones",
+      "type": "Person"
+    },
+    {
+      "id": "Project Alpha",
+      "type": "Project"
+    },
+    {
+      "id": "Prompt Caching",
+      "type": "Technology"
+    },
+    {
+      "id": "Long-Term Memory",
+      "type": "Concept"
+    },
+    {
+      "id": "API Latency",
+      "type": "Metric"
+    }
+  ],
+  "edges_added": [
+    {
+      "source": "Team Z",
+      "target": "DeepBlue",
+      "relation": "develops"
+    },
+    {
+      "source": "Dr. Emily Chen",
+      "target": "Project Alpha",
+      "relation": "works_for"
+    },
+    {
+      "source": "Sarah Jones",
+      "target": "Project Alpha",
+      "relation": "works_for"
+    },
+    {
+      "source": "DeepBlue",
+      "target": "Project Alpha",
+      "relation": "part_of"
+    },
+    {
+      "source": "DeepBlue",
+      "target": "Prompt Caching",
+      "relation": "uses"
+    },
+    {
+      "source": "Prompt Caching",
+      "target": "Long-Term Memory",
+      "relation": "enables"
+    },
+    {
+      "source": "API Latency",
+      "target": "DeepBlue",
+      "relation": "inhibits"
+    }
+  ],
+  "entities_extracted": {
+    "text_preview": "CONFIDENTIAL - INTERNAL USE ONLY\n\nProject Name: Project Alpha\nCode Name: DeepBlue\nStatus: Phase 2 (Development)\nLaunch Date: Q3 2025\n\nDescription:\nProject Alpha is a next-generation \"Context Engineering\" engine designed to optimize LLM memory usage.\nIt utilizes a 3-pillar approach:\n1. Long-Term Memory: Cached system prompts.\n2. Scratchpad: Iterative working memory.\n3. State Isolation: Minimizing context pollution.\n\nKey Stakeholders:\n- Lead: Dr. Emily Chen\n- Engineering: Team Z\n- Product: Sarah J...",
+    "nodes": [
+      {
+        "id": "DeepBlue",
+        "type": "Technology",
+        "description": "Primary project codename for the next-generation context engineering engine."
+      },
+      {
+        "id": "Team Z",
+        "type": "Organization",
+        "description": "Core team responsible for engineering implementation of Project Alpha."
+      },
+      {
+        "id": "Dr. Emily Chen",
+        "type": "Person",
+        "description": "Lead scientist overseeing Project Alpha development and strategy."
+      },
+      {
+        "id": "Sarah Jones",
+        "type": "Person",
+        "description": "Product manager responsible for defining requirements and roadmap for Project Alpha."
+      },
+      {
+        "id": "Project Alpha",
+        "type": "Project",
+        "description": "Main project name for the context optimization initiative, encompassing DeepBlue and related components."
+      },
+      {
+        "id": "Prompt Caching",
+        "type": "Technology",
+        "description": "Technique to store and reuse system prompts to reduce time-to-first-token (TTFT) in LLM inference."
+      },
+      {
+        "id": "Long-Term Memory",
+        "type": "Concept",
+        "description": "Component of DeepBlue's architecture that stores cached system prompts for efficient retrieval."
+      },
+      {
+        "id": "API Latency",
+        "type": "Metric",
+        "description": "Measured delay in API response time; currently at 200ms, posing a performance risk to the system."
+      }
+    ],
+    "edges": [
+      {
+        "source": "Team Z",
+        "target": "DeepBlue",
+        "relation": "develops",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "Dr. Emily Chen",
+        "target": "Project Alpha",
+        "relation": "works_for",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "Sarah Jones",
+        "target": "Project Alpha",
+        "relation": "works_for",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "DeepBlue",
+        "target": "Project Alpha",
+        "relation": "part_of",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "DeepBlue",
+        "target": "Prompt Caching",
+        "relation": "uses",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "Prompt Caching",
+        "target": "Long-Term Memory",
+        "relation": "enables",
+        "properties": {
+          "version": "",
+          "confidence": "high",
+          "context": ""
+        }
+      },
+      {
+        "source": "API Latency",
+        "target": "DeepBlue",
+        "relation": "inhibits",
+        "properties": {
+          "version": "",
+          "confidence": "medium",
+          "context": "higher than expected latency impacts performance"
+        }
+      }
+    ],
+    "extraction_time": 12.124674081802368
+  },
+  "ppr_calculation": null,
+  "performance": {
+    "operation_time": 12.919140100479126,
+    "nodes_processed": 8,
+    "edges_processed": 7
+  },
+  "document_source": "internal_alpha.txt"
+}

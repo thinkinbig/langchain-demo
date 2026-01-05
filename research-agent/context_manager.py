@@ -339,17 +339,8 @@ class VectorStoreManager:
 
     def ingest_documents(self):
         """Check for documents and ingest missing ones."""
-        # #region debug log
-        import json
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:289", "message": "ingest_documents called", "data": {"data_dir": self.data_dir, "persist_dir": self.persist_dir}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
 
         existing_count = self.vector_store.get_collection_count()
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:293", "message": "collection count check", "data": {"existing_count": existing_count}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
 
         documents = []
         files_to_ingest = []
@@ -358,52 +349,19 @@ class VectorStoreManager:
         text_files = glob.glob(os.path.join(self.data_dir, "*.txt")) + \
                      glob.glob(os.path.join(self.data_dir, "*.md")) + \
                      glob.glob(os.path.join(self.data_dir, "*.csv"))
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "context_manager.py:310", "message": "text files found", "data": {"count": len(text_files), "files": text_files}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
 
         # 2. Collect all PDF files
         pdf_files = glob.glob(os.path.join(self.data_dir, "*.pdf"))
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "B", "location": "context_manager.py:322", "message": "PDF files found", "data": {"count": len(pdf_files), "files": pdf_files, "data_dir": self.data_dir, "glob_pattern": os.path.join(self.data_dir, "*.pdf")}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
 
         # 3. Check which files need to be ingested
         all_files = [(f, "text") for f in text_files] + [(f, "pdf") for f in pdf_files]
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_start", "message": "starting file check loop", "data": {"total_files": len(all_files)}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
         for file_path, file_type in all_files:
             source = os.path.basename(file_path)
-            # #region debug log
-            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_loop", "message": "checking file", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
-            # #endregion
             try:
                 is_ingested = self._is_source_ingested(source)
-                # #region debug log
-                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_result", "message": "check result", "data": {"source": source, "is_ingested": is_ingested}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                # #endregion
                 if not is_ingested:
                     files_to_ingest.append((file_path, file_type, source))
-                    # #region debug log
-                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files", "message": "file needs ingestion", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                    # #endregion
-                else:
-                    # #region debug log
-                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files", "message": "file already ingested", "data": {"file_path": file_path, "source": source, "type": file_type}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                    # #endregion
-            except Exception as e:
-                # #region debug log
-                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:check_files_error", "message": "error checking file", "data": {"file_path": file_path, "source": source, "error": str(e), "error_type": type(e).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                # #endregion
+            except Exception:
                 # If check fails, assume file needs ingestion to be safe
                 files_to_ingest.append((file_path, file_type, source))
 
@@ -413,10 +371,6 @@ class VectorStoreManager:
                 f"({existing_count} chunks)."
             )
             print(msg)
-            # #region debug log
-            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "A", "location": "context_manager.py:no_new_files", "message": "all files already ingested", "data": {"existing_count": existing_count}, "timestamp": __import__("time").time() * 1000}) + "\n")
-            # #endregion
             return
 
         print(f"  📚 Ingesting {len(files_to_ingest)} new document(s) into Vector Store...")
@@ -432,40 +386,20 @@ class VectorStoreManager:
                         metadata={"source": source}
                     ))
                 elif file_type == "pdf":
-                    # #region debug log
-                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:325", "message": "PDF extraction started", "data": {"file_path": file_path, "file_exists": os.path.exists(file_path)}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                    # #endregion
                     from pypdf import PdfReader
                     reader = PdfReader(file_path)
                     text = ""
                     for page in reader.pages:
                         text += page.extract_text() + "\n"
-                    # #region debug log
-                    with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                        f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:330", "message": "PDF extraction completed", "data": {"file_path": file_path, "text_length": len(text), "pages": len(reader.pages)}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                    # #endregion
                     documents.append(Document(
                         page_content=text,
                         metadata={"source": source}
                     ))
             except Exception as e:
                 print(f"  ❌ Failed to load {file_path}: {e}")
-                # #region debug log
-                with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "C", "location": "context_manager.py:335", "message": "file extraction failed", "data": {"file_path": file_path, "error": str(e), "error_type": type(e).__name__}, "timestamp": __import__("time").time() * 1000}) + "\n")
-                # #endregion
 
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:337", "message": "documents before split", "data": {"count": len(documents), "sources": [d.metadata.get("source") for d in documents]}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
         if not documents:
             print("  ⚠️  No documents found to ingest.")
-            # #region debug log
-            with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:339", "message": "no documents to ingest", "data": {}, "timestamp": __import__("time").time() * 1000}) + "\n")
-            # #endregion
             return
 
         # 3. Split
@@ -475,39 +409,98 @@ class VectorStoreManager:
         )
         splits = text_splitter.split_documents(documents)
         print(f"  🧩 Split {len(documents)} docs into {len(splits)} chunks.")
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "E", "location": "context_manager.py:347", "message": "documents after split", "data": {"original_count": len(documents), "chunks_count": len(splits)}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
 
         # 4. Index into vector store
-        self.vector_store.add_documents(splits)
-        # #region debug log
-        with open("/home/zeyuli/Code/langchain/.cursor/debug.log", "a") as f:
-            f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "D", "location": "context_manager.py:351", "message": "documents added to vector store", "data": {"chunks_added": len(splits)}, "timestamp": __import__("time").time() * 1000}) + "\n")
-        # #endregion
+        document_ids = self.vector_store.add_documents(splits)
         print("  ✅ Vector store ingestion complete.")
 
-        # 5. Index into Knowledge Graph (if enabled)
+        # 5. Index into Knowledge Graph and link nodes to document chunks (if enabled)
         from config import settings
         if settings.GRAPH_ENABLED:
             try:
+                import time
+                from concurrent.futures import ThreadPoolExecutor, as_completed
+
                 from memory.graph_rag import GraphRAGManager
+
                 graph_rag_manager = GraphRAGManager()
 
                 total = len(splits)
                 print(f"  🕸️  Indexing {total} chunks into Knowledge Graph...")
-                for i, chunk in enumerate(splits):
-                    if (i + 1) % 10 == 0 or i == total - 1:
-                        print(
-                            f"  🕸️  Indexing chunk {i+1}/{total} "
-                            f"into Knowledge Graph..."
+                print("  ⚡ Using parallel processing (10 workers) to speed up...")
+
+                start_time = time.time()
+                completed = 0
+                errors = 0
+
+                # Parallel processing with ThreadPoolExecutor (like HippoRAG paper)
+                # Use 10 workers as mentioned in the paper
+                max_workers = 10
+
+                def index_chunk(chunk_doc_id_pair):
+                    """Index a single chunk."""
+                    chunk, doc_id = chunk_doc_id_pair
+                    try:
+                        graph_rag_manager.index_document(
+                            chunk.page_content,
+                            source_metadata=chunk.metadata,
+                            document_id=doc_id,
+                            verbose=False
                         )
-                    graph_rag_manager.index_document(
-                        chunk.page_content,
-                        source_metadata=chunk.metadata
-                    )
-                print("  ✅ Knowledge Graph indexing complete.")
+                        return True, None
+                    except Exception as e:
+                        return False, str(e)
+
+                # Process chunks in parallel
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    # Submit all tasks
+                    future_to_chunk = {
+                        executor.submit(
+                            index_chunk, (chunk, doc_id)
+                        ): (i, chunk, doc_id)
+                        for i, (chunk, doc_id) in enumerate(
+                            zip(splits, document_ids, strict=True)
+                        )
+                    }
+
+                    # Process completed tasks
+                    for future in as_completed(future_to_chunk):
+                        i, chunk, doc_id = future_to_chunk[future]
+                        try:
+                            success, error = future.result()
+                            if success:
+                                completed += 1
+                            else:
+                                errors += 1
+                                if error:
+                                    print(f"  ⚠️  Chunk {i+1} failed: {error}")
+                        except Exception as e:
+                            errors += 1
+                            print(f"  ⚠️  Chunk {i+1} error: {e}")
+
+                        # Show progress every 50 chunks or at milestones
+                        if (completed + errors) % 50 == 0 or (
+                            completed + errors
+                        ) == total:
+                            elapsed = time.time() - start_time
+                            processed = completed + errors
+                            if processed > 0:
+                                avg_time = elapsed / processed
+                                remaining = avg_time * (total - processed)
+                                print(
+                                    f"  📊 Progress: {processed}/{total} chunks "
+                                    f"({processed/total*100:.1f}%) | "
+                                    f"Completed: {completed} | "
+                                    f"Errors: {errors} | "
+                                    f"ETA: {remaining/60:.1f}m"
+                                )
+
+                elapsed_total = time.time() - start_time
+                print(
+                    f"  ✅ Knowledge Graph indexing complete. "
+                    f"({completed}/{total} successful, {errors} errors, "
+                    f"{elapsed_total/60:.1f}m total)"
+                )
             except Exception as e:
                 print(f"  ⚠️  Knowledge Graph indexing failed: {e}")
                 print("  ℹ️  Continuing without graph indexing.")

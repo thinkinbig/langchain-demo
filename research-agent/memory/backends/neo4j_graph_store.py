@@ -5,6 +5,7 @@ Uses Neo4j as the graph database backend for knowledge graph operations.
 """
 
 import json
+import re
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from memory.graph_store import GraphStore
@@ -101,24 +102,38 @@ class Neo4jGraphStore(GraphStore):
         self.add_node(source, "Unknown", "")
         self.add_node(target, "Unknown", "")
 
-        # Prepare edge properties
-        edge_props = {"relation": relation}
+        # Normalize relation type for Neo4j (must be valid identifier)
+        # Replace invalid characters and ensure it's uppercase
+        relation_type = relation.upper().replace("-", "_").replace(" ", "_")
+        # Remove any characters that aren't valid for Neo4j relationship types
+        relation_type = re.sub(r"[^A-Z0-9_]", "", relation_type)
+        if not relation_type:
+            relation_type = "RELATED_TO"
+
+        # Prepare edge properties (store original relation name and any additional properties)
+        edge_props = {}
         if properties:
             edge_props.update(properties)
+        # Store original relation name in properties for reference
+        if relation != relation_type.lower().replace("_", " "):
+            edge_props["original_relation"] = relation
 
         with self.driver.session(database=self.database) as session:
             # Convert properties to JSON string for storage
             props_json = json.dumps(edge_props) if edge_props else "{}"
 
-            session.run("""
-                MATCH (source:Node {id: $source})
-                MATCH (target:Node {id: $target})
-                MERGE (source)-[r:RELATED {relation: $relation}]->(target)
+            # Use dynamic relationship type
+            # Neo4j allows dynamic relationship types in Cypher
+            query = f"""
+                MATCH (source:Node {{id: $source}})
+                MATCH (target:Node {{id: $target}})
+                MERGE (source)-[r:`{relation_type}`]->(target)
                 SET r.properties = $props_json
-            """,
+            """
+            session.run(
+                query,
                 source=source,
                 target=target,
-                relation=relation,
                 props_json=props_json
             )
 
@@ -155,7 +170,7 @@ class Neo4jGraphStore(GraphStore):
                     WHERE NOT neighbor.id IN $visited
                     RETURN DISTINCT 
                         start.id AS source,
-                        last(relationships(path)).relation AS relation,
+                        type(last(relationships(path))) AS relation,
                         neighbor.id AS target
                     LIMIT 100
                 """,
@@ -166,7 +181,9 @@ class Neo4jGraphStore(GraphStore):
 
                 for record in result:
                     source = record["source"]
-                    relation = record.get("relation", "related_to")
+                    # Get relation type name and convert back to lowercase
+                    relation_type = record.get("relation", "RELATED_TO")
+                    relation = relation_type.lower().replace("_", " ")
                     target = record["target"]
 
                     if target not in visited:
@@ -237,11 +254,16 @@ class Neo4jGraphStore(GraphStore):
             # First check if GDS is available
             try:
                 # Try to use GDS Louvain algorithm
+                # Match all relationship types, not just RELATED
                 result = session.run("""
                     CALL gds.graph.project(
                         'kg-graph',
                         'Node',
-                        'RELATED'
+                        {
+                            '*': {
+                                orientation: 'UNDIRECTED'
+                            }
+                        }
                     )
                     YIELD graphName
                     RETURN graphName
@@ -264,10 +286,11 @@ class Neo4jGraphStore(GraphStore):
                 return communities
             except Exception:
                 # Fallback: simple connected components
+                # Match all relationship types
                 result = session.run("""
                     CALL gds.wcc.stream({
                         nodeQuery: 'MATCH (n:Node) RETURN id(n) AS id',
-                        relationshipQuery: 'MATCH (n:Node)-[r:RELATED]-(m:Node) RETURN id(n) AS source, id(m) AS target'
+                        relationshipQuery: 'MATCH (n:Node)-[r]-(m:Node) RETURN id(n) AS source, id(m) AS target'
                     })
                     YIELD nodeId, componentId
                     RETURN componentId, collect(gds.util.asNode(nodeId).id) AS nodes
@@ -290,7 +313,7 @@ class Neo4jGraphStore(GraphStore):
             return
 
         with self.driver.session(database=self.database) as session:
-            # Create Document node if it doesn't exist
+            # Create Document node if it doesn't exist (for backward compatibility)
             session.run("""
                 MERGE (d:Document {source: $document_source})
             """, document_source=document_source)
@@ -303,6 +326,32 @@ class Neo4jGraphStore(GraphStore):
             """,
                 node_id=node_id,
                 document_source=document_source
+            )
+
+    def link_node_to_document_chunk(
+        self,
+        node_id: str,
+        document_id: str
+    ) -> None:
+        """
+        Link a knowledge graph node to a specific document chunk (vector store).
+
+        Args:
+            node_id: ID of the knowledge graph node
+            document_id: ID of the document chunk in vector store
+        """
+        if not node_id or not document_id:
+            return
+
+        with self.driver.session(database=self.database) as session:
+            # Link Node to Document chunk (vector store)
+            session.run("""
+                MATCH (n:Node {id: $node_id})
+                MATCH (d:Document {id: $document_id})
+                MERGE (n)-[:MENTIONED_IN]->(d)
+            """,
+                node_id=node_id,
+                document_id=document_id
             )
 
     def get_documents_for_nodes(
@@ -348,12 +397,16 @@ class Neo4jGraphStore(GraphStore):
 
         with self.driver.session(database=self.database) as session:
             try:
-                # Project graph
+                # Project graph - match all relationship types
                 session.run("""
                     CALL gds.graph.project(
                         'ppr-graph',
                         'Node',
-                        'RELATED'
+                        {
+                            '*': {
+                                orientation: 'DIRECTED'
+                            }
+                        }
                     )
                 """)
 
@@ -465,7 +518,8 @@ class Neo4jGraphStore(GraphStore):
     def get_edge_count(self) -> int:
         """Get total number of edges."""
         with self.driver.session(database=self.database) as session:
-            result = session.run("MATCH ()-[r:RELATED]->() RETURN count(r) AS count")
+            # Count all relationship types, not just RELATED
+            result = session.run("MATCH ()-[r]->() RETURN count(r) AS count")
             record = result.single()
             return record["count"] if record else 0
 

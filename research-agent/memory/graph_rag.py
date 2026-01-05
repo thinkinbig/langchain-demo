@@ -19,55 +19,118 @@ from prompts import (
     GRAPH_ENTITY_EXTRACTION_MAIN,
     GRAPH_ENTITY_EXTRACTION_SYSTEM,
     GRAPH_EXTRACTION_SYSTEM_PROMPT,
+    HIPPORAG_SCHEMALESS_PROMPT,
+)
+from schemas import (
+    GraphExtractionResult,
+    SchemalessEntityList,
 )
 
 
 class GraphExtractor:
     """Extracts graph elements (nodes/edges) from text using LLM."""
 
-    def __init__(self, llm: BaseChatModel):
+    def __init__(self, llm: BaseChatModel, mode: str = "schema"):
+        """
+        Initialize GraphExtractor.
+
+        Args:
+            llm: Language model to use for extraction
+            mode: Extraction mode - "schemaless" (entities only) or
+                "schema" (entities + relationships)
+        """
         self.llm = llm
+        self.mode = mode
+
+        # Configure structured output based on mode
+        if mode == "schemaless":
+            self.structured_llm = llm.with_structured_output(
+                SchemalessEntityList,
+                include_raw=True
+            )
+        else:
+            self.structured_llm = llm.with_structured_output(
+                GraphExtractionResult,
+                include_raw=True
+            )
+
+    def _empty_result(self) -> Dict[str, Any]:
+        """Return empty extraction result."""
+        return {"nodes": [], "edges": []}
 
     def extract(self, text: str) -> Dict[str, Any]:
         """
         Extract knowledge graph elements from text.
         Returns dict with 'nodes' and 'edges'.
+
+        Args:
+            text: Text to extract from
+
+        Returns:
+            Dictionary with 'nodes' and 'edges' keys
         """
         if not text or len(text) < 50:
-            return {"nodes": [], "edges": []}
+            return self._empty_result()
 
         try:
-            messages = [
-                SystemMessage(content=GRAPH_EXTRACTION_SYSTEM_PROMPT),
-                HumanMessage(
-                    content=f"Text to analyze:\n{text[:10000]}"
-                )  # Truncate to avoid context overflow
-            ]
-
-            # Use JSON mode if supported, or just rely on prompt instructions
-            # For robustness, we request JSON object
-            response = self.llm.invoke(
-                messages,
-                response_format={"type": "json_object"}
-            ).content
-
-            # Parse JSON
-            try:
-                data = json.loads(response)
-            except json.JSONDecodeError:
-                # Fallback: try to find first { and last }
-                start = response.find("{")
-                end = response.rfind("}")
-                if start != -1 and end != -1:
-                    data = json.loads(response[start : end + 1])
-                else:
-                    return {"nodes": [], "edges": []}
-
-            return data
-
+            if self.mode == "schemaless":
+                return self._extract_schemaless(text)
+            else:
+                return self._extract_schema(text)
         except Exception as e:
             print(f"  ❌ Graph Extraction Failed: {e}")
-            return {"nodes": [], "edges": []}
+            return self._empty_result()
+
+    def _extract_schemaless(self, text: str) -> Dict[str, Any]:
+        """Extract only named entities (Schemaless mode)."""
+        prompt = HIPPORAG_SCHEMALESS_PROMPT.format(text=text[:10000])
+        messages = [HumanMessage(content=prompt)]
+
+        try:
+            response = self.structured_llm.invoke(messages)
+
+            if response.get("parsing_error"):
+                print(f"  ⚠️  Parsing error: {response['parsing_error']}")
+                return self._empty_result()
+
+            parsed = response["parsed"]
+
+            # Convert to graph format (entities only, no relationships)
+            return {
+                "nodes": [
+                    {"id": entity, "type": "Unknown", "description": ""}
+                    for entity in parsed.named_entities
+                ],
+                "edges": []
+            }
+        except Exception as e:
+            print(f"  ⚠️  Schemaless extraction error: {e}")
+            return self._empty_result()
+
+    def _extract_schema(self, text: str) -> Dict[str, Any]:
+        """Extract entities and relationships (Schema mode)."""
+        messages = [
+            SystemMessage(content=GRAPH_EXTRACTION_SYSTEM_PROMPT),
+            HumanMessage(content=f"Text to analyze:\n{text[:10000]}")
+        ]
+
+        try:
+            response = self.structured_llm.invoke(messages)
+
+            if response.get("parsing_error"):
+                print(f"  ⚠️  Parsing error: {response['parsing_error']}")
+                return self._empty_result()
+
+            parsed = response["parsed"]
+
+            # Convert Pydantic models to dict format
+            return {
+                "nodes": [node.model_dump() for node in parsed.nodes],
+                "edges": [edge.model_dump() for edge in parsed.edges]
+            }
+        except Exception as e:
+            print(f"  ⚠️  Schema extraction error: {e}")
+            return self._empty_result()
 
 
 class GraphRAGManager:
@@ -87,15 +150,28 @@ class GraphRAGManager:
         try:
             from llm.factory import get_llm_by_model_choice
             self.llm = get_llm_by_model_choice("plus")
-            self.extractor = GraphExtractor(self.llm)
+            # Initialize extractor with configured mode
+            extraction_mode = getattr(settings, "GRAPH_EXTRACTION_MODE", "schemaless")
+            self.extractor = GraphExtractor(self.llm, mode=extraction_mode)
         except ImportError:
             print("  ⚠️  LLM factory not available, graphing will be disabled.")
             self.extractor = None
 
-    def index_document(self, text: str, source_metadata: Optional[Dict] = None) -> None:
+    def index_document(
+        self,
+        text: str,
+        source_metadata: Optional[Dict] = None,
+        document_id: Optional[str] = None,
+        verbose: bool = True
+    ) -> None:
         """
         Process text, extract entities, and update the graph.
         Also stores node-document mappings for HippoRAG retrieval.
+
+        Args:
+            text: Text content to index
+            source_metadata: Metadata about the document source
+            document_id: Optional document chunk ID for linking nodes to chunks
         """
         if not self.extractor or not settings.GRAPH_ENABLED:
             return
@@ -105,10 +181,13 @@ class GraphRAGManager:
         if settings.ENABLE_MONITORING:
             from monitoring.tracer import get_tracer
             tracer = get_tracer()
-            kg_trace_context = tracer.trace_kg_operation("index", text_preview=text[:100])
+            kg_trace_context = tracer.trace_kg_operation(
+                "index", text_preview=text[:100]
+            )
             kg_monitor = kg_trace_context.__enter__()
 
-        print("  🕸️  Indexing document into Knowledge Graph...")
+        if verbose:
+            print("  🕸️  Indexing document into Knowledge Graph...")
         import time
         extraction_start = time.time()
         data = self.extractor.extract(text)
@@ -137,6 +216,11 @@ class GraphRAGManager:
                 self.graph_store.add_node(nid, ntype, desc)
                 # Store mapping: this node appears in this document
                 self.graph_store.add_node_document_mapping(nid, document_source)
+                # Link node to document chunk if document_id provided
+                if document_id and hasattr(
+                    self.graph_store, "link_node_to_document_chunk"
+                ):
+                    self.graph_store.link_node_to_document_chunk(nid, document_id)
                 count_nodes += 1
 
         # Add Edges
@@ -151,10 +235,16 @@ class GraphRAGManager:
 
         # Citations / Bibliography processing
         # Heuristic: Check if this chunk looks like a bibliography
-        # If it contains "references" or "bibliography" case-insensitive, we try to parse it
-        # This is a simplifiction; ideally we'd target the specific "References" chunk
+        # If it contains "references" or "bibliography" case-insensitive, we try
+        # to parse it. This is a simplifiction; ideally we'd target the specific
+        # "References" chunk
         lower_text = text.lower()
-        if "references" in lower_text or "bibliography" in lower_text or "citations" in lower_text:
+        has_bib = (
+            "references" in lower_text
+            or "bibliography" in lower_text
+            or "citations" in lower_text
+        )
+        if has_bib:
             try:
                 from memory.bibliography_parser import parse_bibliography
                 print("  📚 Parsing potential bibliography in chunk...")
@@ -202,7 +292,8 @@ class GraphRAGManager:
 
         # Save after batch update
         self.graph_store.save()
-        print(f"  ✅ Added {count_nodes} nodes and {count_edges} edges to graph.")
+        if verbose:
+            print(f"  ✅ Added {count_nodes} nodes and {count_edges} edges to graph.")
 
         # Record graph update and end trace
         if kg_monitor:
@@ -211,7 +302,11 @@ class GraphRAGManager:
                 for node in nodes
             ]
             edges_added = [
-                {"source": edge.get("source"), "target": edge.get("target"), "relation": edge.get("relation", "related_to")}
+                {
+                    "source": edge.get("source"),
+                    "target": edge.get("target"),
+                    "relation": edge.get("relation", "related_to")
+                }
                 for edge in edges
             ]
             kg_monitor.record_graph_update(nodes_added, edges_added, document_source)
@@ -437,21 +532,30 @@ class GraphRAGManager:
                             )
 
             # 5. Always include Top-K relevant nodes/papers directly in context
-            # This ensures "stub" nodes (like external citations) are visible even if no document is attached.
-            context_lines.append("\nHighly Relevant Graph Entities (Papers/Concepts):")
+            # This ensures "stub" nodes (like external citations) are visible
+            # even if no document is attached.
+            context_lines.append(
+                "\nHighly Relevant Graph Entities (Papers/Concepts):"
+            )
             for node_id, score in top_nodes[:top_k_nodes]:
-                 node = self.graph_store.get_node(node_id)
-                 if node:
-                     # Skip if already shown in a document context (redundancy check?) or just show all for clarity
-                     desc = node.get("description", "")[:120]
-                     context_lines.append(f"  - {node_id} ({node.get('type')}) [PPR: {score:.4f}]: {desc}")
+                node = self.graph_store.get_node(node_id)
+                if node:
+                    # Skip if already shown in a document context (redundancy
+                    # check?) or just show all for clarity
+                    desc = node.get("description", "")[:120]
+                    node_type = node.get("type")
+                    context_lines.append(
+                        f"  - {node_id} ({node_type}) [PPR: {score:.4f}]: {desc}"
+                    )
 
             # Record PPR calculation
             if kg_monitor:
                 # Get full PPR scores if available
                 ppr_scores = {}
                 try:
-                    ppr_scores = self.graph_store.personalized_pagerank(seed_nodes, alpha=alpha)
+                    ppr_scores = self.graph_store.personalized_pagerank(
+                        seed_nodes, alpha=alpha
+                    )
                 except Exception:
                     pass
 
