@@ -373,13 +373,11 @@ You must return your analysis in a structured JSON format.
 You may receive information from multiple sources:
 - **Internal Knowledge Base**: Pre-ingested documents (PDFs, papers, etc.)
 - **Web Search Results**: General web pages and articles from Tavily search
-- **Academic Papers**: Research papers from arXiv and Semantic Scholar (with titles, authors, abstracts, and URLs)
 
 When analyzing, you should:
-1. **Prioritize academic papers** for research-oriented or technical queries
-2. **Use web sources** for current events, news, or general information
-3. **Combine sources** when both academic depth and current information are needed
-4. **Cite appropriately** - use paper titles and URLs for academic sources, web URLs for web sources
+1. **Use web sources** for current events, news, or general information
+2. **Use internal documents** for authoritative information from pre-ingested sources
+3. **Cite appropriately** - use web URLs for web sources, document identifiers for internal docs
 """
 
 SUBAGENT_STRUCTURED_ANALYSIS = ChatPromptTemplate.from_template(
@@ -400,12 +398,11 @@ additional context.
 **SOURCE SELECTION STRATEGY**:
 The search results may include multiple source types:
 - **Internal documents**: Pre-ingested papers/documents (marked as "internal/...")
-- **Academic papers**: Research papers from arXiv/Semantic Scholar (marked with paper titles, authors, abstracts)
 - **Web sources**: General web pages and articles
 
-**For research/academic queries**: Prioritize academic papers and internal documents for authoritative information.
+**For research/academic queries**: Prioritize internal documents for authoritative information.
 **For current events/general queries**: Use web sources for up-to-date information.
-**For comprehensive analysis**: Combine academic papers (for depth) with web sources (for currency).
+**For comprehensive analysis**: Combine internal documents (for depth) with web sources (for currency).
 
 Always cite the appropriate source type in your citations.
 
@@ -431,18 +428,17 @@ The search results may contain a "Knowledge Graph Context" section. You MUST use
 
 **CITATION EXTRACTION**: Extract citations from all source types into the
 `citations` list. This includes:
-- **Academic papers**: Papers from arXiv/Semantic Scholar (use full paper title, authors, year)
 - **Web sources**: Web articles and pages (use article title and URL)
 - **Internal documents**: Pre-ingested documents (use document identifier)
 
 For each citation:
-- `title`: The citation text (e.g. "Author et al., 2023" for papers, or article title for web sources)
+- `title`: The citation text (article title for web sources, or document identifier for internal docs)
 - `context`: Brief context of what the source discusses or why it's cited
-- `url`: The source URL (arXiv URL for papers, web URL for web sources, or empty for internal docs)
+- `url`: The source URL (web URL for web sources, or empty for internal docs)
 - `relevance`: Brief note on why this source is relevant to the task
 
-**Priority**: When you have both academic papers and web sources:
-- For research/technical queries: Prioritize citing academic papers
+**Priority**: When you have both internal documents and web sources:
+- For research/technical queries: Prioritize citing internal documents
 - For current events: Prioritize citing recent web sources
 - Include both when they provide complementary information
 
@@ -471,7 +467,7 @@ Inferred: "Structural inference suggests that X and Y are related because the gr
 **REF_CHECK**: If an "OFFICIAL REFERENCES SECTION" is provided in the data, YOU MUST:
 1. "Jump" to that section to verify any citations mentioned in the text.
 2. Prioritize extracting citations directly from there to ensure accuracy (no hallucinations).
-3. If a paper is mentioned in the text but not in the References section, mark it as [Unverified].
+3. If a citation is mentioned in the text but not in the References section, mark it as [Unverified].
 </instructions>
 """
 )
@@ -546,7 +542,7 @@ from the findings. DO NOT compress or condense - expand and elaborate.
 6. **Source Attribution:** When mentioning key facts, note which sources
    (Internal Knowledge Base vs Web) provided them, especially for important
    claims or statistics. Explain the significance of each source.
-7. **Citations:** If findings mention specific papers or citations, include
+7. **Citations:** If findings mention specific citations or references, include
    them in your synthesis with FULL context about what they discuss, their
    methodology, findings, and relevance to the query.
 8. **Conflict Resolution:** If findings contradict, explicitly state the
@@ -659,7 +655,7 @@ The knowledge graph structure in your findings should directly inform each SCR s
 5. **Source Attribution:** Note which sources (Internal Knowledge Base vs Web)
    provided important claims or statistics.
 
-6. **Citations:** Include full context about papers or citations mentioned.
+6. **Citations:** Include full context about citations or references mentioned.
 </instructions>
 """
 
