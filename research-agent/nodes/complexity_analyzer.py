@@ -3,7 +3,7 @@
 from config import settings
 from graph.utils import process_structured_response
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_subagent_llm
+from llm.factory import get_llm_by_model_choice
 from prompts import COMPLEXITY_ANALYZER_MAIN, COMPLEXITY_ANALYZER_SYSTEM
 from schemas import ComplexityAnalysis, ResearchState
 
@@ -74,34 +74,16 @@ def complexity_analyzer_node(state: ResearchState):
 
     # Invoke LLM with structured output
     # Use subagent_llm (cheaper model) for this simple classification task
-    structured_llm = get_subagent_llm().with_structured_output(
+    structured_llm = get_llm_by_model_choice("turbo").with_structured_output(
         ComplexityAnalysis, include_raw=True
     )
 
     response = structured_llm.invoke(messages)
 
     # Use helper to process retry logic
-    def fallback(s):
-        # Default to medium complexity if analysis fails
-        return {
-            "complexity_analysis": ComplexityAnalysis(
-                complexity_level="medium",
-                recommended_workers=2,
-                max_iterations=2,
-                rationale=(
-                    "Fallback: Defaulting to medium complexity "
-                    "due to analysis error"
-                ),
-                recommended_model="plus"  # Default to plus for fallback
-            ),
-            "error": None,
-            "retry_count": 0
-        }
-
-    retry_state = process_structured_response(response, state, fallback)
+    retry_state = process_structured_response(response, state)
     if retry_state:
-        # If retry_state is returned, it means we either failed (and are looping)
-        # or we hit max retries and are returning the fallback.
+        # Retry needed, return state update
         return retry_state
 
     # Success case

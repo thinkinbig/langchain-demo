@@ -1,6 +1,7 @@
 """Citation agent node: Extract citations and create final report"""
 
 from schemas import Citation, CitationAgentState
+from text_utils import clean_report_output
 
 
 def citation_agent_node(state: CitationAgentState):
@@ -70,13 +71,16 @@ def citation_agent_node(state: CitationAgentState):
         for i, c in enumerate(citations)
     ])
 
+    # Clean synthesized output to remove any XML tags that might have been included
+    cleaned_synthesized = clean_report_output(synthesized)
+
     final_report = f"""
 
 
 {query}
 
 
-{synthesized}
+{cleaned_synthesized}
 
 
 --------------------------------

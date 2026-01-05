@@ -11,9 +11,9 @@ from langchain_core.callbacks import BaseCallbackHandler
 @dataclass
 class QueryBudget:
     """Per-query budget"""
-    max_tokens: int = 100_000
-    max_input_tokens: int = 60_000
-    max_output_tokens: int = 40_000
+    max_tokens: int = 160_000
+    max_input_tokens: int = 160_000
+    max_output_tokens: int = 80_000
     max_api_calls: int = 30
     max_subagents: int = 8
     max_iterations: int = 3
@@ -304,7 +304,6 @@ class CostTrackingCallback(BaseCallbackHandler):
         self.DATA_COST_MAP = {
             "qwen-plus": {"input": 0.0004, "output": 0.0012},  # $0.4 / $1.2 per 1M
             "qwen-turbo": {"input": 0.0002, "output": 0.0006}, # $0.2 / $0.6 per 1M
-            "default": {"input": 0.002, "output": 0.002}       # Legacy high fallback
         }
 
     def on_llm_end(self, response: Any, **kwargs: Any) -> None:
@@ -322,7 +321,10 @@ class CostTrackingCallback(BaseCallbackHandler):
                 elif "qwen-turbo" in model_name:
                     cost_config = self.DATA_COST_MAP["qwen-turbo"]
                 else:
-                    cost_config = self.DATA_COST_MAP["default"]
+                    # Fallback to plus model pricing if model not found
+                    cost_config = self.DATA_COST_MAP.get(
+                        "qwen-plus", {"input": 0.0004, "output": 0.0012}
+                    )
 
                 if token_usage:
                     input_tokens = token_usage.get("prompt_tokens", 0)

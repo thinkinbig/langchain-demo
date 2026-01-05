@@ -43,56 +43,6 @@ def _extract_findings_summary(findings, max_items: int = 5) -> str:
     return "\n".join(summary_parts)
 
 
-def _rule_based_fallback(state: DecisionState) -> dict:
-    """
-    Fallback to rule-based decision logic if LLM fails.
-    This preserves the original decision logic as a safety net.
-    """
-    iteration_count = state.get("iteration_count", 0)
-    findings_count = len(state.get("subagent_findings", []))
-    synthesized_length = len(state.get("synthesized_results", ""))
-    extracted_citations = state.get("all_extracted_citations", [])
-    has_citations = len(extracted_citations) > 0
-
-    # Get complexity analysis
-    complexity_analysis = state.get("complexity_analysis")
-    max_iterations = settings.MAX_ITERATIONS
-    complexity_level = "medium"
-
-    if complexity_analysis:
-        if hasattr(complexity_analysis, "max_iterations"):
-            max_iterations = complexity_analysis.max_iterations
-            complexity_level = complexity_analysis.complexity_level
-        elif isinstance(complexity_analysis, dict):
-            max_iterations = complexity_analysis.get(
-                "max_iterations", settings.MAX_ITERATIONS
-            )
-            complexity_level = complexity_analysis.get("complexity_level", "medium")
-        max_iterations = min(max_iterations, settings.MAX_ITERATIONS)
-
-    # Adaptive thresholds
-    if complexity_level == "simple":
-        min_findings = 2
-        min_synthesis_length = 300
-    elif complexity_level == "complex":
-        min_findings = 5
-        min_synthesis_length = 800
-    else:
-        min_findings = 3
-        min_synthesis_length = 500
-
-    needs_more = (
-        iteration_count < max_iterations and
-        (
-            findings_count < min_findings or
-            synthesized_length < min_synthesis_length or
-            (has_citations and iteration_count < max_iterations - 1)
-        )
-    )
-
-    return {"needs_more_research": needs_more}
-
-
 def decision_node(state: DecisionState):
     """Decision: Determine if more research is needed using LLM analysis"""
     query = state.get("query", "")
@@ -130,7 +80,16 @@ def decision_node(state: DecisionState):
             )
         max_iterations = min(max_iterations, settings.MAX_ITERATIONS)
 
+    # Check if this is a partial synthesis (early decision optimization)
+    has_partial_synthesis = state.get("has_partial_synthesis", False)
+    is_partial = has_partial_synthesis and (
+        "# Resolution" not in synthesized_results or
+        not synthesized_results.strip().endswith("# Resolution")
+    )
+
     print("\n🤔 [Decision] Evaluating if more research is needed...")
+    if is_partial:
+        print("  ⚡ Early decision mode: evaluating based on partial synthesis (S+C only)")
     print(
         f"   Iteration: {iteration_count}/{max_iterations}, "
         f"Findings: {findings_count}, "
@@ -147,23 +106,39 @@ def decision_node(state: DecisionState):
         else "No citations found"
     )
 
+    # Add note about partial synthesis if applicable
+    partial_note = ""
+    if is_partial:
+        partial_note = (
+            "\n\n⚠️ IMPORTANT: This is a PARTIAL synthesis containing only "
+            "Situation and Complication sections. The Resolution section has not "
+            "been generated yet (early decision optimization). Please make your "
+            "decision based on the available Situation and Complication content. "
+            "If you decide to finish research, the Resolution section will be "
+            "generated in the next step."
+        )
+
     # Build prompt
+    decision_prompt = DECISION_MAIN.format(
+        query=query,
+        complexity_info=complexity_info,
+        iteration_count=iteration_count,
+        max_iterations=max_iterations,
+        findings_count=findings_count,
+        synthesis_length=synthesized_length,
+        citations_count=citations_count,
+        findings_summary=findings_summary,
+        synthesis_preview=synthesis_preview,
+        citations_info=citations_info,
+    )
+
+    # Append partial synthesis note if applicable
+    if partial_note:
+        decision_prompt += partial_note
+
     messages = [
         SystemMessage(content=DECISION_SYSTEM),
-        HumanMessage(
-            content=DECISION_MAIN.format(
-                query=query,
-                complexity_info=complexity_info,
-                iteration_count=iteration_count,
-                max_iterations=max_iterations,
-                findings_count=findings_count,
-                synthesis_length=synthesized_length,
-                citations_count=citations_count,
-                findings_summary=findings_summary,
-                synthesis_preview=synthesis_preview,
-                citations_info=citations_info,
-            )
-        ),
+        HumanMessage(content=decision_prompt),
     ]
 
     # Get recommended model from complexity analysis
@@ -188,39 +163,47 @@ def decision_node(state: DecisionState):
                     recommended_model = model
 
     # Invoke LLM with structured output
-    try:
-        llm = get_llm_by_model_choice(recommended_model)
-        structured_llm = llm.with_structured_output(
-            DecisionResult, include_raw=True
-        )
-        response = structured_llm.invoke(messages)
+    llm = get_llm_by_model_choice(recommended_model)
+    structured_llm = llm.with_structured_output(
+        DecisionResult, include_raw=True
+    )
+    response = structured_llm.invoke(messages)
 
-        # Process response with retry logic
-        def fallback(s):
-            print("  ⚠️  Using rule-based fallback due to LLM failure")
-            return _rule_based_fallback(s)
+    # Process response with retry logic
+    retry_state = process_structured_response(response, state)
+    if retry_state:
+        # Retry needed, return state update
+        return retry_state
 
-        retry_state = process_structured_response(response, state, fallback)
-        if retry_state:
-            # Fallback was triggered
-            return retry_state
+    # Success: Parse LLM decision
+    decision_result = response["parsed"]
+    needs_more = decision_result.needs_more_research
 
-        # Success: Parse LLM decision
-        decision_result = response["parsed"]
-        needs_more = decision_result.needs_more_research
+    print(f"  ✅ LLM Decision: {'Continue' if needs_more else 'Finish'} research")
+    print(f"     Confidence: {decision_result.confidence:.2f}")
+    print(f"     Reasoning: {decision_result.reasoning[:150]}...")
+    if decision_result.key_factors:
+        factors = ", ".join(decision_result.key_factors[:3])
+        print(f"     Key Factors: {factors}")
 
-        print(f"  ✅ LLM Decision: {'Continue' if needs_more else 'Finish'} research")
-        print(f"     Confidence: {decision_result.confidence:.2f}")
-        print(f"     Reasoning: {decision_result.reasoning[:150]}...")
-        if decision_result.key_factors:
-            factors = ", ".join(decision_result.key_factors[:3])
-            print(f"     Key Factors: {factors}")
+    # Return full decision information for use in next iteration
+    return_state = {
+        "needs_more_research": needs_more,
+        "decision_reasoning": decision_result.reasoning if needs_more else None,
+        "decision_key_factors": decision_result.key_factors if needs_more else [],
+    }
 
-        return {"needs_more_research": needs_more}
+    # If we have partial synthesis and decision is "finish", we need to complete it
+    # The synthesizer will detect this and complete the Resolution section
+    if is_partial and not needs_more:
+        # Decision is to finish, but we have partial synthesis
+        # Keep the partial synthesis flag so synthesizer can complete it
+        return_state["has_partial_synthesis"] = True
+        print("  ⚡ Decision: Finish research, but partial synthesis detected - will complete Resolution")
+    elif is_partial and needs_more:
+        # Decision is to continue, keep partial synthesis for next iteration
+        return_state["has_partial_synthesis"] = True
+        print("  ⚡ Decision: Continue research, preserving partial synthesis")
 
-    except Exception as e:
-        # If LLM call fails completely, use fallback
-        print(f"  ⚠️  LLM call failed: {e}")
-        print("  ⚠️  Using rule-based fallback")
-        return _rule_based_fallback(state)
+    return return_state
 

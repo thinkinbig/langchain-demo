@@ -12,14 +12,24 @@ class TestToolFailures:
     """Test error handling for tool failures"""
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_search_tool_failure(
-        self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
+        self, mock_get_llm, mock_search, app, initial_state
     ):
         """Test handling of search tool failures"""
         # Mock search failure
         mock_search.side_effect = Exception("Search API error")
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
@@ -46,16 +56,26 @@ class TestToolFailures:
             pytest.skip("Search failure not gracefully handled (may be by design)")
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_api_key_missing(
-        self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
+        self, mock_get_llm, mock_search, app, initial_state
     ):
         """Test handling of missing API key"""
         # Mock search to simulate API key error
         mock_search.side_effect = ValueError(
             "TAVILY_API_KEY environment variable not set"
         )
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {

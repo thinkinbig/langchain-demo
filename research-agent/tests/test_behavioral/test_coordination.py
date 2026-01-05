@@ -4,7 +4,7 @@ Based on Anthropic: "Multi-agent systems have key differences from
 single-agent systems, including a rapid growth in coordination complexity."
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from schemas import ResearchTasks, SubagentOutput, SynthesisResult
@@ -23,12 +23,10 @@ class TestCoordination:
     """Test coordination between agents"""
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_task_coverage(
         self,
-        mock_subagent_llm,
-        mock_lead_llm,
+        mock_get_llm,
         mock_search,
         app,
         initial_state,
@@ -37,6 +35,17 @@ class TestCoordination:
         """Test that tasks cover the query adequately"""
         # Mock search
         mock_search.return_value = mock_search_results
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
@@ -70,12 +79,10 @@ class TestCoordination:
         assert_tasks_related_to_query(tasks, query)
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_findings_completeness(
         self,
-        mock_subagent_llm,
-        mock_lead_llm,
+        mock_get_llm,
         mock_search,
         app,
         initial_state,
@@ -84,6 +91,17 @@ class TestCoordination:
         """Test that findings cover the query"""
         # Mock search
         mock_search.return_value = mock_search_results
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
@@ -118,12 +136,10 @@ class TestCoordination:
         assert_synthesis_quality(synthesis, query)
 
     @patch("tools.search_web")
-    @patch("graph.get_lead_llm")
-    @patch("graph.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_citation_quality(
         self,
-        mock_subagent_llm,
-        mock_lead_llm,
+        mock_get_llm,
         mock_search,
         app,
         initial_state,
@@ -132,6 +148,17 @@ class TestCoordination:
         """Test that citations are properly extracted"""
         # Mock search
         mock_search.return_value = mock_search_results
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {

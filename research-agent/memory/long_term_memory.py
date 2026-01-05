@@ -194,7 +194,6 @@ class LongTermMemory:
             # Check validity (temporal filtering)
             if exclude_expired:
                 # Filter by is_valid flag (temporal annotation)
-                # Default to True for backward compatibility
                 is_valid = metadata.get("is_valid", True)
                 if not is_valid:
                     continue

@@ -7,9 +7,13 @@ from schemas import AnalysisOutput, Citation, SubagentState
 
 @pytest.fixture
 def mock_llm():
-    with patch("nodes.subagent.analysis.get_subagent_llm") as mock_get_llm:
+    with patch("nodes.subagent.analysis.get_llm_by_model_choice") as mock_get_llm:
         mock_chat = MagicMock()
-        mock_get_llm.return_value = mock_chat
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "turbo":
+                return mock_chat
+            return mock_chat
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Mock structured output bound model
         mock_structured = MagicMock()

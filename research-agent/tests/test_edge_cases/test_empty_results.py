@@ -1,6 +1,6 @@
 """Test handling of empty search results"""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from schemas import ResearchTasks, SubagentOutput, SynthesisResult
@@ -12,14 +12,24 @@ class TestEmptyResults:
     """Test behavior when search returns no results"""
 
     @patch("tools.search_web")
-    @patch("llm.factory.get_lead_llm")
-    @patch("llm.factory.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_empty_search_results(
-        self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
+        self, mock_get_llm, mock_search, app, initial_state
     ):
         """Test graceful handling of empty search results"""
         # Mock empty search results
         mock_search.return_value = []
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {
@@ -48,10 +58,9 @@ class TestEmptyResults:
         assert isinstance(findings, list)
 
     @patch("tools.search_web")
-    @patch("llm.factory.get_lead_llm")
-    @patch("llm.factory.get_subagent_llm")
+    @patch("llm.factory.get_llm_by_model_choice")
     def test_partial_empty_results(
-        self, mock_subagent_llm, mock_lead_llm, mock_search, app, initial_state
+        self, mock_get_llm, mock_search, app, initial_state
     ):
         """Test handling when some subagents get empty results"""
         # Mock: first call returns results, second returns empty
@@ -70,6 +79,17 @@ class TestEmptyResults:
             return []
 
         mock_search.side_effect = side_effect
+
+        # Setup mock to return different LLMs based on model choice
+        mock_lead_llm = MagicMock()
+        mock_subagent_llm = MagicMock()
+        def mock_get_llm_side_effect(model_choice):
+            if model_choice == "plus":
+                return mock_lead_llm
+            elif model_choice == "turbo":
+                return mock_subagent_llm
+            return mock_lead_llm
+        mock_get_llm.side_effect = mock_get_llm_side_effect
 
         # Configure structured output mocks
         configure_structured_output_mock(mock_lead_llm, {

@@ -70,22 +70,24 @@ class AgentSettings(BaseSettings):
     # =========================================================================
 
     # Overall timeout for the entire research process
-    TIMEOUT_MAIN: float = 600.0  # 10 minutes
+    # Increased to accommodate multiple iterations with refinement
+    TIMEOUT_MAIN: float = 1200.0  # 20 minutes (increased from 10)
 
     # Timeout for subagent subgraph execution
-    TIMEOUT_SUBAGENT: float = 180.0  # 3 minutes
+    TIMEOUT_SUBAGENT: float = 300.0  # 5 minutes (increased from 3)
 
     # Timeout for web search requests
-    TIMEOUT_WEB_SEARCH: float = 60.0  # 1 minute
+    TIMEOUT_WEB_SEARCH: float = 90.0  # 1.5 minutes (increased from 1)
 
     # Timeout for internal retrieval (RAG)
-    TIMEOUT_RETRIEVAL: float = 30.0  # 30 seconds
+    TIMEOUT_RETRIEVAL: float = 45.0  # 45 seconds (increased from 30)
 
     # Timeout for Python code execution
-    TIMEOUT_PYTHON_REPL: float = 30.0  # 30 seconds
+    TIMEOUT_PYTHON_REPL: float = 60.0  # 1 minute (increased from 30)
 
     # Timeout for LLM calls (optional, LLM may have built-in timeout)
-    TIMEOUT_LLM_CALL: float = 120.0  # 2 minutes
+    # Increased to accommodate complex refinement steps
+    TIMEOUT_LLM_CALL: float = 180.0  # 3 minutes (increased from 2)
 
     # =========================================================================
     # Checkpointer Configuration
@@ -109,6 +111,63 @@ class AgentSettings(BaseSettings):
 
     # Use SCR (Situation-Complication-Resolution) structure for synthesis
     USE_SCR_STRUCTURE: bool = True
+
+    # Early decision optimization: enable decision after partial synthesis
+    # When enabled, decision is made after Situation+Complication, skipping
+    # Resolution if continuing research (saves ~33% synthesis time)
+    ENABLE_EARLY_DECISION: bool = True
+
+    # Early decision point: "situation" or "complication"
+    # "complication" = after Situation+Complication (recommended, balanced)
+    # "situation" = after Situation only (faster but less information)
+    EARLY_DECISION_AFTER: str = "complication"
+
+    # =========================================================================
+    # GraphRAG Configuration
+    # =========================================================================
+
+    # Enable/disable GraphRAG (Knowledge Graph integration)
+    GRAPH_ENABLED: bool = True
+
+    # Path for graph persistence (relative to research-agent directory)
+    GRAPH_PERSIST_PATH: str = "graph_store.json"
+
+    # Weight for graph signals in reranking (0.0-1.0)
+    # Higher values give more weight to graph connectivity
+    GRAPH_RERANK_WEIGHT: float = 0.25
+
+    # Maximum hops for neighbor expansion in graph context retrieval
+    GRAPH_MAX_HOPS: int = 2
+
+    # =========================================================================
+    # HippoRAG/PPR Configuration
+    # =========================================================================
+
+    # Enable/disable PPR-based retrieval (HippoRAG methodology)
+    # When enabled, replaces BFS-based neighborhood expansion with
+    # Personalized PageRank for multi-hop associative retrieval
+    USE_PPR_RETRIEVAL: bool = True
+
+    # Damping factor for PPR (restart probability)
+    # Standard PageRank value: 0.85
+    # Lower values = more localized search, higher = more global
+    PPR_ALPHA: float = 0.85
+
+    # Maximum iterations for PPR convergence
+    PPR_MAX_ITER: int = 100
+
+    # Convergence tolerance for PPR
+    PPR_TOL: float = 1e-6
+
+    # Number of top nodes to retrieve from PPR
+    PPR_TOP_K_NODES: int = 20
+
+    # Number of documents to retrieve from top nodes
+    PPR_TOP_K_DOCS: int = 10
+
+    # Weight for PPR results in hybrid retrieval (vs vector search)
+    # 0.0 = only vector search, 1.0 = only PPR
+    PPR_WEIGHT: float = 0.4
 
 
 # Global singleton

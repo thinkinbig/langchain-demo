@@ -168,9 +168,16 @@ def mock_app_with_mocks(mock_search_results, mock_llm_response):
     mock_subagent_llm.invoke.return_value = mock_llm_response
     mock_subagent_llm.with_structured_output.side_effect = create_structured_output_mock
 
-    # Mock the getter functions to return our mock LLMs
-    with patch("llm.factory.get_lead_llm", return_value=mock_lead_llm), \
-         patch("llm.factory.get_subagent_llm", return_value=mock_subagent_llm):
+    # Mock the getter function to return our mock LLMs based on model choice
+    def mock_get_llm_by_model_choice(model_choice):
+        if model_choice == "plus":
+            return mock_lead_llm
+        elif model_choice == "turbo":
+            return mock_subagent_llm
+        else:
+            return mock_lead_llm  # Default fallback
+
+    with patch("llm.factory.get_llm_by_model_choice", side_effect=mock_get_llm_by_model_choice):
 
         # Mock search
         with patch("tools.search_web") as mock_search:

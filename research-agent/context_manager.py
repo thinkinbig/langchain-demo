@@ -107,21 +107,24 @@ class EnhancedRetriever:
         self,
         candidates: List[Tuple[Document, float]],
         query: str,
-        k: int = 5
+        k: int = 5,
+        graph_rag_manager=None
     ) -> List[Tuple[Document, float]]:
         """
-        Rerank candidates using multiple signals.
+        Rerank candidates using multiple signals including graph connectivity.
 
         Uses a combination of:
         - Semantic similarity (from vector search)
         - Keyword overlap
         - Document length (prefer medium-length docs)
         - Source diversity
+        - Graph connectivity (if GraphRAG is enabled)
 
         Args:
             candidates: List of (Document, score) tuples
             query: Original query
             k: Number of top results to return
+            graph_rag_manager: Optional GraphRAGManager for graph-based reranking
 
         Returns:
             Reranked list of (Document, score) tuples
@@ -129,8 +132,19 @@ class EnhancedRetriever:
         if not candidates:
             return []
 
+        from config import settings
+
         query_lower = query.lower()
         query_words = set(query_lower.split())
+
+        # Extract query entities for graph scoring (if GraphRAG enabled)
+        query_entities = None
+        if graph_rag_manager and settings.GRAPH_ENABLED:
+            try:
+                query_entities = graph_rag_manager.extract_entities_from_query(query)
+            except Exception as e:
+                print(f"  ⚠️  Failed to extract query entities for reranking: {e}")
+                query_entities = None
 
         scored = []
         seen_sources = set()
@@ -159,12 +173,34 @@ class EnhancedRetriever:
             diversity_bonus = 0.0 if source in seen_sources else 0.1
             seen_sources.add(source)
 
-            # Combined score
+            # Graph connectivity score (if GraphRAG enabled)
+            graph_score = 0.0
+            if graph_rag_manager and settings.GRAPH_ENABLED:
+                try:
+                    graph_score = graph_rag_manager.get_graph_connectivity_score(
+                        doc.page_content,
+                        query_entities
+                    )
+                except Exception:
+                    # Graceful degradation: if graph scoring fails, use 0.0
+                    pass
+
+            # Combined score with graph weight from config
+            graph_weight = settings.GRAPH_RERANK_WEIGHT
+            base_weight = 1.0 - graph_weight
+
+            # Normalize base weights to sum to base_weight
+            similarity_weight = 0.4 * base_weight
+            keyword_weight = 0.3 * base_weight
+            length_weight = 0.15 * base_weight
+            diversity_weight = 0.15 * base_weight  # Adjusted to fit
+
             combined_score = (
-                similarity * 0.5 +  # Semantic similarity (50%)
-                keyword_score * 0.3 +  # Keyword overlap (30%)
-                length_score * 0.15 +  # Length preference (15%)
-                diversity_bonus  # Source diversity (5%)
+                similarity * similarity_weight +
+                keyword_score * keyword_weight +
+                length_score * length_weight +
+                diversity_bonus * diversity_weight +
+                graph_score * graph_weight  # Graph connectivity boost
             )
 
             scored.append((doc, combined_score))
@@ -213,8 +249,21 @@ class EnhancedRetriever:
                 seen_content.add(content_hash)
                 unique_candidates.append((doc, score))
 
-        # Stage 3: Rerank
-        reranked = self.rerank(unique_candidates, query, k=k)
+        # Stage 3: Rerank (with optional graph reranking)
+        # Get GraphRAG manager if available
+        graph_rag_manager = None
+        try:
+            from config import settings
+            if settings.GRAPH_ENABLED:
+                from memory.graph_rag import GraphRAGManager
+                graph_rag_manager = GraphRAGManager()
+        except Exception:
+            # Graceful degradation: continue without graph reranking
+            pass
+
+        reranked = self.rerank(
+            unique_candidates, query, k=k, graph_rag_manager=graph_rag_manager
+        )
 
         return reranked
 
@@ -293,8 +342,34 @@ class VectorStoreManager:
         splits = text_splitter.split_documents(documents)
         print(f"  🧩 Split {len(documents)} docs into {len(splits)} chunks.")
 
-        # 4. Index
+        # 4. Index into vector store
         self.vector_store.add_documents(splits)
+        print("  ✅ Vector store ingestion complete.")
+
+        # 5. Index into Knowledge Graph (if enabled)
+        from config import settings
+        if settings.GRAPH_ENABLED:
+            try:
+                from memory.graph_rag import GraphRAGManager
+                graph_rag_manager = GraphRAGManager()
+
+                total = len(splits)
+                print(f"  🕸️  Indexing {total} chunks into Knowledge Graph...")
+                for i, chunk in enumerate(splits):
+                    if (i + 1) % 10 == 0 or i == total - 1:
+                        print(
+                            f"  🕸️  Indexing chunk {i+1}/{total} "
+                            f"into Knowledge Graph..."
+                        )
+                    graph_rag_manager.index_document(
+                        chunk.page_content,
+                        source_metadata=chunk.metadata
+                    )
+                print("  ✅ Knowledge Graph indexing complete.")
+            except Exception as e:
+                print(f"  ⚠️  Knowledge Graph indexing failed: {e}")
+                print("  ℹ️  Continuing without graph indexing.")
+
         print("  ✅ Ingestion complete.")
 
     def retrieve(
@@ -304,6 +379,12 @@ class VectorStoreManager:
         use_reranking: bool = True
     ) -> tuple[str, list[str]]:
         """Retrieve relevant context for a query.
+
+        Implements hybrid retrieval:
+        1. Vector search (semantic similarity)
+        2. PPR-based graph retrieval (HippoRAG, if enabled)
+        3. Merge and deduplicate results
+        4. Rerank combined results
 
         Args:
             query: Search query
@@ -316,9 +397,12 @@ class VectorStoreManager:
         if not query:
             return "", []
 
+        from config import settings
+
+        # Step 1: Vector search (always performed)
         if use_reranking:
             # Use enhanced retrieval with reranking
-            results = self.enhanced_retriever.retrieve_with_reranking(
+            vector_results = self.enhanced_retriever.retrieve_with_reranking(
                 query,
                 k=k,
                 coarse_k=k * 4,  # Retrieve 4x candidates for reranking
@@ -326,10 +410,9 @@ class VectorStoreManager:
             )
 
             # Convert to document list (results are already reranked)
-            relevant_results = [doc for doc, score in results]
+            relevant_results = [doc for doc, score in vector_results]
         else:
             # Fallback to original retrieval method
-            from config import settings
             results_with_score = self.vector_store.similarity_search_with_score(
                 query, k=k
             )
@@ -339,15 +422,125 @@ class VectorStoreManager:
                 if score < settings.RETRIEVAL_L2_THRESHOLD:
                     relevant_results.append(doc)
 
-        if not relevant_results:
+        # Step 2: PPR-based graph retrieval (if enabled)
+        ppr_document_sources = set()
+        ppr_context = ""
+        if settings.GRAPH_ENABLED and settings.USE_PPR_RETRIEVAL:
+            try:
+                from memory.graph_rag import GraphRAGManager
+                graph_rag_manager = GraphRAGManager()
+
+                # Get PPR-based retrieval results
+                ppr_context = graph_rag_manager.retrieve_with_ppr(
+                    query,
+                    top_k_nodes=settings.PPR_TOP_K_NODES,
+                    top_k_docs=settings.PPR_TOP_K_DOCS,
+                    alpha=settings.PPR_ALPHA
+                )
+
+                # Extract document sources from PPR results
+                # The retrieve_with_ppr method returns formatted context,
+                # but we also need the raw document sources for merging
+                if ppr_context:
+                    # Get document sources directly from graph store
+                    query_entities = (
+                        graph_rag_manager.extract_entities_from_query(query)
+                    )
+                    if query_entities:
+                        top_nodes = (
+                            graph_rag_manager.graph_store.get_top_nodes_by_ppr(
+                                query_entities,
+                                top_k=settings.PPR_TOP_K_NODES,
+                                alpha=settings.PPR_ALPHA
+                            )
+                        )
+                        node_ids = [node_id for node_id, _ in top_nodes]
+                        ppr_document_sources = (
+                            graph_rag_manager.graph_store.get_documents_for_nodes(
+                                node_ids
+                            )
+                        )
+
+            except Exception as e:
+                print(f"  ⚠️  PPR retrieval failed: {e}")
+                # Graceful degradation: continue without PPR
+                pass
+
+        # Step 3: Merge results
+        # Collect sources from vector search
+        vector_sources = set()
+        for doc in relevant_results:
+            source = doc.metadata.get("source", "Unknown")
+            vector_sources.add(source)
+
+        # Step 4: If PPR found additional sources, try to retrieve them
+        # (This is a best-effort approach - we may not have all chunks)
+        additional_docs = []
+        if ppr_document_sources:
+            # Get documents that are from PPR sources but not in vector results
+            ppr_only_sources = ppr_document_sources - vector_sources
+
+            # Try to retrieve chunks from these sources
+            # Note: This requires searching the vector store, which we do by
+            # searching for the source name in the query
+            for source in list(ppr_only_sources)[:settings.PPR_TOP_K_DOCS]:
+                try:
+                    # Search for documents containing the source name
+                    source_results = (
+                        self.vector_store.similarity_search_with_score(
+                            source, k=2
+                        )
+                    )
+                    for doc, _ in source_results:
+                        if doc.metadata.get("source") == source:
+                            additional_docs.append(doc)
+                            break
+                except Exception:
+                    pass
+
+        # Combine all results
+        all_results = relevant_results + additional_docs
+
+        # Step 5: Rerank combined results if reranking is enabled
+        if use_reranking and all_results:
+            try:
+                # Get graph manager for reranking
+                graph_rag_manager = None
+                if settings.GRAPH_ENABLED:
+                    from memory.graph_rag import GraphRAGManager
+                    graph_rag_manager = GraphRAGManager()
+
+                # Rerank with graph connectivity scores
+                # Give equal initial scores to all results
+                reranked = self.enhanced_retriever.rerank(
+                    [(doc, 1.0) for doc in all_results],
+                    query,
+                    k=k,
+                    graph_rag_manager=graph_rag_manager
+                )
+                all_results = [doc for doc, score in reranked]
+
+            except Exception:
+                # Fallback: use original results
+                pass
+
+        # Step 6: Format output
+        if not all_results:
             return "(No relevant internal documents found)", []
 
         context_parts = []
         sources = set()
-        for doc in relevant_results:
+        for doc in all_results[:k]:  # Limit to k results
             source = doc.metadata.get("source", "Unknown")
             sources.add(source)
             context_parts.append(f"Source: {source}\nContent:\n{doc.page_content}\n---")
+
+        # Add PPR context as additional information (if available)
+        if ppr_context and settings.USE_PPR_RETRIEVAL:
+            context_parts.append(
+                f"\n--- Knowledge Graph Context (PPR-based) ---\n"
+                f"{ppr_context}"
+            )
 
         return "\n".join(context_parts), list(sources)
 

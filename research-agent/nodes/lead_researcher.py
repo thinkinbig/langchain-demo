@@ -21,7 +21,6 @@ from prompts import (
 from schemas import (
     ApproachEvaluation,
     LeadResearcherState,
-    ResearchTask,
     ResearchTasks,
 )
 
@@ -161,6 +160,20 @@ def lead_researcher_node(state: LeadResearcherState):
         else:
             print("  ℹ️  No relevant planning history found")
 
+    # Get decision reasoning from previous iteration (if available)
+    decision_reasoning = state.get("decision_reasoning")
+    decision_key_factors = state.get("decision_key_factors", [])
+    decision_guidance = ""
+    if iteration_count > 0 and (decision_reasoning or decision_key_factors):
+        decision_parts = []
+        if decision_reasoning:
+            decision_parts.append(f"Previous iteration identified gaps: {decision_reasoning[:300]}")
+        if decision_key_factors:
+            factors_text = ", ".join(decision_key_factors[:5])
+            decision_parts.append(f"Key areas needing more research: {factors_text}")
+        decision_guidance = "\n\n".join(decision_parts)
+        print("  📋 Using decision guidance from previous iteration")
+
     # Get complexity analysis for task creation guidance
     complexity_analysis = state.get("complexity_analysis")
     complexity_info = ""
@@ -261,46 +274,14 @@ def lead_researcher_node(state: LeadResearcherState):
         approach_response = approach_llm.invoke(approach_messages)
 
         # Process approach evaluation response
-        def approach_fallback(s):
-            # Fallback: create a simple approach evaluation
-            from schemas import ResearchApproach
-            return {
-                "approach_evaluation": ApproachEvaluation(
-                    approaches=[
-                        ResearchApproach(
-                            description="Direct research approach",
-                            advantages=["Straightforward", "Fast"],
-                            disadvantages=["May miss nuances"],
-                            suitability="Standard approach"
-                        ),
-                        ResearchApproach(
-                            description="Comprehensive analysis approach",
-                            advantages=["Thorough", "Complete"],
-                            disadvantages=["Time-consuming"],
-                            suitability="For complex queries"
-                        ),
-                        ResearchApproach(
-                            description="Focused targeted approach",
-                            advantages=["Efficient", "Focused"],
-                            disadvantages=["May miss context"],
-                            suitability="For specific queries"
-                        )
-                    ],
-                    selected_approach_index=0,
-                    selection_reasoning="Fallback: Using direct approach"
-                )
-            }
-
         approach_retry_state = process_structured_response(
-            approach_response, state, approach_fallback
+            approach_response, state
         )
         if approach_retry_state:
-            # If retry failed, use fallback
-            approach_eval = approach_retry_state.get("approach_evaluation")
-            if not approach_eval:
-                approach_eval = approach_fallback(state)["approach_evaluation"]
-        else:
-            approach_eval = approach_response["parsed"]
+            # Retry needed, return state update
+            return approach_retry_state
+
+        approach_eval = approach_response["parsed"]
 
         # Display approach evaluation results
         print("\n  📊 [Approach Evaluation Results]")
@@ -348,6 +329,23 @@ def lead_researcher_node(state: LeadResearcherState):
         )
 
         if need_approach_evaluation or selected_approach:
+            # Get graph context for task generation (if GraphRAG enabled)
+            graph_context = ""
+            try:
+                from config import settings
+                if settings.GRAPH_ENABLED:
+                    from memory.graph_rag import GraphRAGManager
+                    graph_rag_manager = GraphRAGManager()
+                    graph_context = graph_rag_manager.retrieve_with_ppr(
+                        query,
+                        top_k_nodes=getattr(settings, 'PPR_TOP_K_NODES', 20),
+                        top_k_docs=getattr(settings, 'PPR_TOP_K_DOCS', 10),
+                        alpha=getattr(settings, 'PPR_ALPHA', 0.85)
+                    )
+            except Exception:
+                # Graceful degradation: continue without graph context
+                pass
+
             # Use task generation prompt with selected approach
             task_prompt = LEAD_RESEARCHER_TASK_GENERATION.format(
                 query=query,
@@ -355,7 +353,8 @@ def lead_researcher_node(state: LeadResearcherState):
                 selection_reasoning=selection_reasoning or "Based on query analysis",
                 complexity_info=complexity_info,
                 memory_context=memory_ctx,
-                internal_knowledge=retrieved_context
+                internal_knowledge=retrieved_context,
+                graph_context=graph_context or "(No graph context available)"
             )
             messages.append(HumanMessage(content=task_prompt))
         else:
@@ -407,10 +406,25 @@ def lead_researcher_node(state: LeadResearcherState):
             memory_context if memory_context
             else "No previous planning history."
         )
+
+        # Format decision guidance for prompt
+        decision_context = decision_guidance if decision_guidance else ""
+        decision_task_guidance = ""
+        if decision_key_factors:
+            decision_task_guidance = (
+                f"Pay special attention to the key areas identified in the decision "
+                f"reasoning: {', '.join(decision_key_factors[:3])}. "
+                "Focus new tasks on addressing these specific gaps."
+            )
+        else:
+            decision_task_guidance = ""
+
         prompt_content = LEAD_RESEARCHER_REFINE.format(
             query=query,
             findings_summary=findings_summary,
             citations_from_previous_round=citations_formatted,
+            decision_guidance=decision_context,
+            decision_task_guidance=decision_task_guidance,
             scratchpad=scratchpad,
             memory_context=memory_ctx
         )
@@ -467,31 +481,9 @@ def lead_researcher_node(state: LeadResearcherState):
     response = structured_llm.invoke(messages)
 
     # Use helper to process retry logic
-    def fallback(s):
-        return {
-            "research_plan": f"Research plan for: {s['query']} (Fallback)",
-            "subagent_tasks": [
-                ResearchTask(
-                    id="task_1",
-                    description=f"Research: {s['query']}",
-                    rationale="Fallback"
-                ),
-                ResearchTask(
-                    id="task_2",
-                    description=f"Info: {s['query']}",
-                    rationale="Fallback"
-                )
-            ],
-            "iteration_count": s.get("iteration_count", 0) + 1,
-            "scratchpad": s.get("scratchpad", "Fallback due to error")
-        }
-
-    retry_state = process_structured_response(response, state, fallback)
+    retry_state = process_structured_response(response, state)
     if retry_state:
-        # If retry_state is returned, it means we either failed (and are looping)
-        # or we hit max retries and are returning the fallback.
-        # Preserve scratchpad: try to extract from parsed result,
-        # otherwise keep existing
+        # Retry needed, preserve state and return for retry
         preserved_scratchpad = state.get("scratchpad", "")
         parsed_result = response.get("parsed")
         if parsed_result and hasattr(parsed_result, "scratchpad"):
@@ -521,7 +513,6 @@ def lead_researcher_node(state: LeadResearcherState):
         print(f"     {i}. {task.description[:60]}... (ID: {task.id})")
 
     # Store important planning information to long-term memory
-    # Only store if there's meaningful content (not just fallback)
     if tasks and len(tasks) > 0:
         task_summary = "; ".join(
             [f"{t.id}: {t.description[:50]}" for t in tasks[:3]]

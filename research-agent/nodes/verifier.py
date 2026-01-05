@@ -2,9 +2,10 @@
 
 import context_manager
 from langchain_core.messages import HumanMessage, SystemMessage
-from llm.factory import get_lead_llm
+from llm.factory import get_llm_by_model_choice
 from prompts import VERIFIER_MAIN, VERIFIER_SYSTEM
 from schemas import ResearchState, VerificationResult, extract_evidence_summaries
+from text_utils import clean_report_output
 
 
 def verifier_node(state: ResearchState):
@@ -55,7 +56,8 @@ def verifier_node(state: ResearchState):
     )
 
     # Use lead LLM (stronger model) for verification
-    structured_llm = get_lead_llm().with_structured_output(VerificationResult)
+    llm = get_llm_by_model_choice("plus")
+    structured_llm = llm.with_structured_output(VerificationResult)
 
     try:
         response = structured_llm.invoke([
@@ -69,8 +71,10 @@ def verifier_node(state: ResearchState):
         else:
             corrections_count = len(response.corrections)
             print(f"  ⚠️  Issues found. {corrections_count} corrections applied.")
+            # Clean corrected report to remove any XML tags
+            cleaned_report = clean_report_output(response.corrected_report)
             return {
-                "synthesized_results": response.corrected_report
+                "synthesized_results": cleaned_report
             }
 
     except Exception as e:

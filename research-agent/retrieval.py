@@ -58,6 +58,14 @@ class RetrievalService:
         """
         Retrieve context from internal knowledge base (RAG).
 
+        Uses hybrid retrieval combining:
+        - Vector search (semantic similarity)
+        - PPR-based graph retrieval (HippoRAG, if enabled via config)
+
+        PPR retrieval is controlled by the USE_PPR_RETRIEVAL config setting.
+        When enabled, Personalized PageRank is used for multi-hop associative
+        retrieval on the knowledge graph.
+
         Args:
             query: Search query
             visited_sources: List of already visited source identifiers
@@ -76,7 +84,7 @@ class RetrievalService:
 
         visited_set = set(visited_sources or [])
 
-        # Retrieve from knowledge base
+        # Retrieve from knowledge base (includes PPR if enabled)
         context_str, source_names = context_manager.retrieve_knowledge(query, k=k)
 
         # Convert to Source objects

@@ -1,6 +1,10 @@
 """Memory management module for context engineering optimizations"""
 
 from memory.checkpointer_factory import get_checkpointer
+from memory.findings_memory import (
+    FindingsMemoryManager,
+    create_findings_memory_manager,
+)
 from memory.langmem_integration import (
     LongTermMemoryLangMemBridge,
     get_langmem_manager,
@@ -36,4 +40,7 @@ __all__ = [
     "LongTermMemoryLangMemBridge",
     "get_langmem_manager",
     "get_langmem_tools",
+    # Findings memory
+    "FindingsMemoryManager",
+    "create_findings_memory_manager",
 ]

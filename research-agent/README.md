@@ -106,16 +106,13 @@ python research-agent/tests/evaluate_agent.py
 - **Daily Budget**: Max 5M tokens / $50 (**Reject new queries** if exceeded)
 - **Monthly Budget**: Max 120M tokens / $1200 (**Complete stop** if exceeded)
  
-See [QUANTIFIED_REQUIREMENTS.md](./QUANTIFIED_REQUIREMENTS.md) for complete metrics.
+
  
 ## Documentation
  
-1.  **[MVP_ANALYSIS.md](./MVP_ANALYSIS.md)** - Comprehensive requirements and architecture analysis
-2.  **[ARCHITECTURE_COMPARISON.md](./ARCHITECTURE_COMPARISON.md)** - Comparison of existing patterns vs target architecture
-3.  **[REQUIREMENTS_CHECKLIST.md](./REQUIREMENTS_CHECKLIST.md)** - Detailed implementation checklist
-4.  **[METRICS_AND_KPIs.md](./METRICS_AND_KPIs.md)** - Comprehensive metrics and KPIs definition
-5.  **[QUANTIFIED_REQUIREMENTS.md](./QUANTIFIED_REQUIREMENTS.md)** - Quick reference for all quantified targets
-6.  **[MEASUREMENT_PLAN.md](./MEASUREMENT_PLAN.md)** - Implementation plan for metrics tracking
+1.  **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Comprehensive system architecture and design.
+2.  **[RETROSPECT.md](./RETROSPECT.md)** - Retrospective on the MVP prototype and lessons learned.
+3.  **[CHECKLIST_STATUS.md](./CHECKLIST_STATUS.md)** - Current implementation status.
  
 ## Key Design Decisions
  

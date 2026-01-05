@@ -79,10 +79,21 @@ def route_decision(
 
 
 def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"]:
-    """Route synthesizer retry or success"""
+    """Route synthesizer retry, partial synthesis (early decision), or success"""
     if should_retry(state):
         print("  ↺ Routing back to synthesizer for retry...")
         return "synthesizer"
+
+    # Early decision optimization: if partial synthesis is done, route to decision
+    # This allows decision to be made after S+C without waiting for Resolution
+    partial_synthesis_done = state.get("partial_synthesis_done", False)
+    early_decision_enabled = state.get("early_decision_enabled", True)
+
+    if early_decision_enabled and partial_synthesis_done:
+        print("  ⚡ Early decision: routing to decision after partial synthesis (S+C)")
+        return "decision"
+
+    # Normal flow: complete synthesis, route to decision
     return "decision"
 
 

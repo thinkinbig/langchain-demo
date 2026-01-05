@@ -3,18 +3,19 @@
 from schemas import ResearchState
 
 
-def process_structured_response(response, state, fallback_func=None):
+def process_structured_response(response, state):
     """
     Standardized validation and state update for retry loop.
 
     Args:
         response: Output from .with_structured_output(..., include_raw=True)
         state: Current state dict
-        fallback_func: Optional callable to generate fallback state
-            if max retries reached
 
     Returns:
         dict: State update or None if successful
+
+    Raises:
+        ValueError: If max retries reached and parsing still fails
     """
     retry_count = state.get("retry_count", 0)
     parsing_error = response.get("parsing_error")
@@ -25,14 +26,11 @@ def process_structured_response(response, state, fallback_func=None):
         # Check max retries (e.g., 3 attempts total: 0, 1, 2)
         if retry_count >= 2:
             print(f"  ❌ Max retries ({retry_count + 1}) reached")
-            if fallback_func:
-                print("  ⚠️  Using fallback logic")
-                fallback_update = fallback_func(state)
-                # Ensure fallback clears the error state
-                return {**fallback_update, "error": None, "retry_count": 0}
-
-            # If no fallback, just propagate the error or decide to end
-            return {"error": str(parsing_error), "retry_count": retry_count + 1}
+            error_msg = (
+                f"Failed to parse LLM response after {retry_count + 1} attempts: "
+                f"{parsing_error}"
+            )
+            raise ValueError(error_msg)
 
         # Route back for retry
         return {

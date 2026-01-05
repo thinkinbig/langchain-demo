@@ -388,6 +388,40 @@ class SynthesisResult(DictCompatibleModel):
     summary: str = Field(..., description="Comprehensive summary of findings")
 
 
+class SituationResult(DictCompatibleModel):
+    """Result for Situation section generation (Step 1 of chained SCR synthesis)"""
+    situation: str = Field(
+        ...,
+        description=(
+            "Current state, background, facts, and context. "
+            "Describe what is known, the current situation, and relevant context."
+        )
+    )
+
+
+class ComplicationResult(DictCompatibleModel):
+    """Result for Complication section generation (Step 2 of chained SCR synthesis)"""
+    complication: str = Field(
+        ...,
+        description=(
+            "Problems, challenges, conflicts, tensions, or dilemmas. "
+            "Identify what makes the situation complex, difficult, or problematic."
+        )
+    )
+
+
+class ResolutionResult(DictCompatibleModel):
+    """Result for Resolution section generation (Step 3 of chained SCR synthesis)"""
+    resolution: str = Field(
+        ...,
+        description=(
+            "Solutions, recommendations, conclusions, or future directions. "
+            "Present how to address the complications, what can be done, or what "
+            "conclusions can be drawn."
+        )
+    )
+
+
 class SCRResult(DictCompatibleModel):
     """SCR-structured synthesis result (Situation-Complication-Resolution)"""
     situation: str = Field(
@@ -544,6 +578,14 @@ class ResearchState(DictCompatibleModel):
     needs_more_research: bool = Field(
         default=False, description="Whether more research needed"
     )
+    decision_reasoning: Optional[str] = Field(
+        default=None,
+        description="Reasoning from decision node about why more research is needed"
+    )
+    decision_key_factors: List[str] = Field(
+        default_factory=list,
+        description="Key factors identified by decision node that influenced the decision"
+    )
     synthesized_results: str = Field(
         default="", description="Synthesized results"
     )
@@ -612,6 +654,30 @@ class ResearchState(DictCompatibleModel):
     complexity_analysis: Optional[ComplexityAnalysis] = Field(
         default=None,
         description="Complexity analysis result with recommended workers and iterations"
+    )
+
+    # Early decision optimization fields
+    # Note: Using regular field names (no leading underscore) as Pydantic doesn't
+    # allow underscore-prefixed field names. These are internal state fields.
+    synthesis_mode: Optional[str] = Field(
+        default=None,
+        description="Synthesis mode: 'full' or 'partial' (for early decision optimization)"
+    )
+    has_partial_synthesis: bool = Field(
+        default=False,
+        description="Whether current synthesis is partial (only S+C, missing R)"
+    )
+    early_decision_enabled: bool = Field(
+        default=True,
+        description="Whether early decision optimization is enabled"
+    )
+    early_decision_after: str = Field(
+        default="complication",
+        description="Early decision point: 'situation' or 'complication'"
+    )
+    partial_synthesis_done: bool = Field(
+        default=False,
+        description="Whether partial synthesis (S+C) has been completed"
     )
 
     @field_validator("query")
