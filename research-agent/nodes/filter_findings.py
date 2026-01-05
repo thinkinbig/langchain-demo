@@ -66,6 +66,17 @@ def filter_findings_node(state: ResearchState):
             f"unique citations from findings"
         )
 
+    # Convert citations with URLs to visited_sources
+    # This prevents duplicate searches for papers that are already cited
+    from nodes.subagent.utils import citations_to_visited_sources
+
+    citation_sources = citations_to_visited_sources(unique_citations)
+    if citation_sources:
+        print(
+            f"  🔗 [Sources] Converted {len(citation_sources)} citations "
+            f"with URLs to visited_sources (type: citation)"
+        )
+
     # Return REPLACEMENT list (Note: requires reducer in schema to handle
     # strict replacement if needed, but since this is a sequential node,
     # it overwrites if we change schema or just clean up here.
@@ -79,6 +90,7 @@ def filter_findings_node(state: ResearchState):
     # AND update Synthesizer to look for `filtered_findings` first.
     return {
         "filtered_findings": valid_findings,
-        "all_extracted_citations": unique_citations
+        "all_extracted_citations": unique_citations,
+        "visited_sources": citation_sources,  # Add citation sources to visited_sources
     }
 

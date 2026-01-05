@@ -140,6 +140,23 @@ async def subagent_node(state: SubagentState):
                     source_type="web"
                 ))
 
+    # Get paper result sources
+    paper_result = result_state.get("paper_result")
+    if paper_result:
+        if isinstance(paper_result, RetrievalResult):
+            for source in paper_result.sources:
+                visited_sources.append(VisitedSource(
+                    identifier=source.identifier,
+                    source_type="paper"
+                ))
+        elif isinstance(paper_result, dict):
+            for s in paper_result.get("sources", []):
+                visited_sources.append(VisitedSource(
+                    identifier=s.get("identifier", ""),
+                    source_type="paper"
+                ))
+
+
     # Filter output: return ONLY what needs to be merged to the parent state
     # This avoids 'InvalidConcurrentGraphUpdate' on non-reducer keys
     # like 'subagent_tasks'

@@ -121,7 +121,10 @@ python research-agent/tests/evaluate_agent.py
 ### Architecture
 - **Pattern**: Orchestrator-Worker with iterative refinement
 - **Parallelization**: LangGraph's `Send()` API (proven in `parallel-agent/`)
-- **Search**: Tavily API for web search
+- **Search**: 
+  - Tavily API for web search
+  - arXiv API for academic papers (free, no API key required)
+  - Semantic Scholar API (optional, requires API key)
 - **Memory**: In-memory state initially, external storage post-MVP
  
 ### Core Components
@@ -134,15 +137,20 @@ python research-agent/tests/evaluate_agent.py
     - Iterative decision-making
  
 2.  **Subagent Nodes**
-    - Parallel web search execution
+    - Parallel web and paper search execution
+    - Intelligent source selection by LLM (papers for research, web for current events)
     - Result evaluation and filtering
-    - Source tracking
-    - Structured findings output
+    - Source tracking (internal, web, and paper sources)
+    - Structured findings output with proper citations
  
-3.  **Synthesis Node**
-    - Aggregation of subagent findings
-    - Comprehensive result synthesis
-    - Citation integration
+3.  **Synthesis Node** (See [SYNTHESIZER_DESIGN.md](./docs/SYNTHESIZER_DESIGN.md))
+    - SCR (Situation-Complication-Resolution) framework for structured reporting
+    - Incremental synthesis: Updates existing reports when new findings arrive
+    - Early decision optimization: Stops early to save time when research continues
+    - Semantic memory retrieval: Uses LangMem to find relevant historical findings
+    - Two-pass refinement: Reflection and refinement for quality improvement
+    - Graph-aware synthesis: Maps knowledge graph structure to report sections
+    - Citation integration with proper attribution
  
 4.  **CitationAgent Node**
     - Citation extraction from sources

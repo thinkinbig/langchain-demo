@@ -12,6 +12,7 @@ from schemas import (
     AnalysisOutput,
     Finding,
     SubagentState,
+    VisitedSource,
     content_metadata_to_string,
     create_content_metadata,
 )
@@ -113,17 +114,20 @@ def enhance_context_with_references(all_sources: List[Source]) -> str:
     if not internal_sources:
         return ""
 
-    print(f"  📚 [Analysis] Enhancing context with Reference sections from {len(internal_sources)} papers...")
-    
+    print(
+        f"  📚 [Analysis] Enhancing context with Reference sections "
+        f"from {len(internal_sources)} papers..."
+    )
+
     enhanced_content_parts = []
-    
+
     # Process each internal source
     for source_id in internal_sources:
         # Heavily biased retrieval query to find the references section
-        # We assume the user has ingested papers where "Refeferences" or "Bibliography" 
+        # We assume the user has ingested papers where "Refeferences" or "Bibliography"
         # is a distinct section.
         query = f"References Bibliography Citations section in {source_id}"
-        
+
         try:
             # We use a direct retrieval call focused on this specific source
             # Note: The context_manager logic retrieves based on query similarity.
@@ -131,21 +135,21 @@ def enhance_context_with_references(all_sources: List[Source]) -> str:
             # or the query retrieving those specific chunks.
             # For a more robust solution, we might need a dedicated `retrieve_from_source` method
             # but for now we'll use the query mechanism with high likelihood of hitting the ref section.
-            
+
             # TODO: Improve source filtering in context_manager if this proves unreliable
-            
+
             context, _ = context_manager.retrieve_knowledge(
-                query, 
+                query,
                 k=2  # Just get top 2 chunks which likely contain the refs
             )
-            
+
             if context and "No relevant internal documents" not in context:
                 enhanced_content_parts.append(
                     f"\n--- OFFICIAL REFERENCES SECTION FROM {source_id} ---\n"
                     f"{context}\n"
                     f"--- END REFERENCES FROM {source_id} ---\n"
                 )
-                
+
         except Exception as e:
             print(f"  ⚠️  Failed to retrieve references for {source_id}: {e}")
 
@@ -180,6 +184,7 @@ def prepare_analysis_context(
     # Get retrieval results (unified format)
     internal_result = state.get("internal_result")
     web_result = state.get("web_result")
+    paper_result = state.get("paper_result")
 
     # Handle dict serialization - re-hydrating objects if they are dicts
     if internal_result and isinstance(internal_result, dict):
@@ -198,6 +203,14 @@ def prepare_analysis_context(
             source_type=RetrievalSource.WEB,
             has_content=web_result.get("has_content", False)
         )
+    if paper_result and isinstance(paper_result, dict):
+        sources = [Source(**s) for s in paper_result.get("sources", [])]
+        paper_result = RetrievalResult(
+            content=paper_result.get("content", ""),
+            sources=sources,
+            source_type=RetrievalSource.PAPER,
+            has_content=paper_result.get("has_content", False)
+        )
 
     visited_sources = state.get("visited_sources", [])
     visited_identifiers = [vs.identifier for vs in visited_sources]
@@ -208,10 +221,11 @@ def prepare_analysis_context(
             task=task_description,
             internal_result=internal_result,
             web_result=web_result,
+            paper_result=paper_result,
             visited_identifiers=visited_identifiers
         )
     )
-    
+
     # ENHANCEMENT: Automatically retrieve References section for internal papers
     references_context = enhance_context_with_references(all_sources)
     if references_context:
@@ -277,4 +291,46 @@ def build_finding_from_analysis(
     )
 
     return finding
+
+
+def citations_to_visited_sources(citations: List[dict]) -> List[VisitedSource]:
+    """
+    Convert extracted citations to VisitedSource objects.
+
+    Only processes citations that have a URL (for deduplication purposes).
+    Uses source_type="citation" to distinguish from actually visited sources.
+
+    Args:
+        citations: List of citation dictionaries with keys:
+            - title: Citation title
+            - url: Source URL (required for conversion)
+            - context: Optional context
+            - relevance: Optional relevance info
+
+    Returns:
+        List of VisitedSource objects with source_type="citation"
+    """
+    visited_sources = []
+    seen_identifiers = set()
+
+    for citation in citations:
+        # Only process citations with URLs (needed for deduplication)
+        url = citation.get("url", "").strip()
+        if not url:
+            continue
+
+        # Skip if we've already seen this identifier
+        if url in seen_identifiers:
+            continue
+
+        seen_identifiers.add(url)
+
+        # Create VisitedSource with citation type
+        visited_source = VisitedSource(
+            identifier=url,
+            source_type="citation"
+        )
+        visited_sources.append(visited_source)
+
+    return visited_sources
 

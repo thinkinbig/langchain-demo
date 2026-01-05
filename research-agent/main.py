@@ -90,13 +90,21 @@ async def main():
         # This will auto-update query_budget on every LLM call
         cost_callback = CostTrackingCallback(query_budget)
 
+        # Set recursion limit based on MAX_ITERATIONS
+        # Each iteration involves multiple nodes, so we set a safe limit
+        # Typical path per iteration: complexity_analyzer -> lead_researcher ->
+        # subagent(s) -> filter_findings -> synthesizer -> decision
+        # This is ~6-10 nodes per iteration, so we use a multiplier of 15 for safety
+        from config import settings
+        recursion_limit = (settings.MAX_ITERATIONS + 1) * 15
+
         config = {
             "callbacks": [cost_callback],
-            "configurable": {"thread_id": thread_id}
+            "configurable": {"thread_id": thread_id},
+            "recursion_limit": recursion_limit,
         }
 
         # Use async invoke for the graph with timeout
-        from config import settings
         final_state = await asyncio.wait_for(
             app.ainvoke(initial_state, config=config),
             timeout=settings.TIMEOUT_MAIN

@@ -169,6 +169,16 @@ class AgentSettings(BaseSettings):
     # 0.0 = only vector search, 1.0 = only PPR
     PPR_WEIGHT: float = 0.4
 
+    # =========================================================================
+    # Paper Search Configuration
+    # =========================================================================
+
+    # Enable Semantic Scholar API (requires SEMANTIC_SCHOLAR_API_KEY)
+    # When enabled, paper search will also query Semantic Scholar in addition to arXiv
+    # Note: Paper search is automatically performed alongside web search in web_search_node
+    # The LLM will decide which sources to use based on the task requirements
+    USE_SEMANTIC_SCHOLAR: bool = False
+
 
 # Global singleton
 settings = AgentSettings()

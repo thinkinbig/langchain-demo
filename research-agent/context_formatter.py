@@ -71,6 +71,11 @@ class ContextFormatter:
                     "title": source.title or f"Internal Document: {source.identifier}",
                     "url": f"internal/{source.identifier}"
                 })
+            elif source.source_type == RetrievalSource.PAPER:
+                formatted_sources.append({
+                    "title": source.title or source.identifier,
+                    "url": source.identifier
+                })
             else:
                 formatted_sources.append({
                     "title": source.title or source.identifier,
@@ -118,6 +123,7 @@ class ContextFormatter:
         task: str,
         internal_result: Optional[RetrievalResult] = None,
         web_result: Optional[RetrievalResult] = None,
+        paper_result: Optional[RetrievalResult] = None,
         visited_identifiers: Optional[List[str]] = None
     ) -> tuple[str, str, List[Source]]:
         """
@@ -129,6 +135,7 @@ class ContextFormatter:
             task: Task description
             internal_result: Internal knowledge base result
             web_result: Web search result
+            paper_result: Academic paper search result
             visited_identifiers: List of already visited identifiers
 
         Returns:
@@ -146,6 +153,16 @@ class ContextFormatter:
             if formatted_internal:
                 context_parts.append(formatted_internal)
                 all_sources.extend(internal_result.sources)
+
+        # Format paper context (prioritize papers over web for academic queries)
+        if paper_result and not paper_result.is_empty():
+            formatted_paper = self.format_retrieval_result(
+                paper_result,
+                visited_identifiers
+            )
+            if formatted_paper:
+                context_parts.append(formatted_paper)
+                all_sources.extend(paper_result.sources)
 
         # Format web context
         if web_result and not web_result.is_empty():

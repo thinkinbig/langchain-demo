@@ -11,8 +11,8 @@ from langchain_core.callbacks import BaseCallbackHandler
 @dataclass
 class QueryBudget:
     """Per-query budget"""
-    max_tokens: int = 160_000
-    max_input_tokens: int = 160_000
+    max_tokens: int = 120_000
+    max_input_tokens: int = 120_000
     max_output_tokens: int = 80_000
     max_api_calls: int = 30
     max_subagents: int = 8

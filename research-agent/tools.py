@@ -115,6 +115,217 @@ def scrape_web_page(url: str) -> str:
         return f"Error scraping {url}: {str(e)}"
 
 
+def search_papers_arxiv(query: str, max_results: int = 5) -> List[Dict]:
+    """
+    Search for academic papers on arXiv.
+
+    arXiv API is free and doesn't require an API key.
+    Returns a list of paper results with title, authors, abstract, and URL.
+
+    Args:
+        query: Search query (can include keywords, author names, etc.)
+        max_results: Maximum number of results to return
+
+    Returns:
+        List of dictionaries with paper information:
+        - title: Paper title
+        - url: arXiv URL
+        - authors: List of author names
+        - abstract: Paper abstract
+        - published: Publication date
+        - arxiv_id: arXiv ID (e.g., "2301.12345")
+    """
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # arXiv API endpoint
+            base_url = "http://export.arxiv.org/api/query"
+
+            # Build query - arXiv uses special query syntax
+            # We can search in title, abstract, or all fields
+            # For simplicity, we search in all fields
+            search_query = query.replace(" ", "+AND+")
+
+            params = {
+                "search_query": f"all:{search_query}",
+                "start": 0,
+                "max_results": max_results,
+                "sortBy": "relevance",
+                "sortOrder": "descending"
+            }
+
+            response = requests.get(base_url, params=params, timeout=15)
+            response.raise_for_status()
+
+            # Parse XML response
+            from xml.etree import ElementTree as ET
+            root = ET.fromstring(response.content)
+
+            # Namespace for arXiv API
+            ns = {
+                'atom': 'http://www.w3.org/2005/Atom',
+                'opensearch': 'http://a9.com/-/spec/opensearch/1.1/',
+                'arxiv': 'http://arxiv.org/schemas/atom'
+            }
+
+            results = []
+            entries = root.findall('atom:entry', ns)
+
+            for entry in entries:
+                # Extract paper information
+                title = entry.find('atom:title', ns)
+                title_text = title.text.strip().replace('\n', ' ') if title is not None else "Untitled"
+
+                # Get arXiv ID from id field (format: http://arxiv.org/abs/2301.12345v1)
+                id_elem = entry.find('atom:id', ns)
+                arxiv_id = ""
+                if id_elem is not None:
+                    arxiv_id = id_elem.text.split('/')[-1]  # Extract ID from URL
+
+                # Get URL
+                url = f"https://arxiv.org/abs/{arxiv_id}" if arxiv_id else ""
+
+                # Extract authors
+                authors = []
+                for author in entry.findall('atom:author', ns):
+                    name_elem = author.find('atom:name', ns)
+                    if name_elem is not None:
+                        authors.append(name_elem.text)
+
+                # Extract abstract
+                summary = entry.find('atom:summary', ns)
+                abstract = summary.text.strip() if summary is not None else ""
+
+                # Extract published date
+                published = entry.find('atom:published', ns)
+                published_date = published.text[:10] if published is not None else ""  # YYYY-MM-DD
+
+                results.append({
+                    "title": title_text,
+                    "url": url,
+                    "authors": authors,
+                    "abstract": abstract,
+                    "published": published_date,
+                    "arxiv_id": arxiv_id,
+                    "source": "arxiv"
+                })
+
+            return results
+
+        except Exception as e:
+            print(f"  ⚠️  arXiv search error (attempt {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(1)  # Brief backoff
+            else:
+                print(f"  ❌ All arXiv search attempts failed for query: {query[:50]}...")
+                return []
+
+
+def search_papers_semantic_scholar(query: str, max_results: int = 5) -> List[Dict]:
+    """
+    Search for academic papers using Semantic Scholar API.
+    
+    Semantic Scholar API is free but requires an API key.
+    Set SEMANTIC_SCHOLAR_API_KEY environment variable to use this function.
+    
+    Args:
+        query: Search query
+        max_results: Maximum number of results to return
+        
+    Returns:
+        List of dictionaries with paper information
+    """
+    api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+    if not api_key:
+        print("  ⚠️  SEMANTIC_SCHOLAR_API_KEY not set, skipping Semantic Scholar search")
+        return []
+
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            base_url = "https://api.semanticscholar.org/graph/v1/paper/search"
+
+            headers = {
+                "x-api-key": api_key
+            }
+
+            params = {
+                "query": query,
+                "limit": max_results,
+                "fields": "title,authors,year,abstract,url,paperId,citationCount"
+            }
+
+            response = requests.get(base_url, headers=headers, params=params, timeout=15)
+            response.raise_for_status()
+
+            data = response.json()
+            results = []
+
+            for paper in data.get("data", []):
+                authors_list = [author.get("name", "") for author in paper.get("authors", [])]
+
+                results.append({
+                    "title": paper.get("title", "Untitled"),
+                    "url": paper.get("url", ""),
+                    "authors": authors_list,
+                    "abstract": paper.get("abstract", ""),
+                    "published": str(paper.get("year", "")),
+                    "paper_id": paper.get("paperId", ""),
+                    "citation_count": paper.get("citationCount", 0),
+                    "source": "semantic_scholar"
+                })
+
+            return results
+
+        except Exception as e:
+            print(f"  ⚠️  Semantic Scholar search error (attempt {attempt+1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(1)
+            else:
+                print(f"  ❌ All Semantic Scholar search attempts failed for query: {query[:50]}...")
+                return []
+
+
+def search_papers(query: str, max_results: int = 5, use_semantic_scholar: bool = False) -> List[Dict]:
+    """
+    Unified paper search function that searches both arXiv and optionally Semantic Scholar.
+    
+    Args:
+        query: Search query
+        max_results: Maximum number of results per source
+        use_semantic_scholar: Whether to also search Semantic Scholar (requires API key)
+        
+    Returns:
+        Combined list of paper results from all sources
+    """
+    results = []
+
+    # Always search arXiv (free, no API key needed)
+    print(f"  📄 [Paper Search] Searching arXiv for: {query[:60]}...")
+    arxiv_results = search_papers_arxiv(query, max_results=max_results)
+    results.extend(arxiv_results)
+
+    # Optionally search Semantic Scholar
+    if use_semantic_scholar:
+        print(f"  📄 [Paper Search] Searching Semantic Scholar for: {query[:60]}...")
+        ss_results = search_papers_semantic_scholar(query, max_results=max_results)
+        results.extend(ss_results)
+
+    # Deduplicate by title similarity (simple approach)
+    # In production, you might want more sophisticated deduplication
+    seen_titles = set()
+    unique_results = []
+    for result in results:
+        title_lower = result.get("title", "").lower()
+        # Simple deduplication: if title is very similar, skip
+        if title_lower not in seen_titles:
+            seen_titles.add(title_lower)
+            unique_results.append(result)
+
+    print(f"  ✅ [Paper Search] Found {len(unique_results)} unique papers")
+    return unique_results[:max_results * 2]  # Return up to 2x max_results if using multiple sources
+
+
 def python_repl(code: str) -> str:
     """
     Execute Python code and return the output (stdout).

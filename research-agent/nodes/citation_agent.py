@@ -74,7 +74,7 @@ def citation_agent_node(state: CitationAgentState):
     # Clean synthesized output to remove any XML tags that might have been included
     cleaned_synthesized = clean_report_output(synthesized)
 
-    final_report = f"""
+    final_report = f"""# Research Report
 
 
 {query}

@@ -368,6 +368,18 @@ aspects simultaneously.
 SUBAGENT_SYSTEM = """You are a Research Analyst with access to a Python Environment.
 Your goal is to synthesize search results into a concise, fact-based summary.
 You must return your analysis in a structured JSON format.
+
+**AVAILABLE DATA SOURCES**:
+You may receive information from multiple sources:
+- **Internal Knowledge Base**: Pre-ingested documents (PDFs, papers, etc.)
+- **Web Search Results**: General web pages and articles from Tavily search
+- **Academic Papers**: Research papers from arXiv and Semantic Scholar (with titles, authors, abstracts, and URLs)
+
+When analyzing, you should:
+1. **Prioritize academic papers** for research-oriented or technical queries
+2. **Use web sources** for current events, news, or general information
+3. **Combine sources** when both academic depth and current information are needed
+4. **Cite appropriately** - use paper titles and URLs for academic sources, web URLs for web sources
 """
 
 SUBAGENT_STRUCTURED_ANALYSIS = ChatPromptTemplate.from_template(
@@ -384,6 +396,18 @@ The following search results were retrieved:
 Analyze the search results and extract information relevant to the task.
 Check the "ENTERPRISE KNOWLEDGE BASE" provided in the system prompt for
 additional context.
+
+**SOURCE SELECTION STRATEGY**:
+The search results may include multiple source types:
+- **Internal documents**: Pre-ingested papers/documents (marked as "internal/...")
+- **Academic papers**: Research papers from arXiv/Semantic Scholar (marked with paper titles, authors, abstracts)
+- **Web sources**: General web pages and articles
+
+**For research/academic queries**: Prioritize academic papers and internal documents for authoritative information.
+**For current events/general queries**: Use web sources for up-to-date information.
+**For comprehensive analysis**: Combine academic papers (for depth) with web sources (for currency).
+
+Always cite the appropriate source type in your citations.
 
 **STRATEGIC USE OF KNOWLEDGE GRAPH FOR MULTI-HOP REASONING**:
 The search results may contain a "Knowledge Graph Context" section. You MUST use this to perform **Multi-hop Reasoning** and bridge fragmented information:
@@ -405,13 +429,22 @@ The search results may contain a "Knowledge Graph Context" section. You MUST use
 
 5. **Validate Against Structure:** If sources mention conflicting information, check if the graph context explains the divergence (e.g., different versions, different sub-components, or temporal changes indicated by "deprecates" relationships).
 
-**CITATION EXTRACTION**: Extract academic paper citations into the
-`citations` list.
-- Each item must be an object with:
-  - `title`: The citation text (e.g. "Author et al., 2023")
-  - `context`: Brief context of what the paper is about or why it's cited.
-  - `url`: Empty string if not available.
-  - `relevance`: Brief note on relevance.
+**CITATION EXTRACTION**: Extract citations from all source types into the
+`citations` list. This includes:
+- **Academic papers**: Papers from arXiv/Semantic Scholar (use full paper title, authors, year)
+- **Web sources**: Web articles and pages (use article title and URL)
+- **Internal documents**: Pre-ingested documents (use document identifier)
+
+For each citation:
+- `title`: The citation text (e.g. "Author et al., 2023" for papers, or article title for web sources)
+- `context`: Brief context of what the source discusses or why it's cited
+- `url`: The source URL (arXiv URL for papers, web URL for web sources, or empty for internal docs)
+- `relevance`: Brief note on why this source is relevant to the task
+
+**Priority**: When you have both academic papers and web sources:
+- For research/technical queries: Prioritize citing academic papers
+- For current events: Prioritize citing recent web sources
+- Include both when they provide complementary information
 
 **Reasoning**: Explain your analysis process in `reasoning`, including how you used graph relationships to connect information.
 
@@ -1201,17 +1234,37 @@ DECISION_SYSTEM = """You are a Research Quality Assessment Expert.
 Your task is to evaluate whether the current research state is sufficient
 to answer the user's query, or if more research iterations are needed.
 
+**CRITICAL: Default to STOPPING when uncertain.**
+When in doubt, choose to finish research rather than continue. Only continue
+if there are clear, specific gaps that additional research would meaningfully address.
+
 Consider the following factors:
 1. **Query Coverage**: Does the current research adequately address all
-   aspects of the query?
+   aspects of the query? If yes, STOP.
 2. **Information Quality**: Are the findings substantive, relevant, and
-   well-supported?
+   well-supported? If yes, STOP.
 3. **Synthesis Depth**: Is the synthesized result comprehensive and
-   informative enough?
-4. **Citation Richness**: Are there sufficient citations and sources?
+   informative enough? If yes, STOP.
+4. **Citation Richness**: Are there sufficient citations and sources? If yes, STOP.
 5. **Iteration Limits**: Respect the maximum iterations based on complexity.
-6. **Diminishing Returns**: Consider if additional iterations would add
-   meaningful value.
+   As you approach the limit, be more conservative about continuing.
+6. **Diminishing Returns**: This is CRITICAL. Compare current metrics with
+   previous iteration. If growth is minimal (<10%), it indicates diminishing
+   returns - you should STOP unless there are clear, specific gaps.
+
+**When to STOP (finish research):**
+- Query is adequately answered with quality information
+- Synthesis is comprehensive and covers the main aspects
+- Sufficient citations are available
+- Diminishing returns detected (minimal growth from previous iteration)
+- Approaching or at iteration limit
+- When uncertain - default to stopping
+
+**When to CONTINUE (more research needed):**
+- Clear, specific gaps in query coverage that additional research would address
+- Significant new information is likely available and would add value
+- Current findings are insufficient or low quality
+- Early iterations with clear room for improvement
 
 Output Format:
 You must respond with a JSON object matching the `DecisionResult` schema.
@@ -1248,18 +1301,78 @@ Citations Found: {citations_count}
 </citations_info>
 
 <instructions>
-Evaluate whether more research is needed based on:
-1. Whether the query is adequately answered
-2. Quality and depth of current findings
-3. Completeness of synthesis
-4. Availability of citations for deeper exploration
-5. Remaining iteration budget
+This is the first iteration. Evaluate the current research state and
+make your decision based on the criteria in the system prompt.
+</instructions>
+"""
+)
 
-Consider the complexity level when making your decision:
-- Simple queries: Can stop earlier if basic information is covered
-- Complex queries: May need more iterations for comprehensive coverage
+DECISION_REFINE = ChatPromptTemplate.from_template(
+    """<query>
+{query}
+</query>
 
-Provide your decision with confidence score and clear reasoning.
+<complexity_analysis>
+{complexity_info}
+</complexity_analysis>
+
+<current_state>
+Iteration: {iteration_count} / {max_iterations}
+Findings Count: {findings_count}
+Synthesis Length: {synthesis_length} characters
+Citations Found: {citations_count}
+</current_state>
+
+<previous_iteration_comparison>
+{previous_comparison}
+</previous_iteration_comparison>
+
+<diminishing_returns_analysis>
+{diminishing_returns_info}
+</diminishing_returns_analysis>
+
+<findings_summary>
+{findings_summary}
+</findings_summary>
+
+<synthesis_preview>
+{synthesis_preview}
+</synthesis_preview>
+
+<citations_info>
+{citations_info}
+</citations_info>
+
+<instructions>
+This is a subsequent iteration. You have access to comparison data from
+the previous iteration in the sections above.
+
+**CRITICAL: Pay special attention to the Diminishing Returns Analysis.**
+If diminishing returns are detected, you should
+strongly consider STOPPING unless there are clear, specific gaps that need
+addressing.
+
+Evaluate based on the criteria in the system prompt, with particular focus
+on the diminishing returns analysis provided above.
+</instructions>
+"""
+)
+
+DECISION_RETRY = ChatPromptTemplate.from_template(
+    """{previous_prompt}
+
+<error>
+The previous attempt failed validation:
+{error}
+</error>
+
+<instructions>
+Please correct the JSON structure and try again.
+Ensure all fields match the `DecisionResult` schema:
+- needs_more_research: boolean
+- confidence: float (0.0-1.0)
+- reasoning: string
+- key_factors: list of strings
 </instructions>
 """
 )

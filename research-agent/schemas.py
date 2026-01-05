@@ -528,7 +528,10 @@ class AnalysisOutput(DictCompatibleModel):
 class VisitedSource(DictCompatibleModel):
     """Unified representation of a visited source"""
     identifier: str = Field(..., description="URL or document name")
-    source_type: str = Field(..., description="Type: 'internal' or 'web'")
+    source_type: str = Field(
+        ...,
+        description="Type: 'internal', 'web', 'paper', or 'citation'"
+    )
     visited_at: Optional[datetime] = Field(
         default=None, description="When source was visited"
     )
@@ -655,6 +658,14 @@ class ResearchState(DictCompatibleModel):
         default=0,
         description="Count of citations from previous iteration (for delta tracking)"
     )
+    previous_synthesis_length: int = Field(
+        default=0,
+        description="Length of synthesis from previous iteration (for diminishing returns detection)"
+    )
+    previous_findings_count: int = Field(
+        default=0,
+        description="Count of findings from previous iteration (for diminishing returns detection)"
+    )
 
     # Complexity analysis
     complexity_analysis: Optional[ComplexityAnalysis] = Field(
@@ -740,6 +751,9 @@ class SubagentState(DictCompatibleModel):
     )
     web_result: Optional[Any] = Field(
         default=None, description="Web search retrieval result"
+    )
+    paper_result: Optional[Any] = Field(
+        default=None, description="Academic paper search result (from arXiv/Semantic Scholar)"
     )
     subagent_findings: List[Finding] = Field(
         default_factory=list, description="Findings output"

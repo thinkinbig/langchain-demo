@@ -12,6 +12,7 @@ class RetrievalSource(str, Enum):
     """Type of retrieval source"""
     INTERNAL = "internal"
     WEB = "web"
+    PAPER = "paper"  # Academic papers from arXiv, Semantic Scholar, etc.
 
 
 class Source(DictCompatibleModel):
@@ -263,6 +264,97 @@ class RetrievalService:
         )
 
     @staticmethod
+    def retrieve_papers(
+        query: str,
+        visited_urls: Optional[List[str]] = None,
+        max_results: int = 5,
+        use_semantic_scholar: bool = False
+    ) -> RetrievalResult:
+        """
+        Retrieve academic papers from arXiv and optionally Semantic Scholar.
+
+        Args:
+            query: Search query
+            visited_urls: List of already visited paper URLs
+            max_results: Maximum number of results per source
+            use_semantic_scholar: Whether to also search Semantic Scholar (requires API key)
+
+        Returns:
+            RetrievalResult with paper information and abstracts
+        """
+        if not query:
+            return RetrievalResult(
+                content="",
+                sources=[],
+                source_type=RetrievalSource.PAPER,
+                has_content=False
+            )
+
+        visited_set = set(visited_urls or [])
+
+        # Perform paper search
+        paper_results = tools.search_papers(
+            query=query,
+            max_results=max_results,
+            use_semantic_scholar=use_semantic_scholar
+        )
+
+        if not paper_results:
+            return RetrievalResult(
+                content="",
+                sources=[],
+                source_type=RetrievalSource.PAPER,
+                has_content=False
+            )
+
+        # Convert paper results to Source objects and format content
+        sources = []
+        papers_content = []
+
+        for i, paper in enumerate(paper_results):
+            url = paper.get("url", "")
+            title = paper.get("title", "Untitled")
+            authors = paper.get("authors", [])
+            abstract = paper.get("abstract", "")
+            published = paper.get("published", "")
+            source_name = paper.get("source", "unknown")
+
+            if url and url not in visited_set:
+                source = Source(
+                    identifier=url,
+                    title=title,
+                    source_type=RetrievalSource.PAPER
+                )
+                sources.append(source)
+
+                # Format paper information
+                authors_str = ", ".join(authors[:5])  # Limit to first 5 authors
+                if len(authors) > 5:
+                    authors_str += " et al."
+
+                paper_info = f"""
+Paper {i+1}: {title}
+Authors: {authors_str}
+Published: {published}
+Source: {source_name}
+URL: {url}
+
+Abstract:
+{abstract[:1000]}  # Limit abstract length
+"""
+                papers_content.append(paper_info.strip())
+
+        combined_content = "\n\n---\n\n".join(papers_content)
+        has_content = bool(combined_content and len(combined_content.strip()) > 0)
+
+        return RetrievalResult(
+            content=combined_content,
+            sources=sources,
+            source_type=RetrievalSource.PAPER,
+            has_content=has_content
+        )
+
+    @staticmethod
     async def aretrieve_web(
         query: str,
         visited_urls: Optional[List[str]] = None,
@@ -285,6 +377,24 @@ class RetrievalService:
             visited_urls=visited_urls,
             max_results=max_results,
             scrape_top_result=scrape_top_result
+        )
+
+    @staticmethod
+    async def aretrieve_papers(
+        query: str,
+        visited_urls: Optional[List[str]] = None,
+        max_results: int = 5,
+        use_semantic_scholar: bool = False
+    ) -> RetrievalResult:
+        """Async wrapper for retrieve_papers"""
+        import asyncio
+
+        return await asyncio.to_thread(
+            RetrievalService.retrieve_papers,
+            query=query,
+            visited_urls=visited_urls,
+            max_results=max_results,
+            use_semantic_scholar=use_semantic_scholar
         )
 
 
