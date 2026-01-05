@@ -96,7 +96,8 @@ class AgentSettings(BaseSettings):
     # Checkpointer backend: 'memory', 'sqlite', or 'postgres'
     # Note: SQLite/Postgres support may require additional packages or
     # newer langgraph version
-    CHECKPOINTER_BACKEND: str = "memory"
+    # Using sqlite for persistent checkpoint storage (survives restarts)
+    CHECKPOINTER_BACKEND: str = "sqlite"
 
     # SQLite database path (for sqlite backend)
     CHECKPOINTER_DB_PATH: str = "checkpoints.db"

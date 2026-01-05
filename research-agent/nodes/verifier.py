@@ -37,8 +37,20 @@ def verifier_node(state: ResearchState):
 
     # 2. From RAG (Direct verification)
     print("  🧠 [Verifier] Retrieving verification context...")
-    # Use the first 100 chars of report as proxy query
-    verification_query = report[:200]
+    # Use original query for RAG retrieval (more accurate than report snippet)
+    # The query represents the core topic, while report may start with
+    # intro/background
+    original_query = state.get("query", "")
+    if original_query:
+        verification_query = original_query
+    else:
+        # Fallback: extract key sentences from report (first paragraph or
+        # first 300 chars). This is better than just first 200 chars which
+        # might be just title
+        lines = report.split('\n')
+        first_paragraph = lines[0] if lines else report[:300]
+        verification_query = first_paragraph.strip()[:300]
+
     rag_evidence, _ = context_manager.retrieve_knowledge(verification_query)
     if rag_evidence:
         evidence_pieces.append(f"Internal Knowledge Base:\n{rag_evidence}")

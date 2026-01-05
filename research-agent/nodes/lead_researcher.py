@@ -10,8 +10,6 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_llm_by_model_choice
 from memory.temporal_memory import TemporalMemory
 from prompts import (
-    LEAD_RESEARCHER_APPROACH_MAIN,
-    LEAD_RESEARCHER_APPROACH_SYSTEM,
     LEAD_RESEARCHER_INITIAL,
     LEAD_RESEARCHER_REFINE,
     LEAD_RESEARCHER_RETRY,
@@ -19,7 +17,6 @@ from prompts import (
     LEAD_RESEARCHER_TASK_GENERATION,
 )
 from schemas import (
-    ApproachEvaluation,
     LeadResearcherState,
     ResearchTasks,
 )
@@ -167,7 +164,8 @@ def lead_researcher_node(state: LeadResearcherState):
     if iteration_count > 0 and (decision_reasoning or decision_key_factors):
         decision_parts = []
         if decision_reasoning:
-            decision_parts.append(f"Previous iteration identified gaps: {decision_reasoning[:300]}")
+            gaps_msg = f"Previous iteration identified gaps: {decision_reasoning[:300]}"
+            decision_parts.append(gaps_msg)
         if decision_key_factors:
             factors_text = ", ".join(decision_key_factors[:5])
             decision_parts.append(f"Key areas needing more research: {factors_text}")
@@ -212,104 +210,15 @@ def lead_researcher_node(state: LeadResearcherState):
             )
             complexity_info = msg
 
-    # Check if we need to do approach evaluation (first iteration only)
-    selected_approach = state.get("selected_approach")
-    selection_reasoning = state.get("selection_reasoning")
-    need_approach_evaluation = (
-        iteration_count == 0 and not selected_approach
-    )
-
-    if need_approach_evaluation:
-        # Phase 1: Approach Evaluation
-        print("  📋 [Phase 1] Evaluating research approaches...")
-
-        system_prompt = context_manager.get_system_context(
-            LEAD_RESEARCHER_APPROACH_SYSTEM, include_knowledge=False
-        )
-        approach_messages = [SystemMessage(content=system_prompt)]
-
-        memory_ctx = (
-            memory_context if memory_context
-            else "No previous planning history."
-        )
-        scratchpad = state.get("scratchpad", "")
-        max_scratchpad_length = 200
-        if len(scratchpad) > max_scratchpad_length:
-            scratchpad = scratchpad[:max_scratchpad_length] + "..."
-
-        approach_prompt = LEAD_RESEARCHER_APPROACH_MAIN.format(
-            query=query,
-            complexity_info=complexity_info,
-            memory_context=memory_ctx,
-            internal_knowledge=retrieved_context
-        )
-        approach_messages.append(HumanMessage(content=approach_prompt))
-
-        # Get recommended model
-        from config import settings
-        complexity_analysis = state.get("complexity_analysis")
-        recommended_model = "plus"  # Default
-        if complexity_analysis:
-            if hasattr(complexity_analysis, "recommended_model"):
-                model = complexity_analysis.recommended_model
-                if model in ["turbo", "plus", "max"]:
-                    if model == "max" and not settings.ENABLE_MAX_MODEL:
-                        recommended_model = "plus"
-                    else:
-                        recommended_model = model
-            elif isinstance(complexity_analysis, dict):
-                model = complexity_analysis.get("recommended_model", "plus")
-                if model in ["turbo", "plus", "max"]:
-                    if model == "max" and not settings.ENABLE_MAX_MODEL:
-                        recommended_model = "plus"
-                    else:
-                        recommended_model = model
-
-        # Invoke LLM for approach evaluation
-        llm = get_llm_by_model_choice(recommended_model)
-        approach_llm = llm.with_structured_output(
-            ApproachEvaluation, include_raw=True
-        )
-
-        approach_response = approach_llm.invoke(approach_messages)
-
-        # Process approach evaluation response
-        approach_retry_state = process_structured_response(
-            approach_response, state
-        )
-        if approach_retry_state:
-            # Retry needed, return state update
-            return approach_retry_state
-
-        approach_eval = approach_response["parsed"]
-
-        # Display approach evaluation results
-        print("\n  📊 [Approach Evaluation Results]")
-        for i, approach in enumerate(approach_eval.approaches):
-            is_selected = i == approach_eval.selected_approach_index
-            marker = "✅ SELECTED" if is_selected else "  "
-            print(f"\n     {marker} Approach {i + 1}:")
-            print(f"        Description: {approach.description[:100]}...")
-            if approach.advantages:
-                adv_str = ', '.join(approach.advantages[:3])
-                print(f"        Advantages: {adv_str}")
-            if approach.disadvantages:
-                dis_str = ', '.join(approach.disadvantages[:3])
-                print(f"        Disadvantages: {dis_str}")
-            if approach.suitability:
-                print(f"        Suitability: {approach.suitability[:80]}...")
-
-        selected_idx = approach_eval.selected_approach_index
-        selected_approach_obj = approach_eval.approaches[selected_idx]
-        print(f"\n     Selected: Approach {selected_idx + 1}")
-        print(f"     Reasoning: {approach_eval.selection_reasoning[:150]}...")
-
-        # Store selected approach for Phase 2
-        selected_approach = selected_approach_obj.description
-        selection_reasoning = approach_eval.selection_reasoning
-
-        # Now proceed to Phase 2: Task Generation
-        print("\n  📝 [Phase 2] Generating tasks based on selected approach...")
+    # Get selected approach directly from state (set by human_approach_selector)
+    # The human_approach_selector sets selected_approach, selection_reasoning, and
+    # selected_approach_index directly in the state, so we can access them directly
+    if isinstance(state, dict):
+        selected_approach = state.get("selected_approach")
+        selection_reasoning = state.get("selection_reasoning")
+    else:
+        selected_approach = getattr(state, "selected_approach", None)
+        selection_reasoning = getattr(state, "selection_reasoning", None)
 
     if iteration_count == 0:
         # Phase 2: Task Generation (first iteration, after approach evaluation)
@@ -328,7 +237,9 @@ def lead_researcher_node(state: LeadResearcherState):
             else "No previous planning history."
         )
 
-        if need_approach_evaluation or selected_approach:
+        # Use selected approach if available (from human_approach_selector)
+        # Otherwise fall back to standard approach
+        if selected_approach:
             # Get graph context for task generation (if GraphRAG enabled)
             graph_context = ""
             try:
@@ -349,7 +260,7 @@ def lead_researcher_node(state: LeadResearcherState):
             # Use task generation prompt with selected approach
             task_prompt = LEAD_RESEARCHER_TASK_GENERATION.format(
                 query=query,
-                selected_approach=selected_approach or "Standard research approach",
+                selected_approach=selected_approach,
                 selection_reasoning=selection_reasoning or "Based on query analysis",
                 complexity_info=complexity_info,
                 memory_context=memory_ctx,
@@ -357,8 +268,13 @@ def lead_researcher_node(state: LeadResearcherState):
                 graph_context=graph_context or "(No graph context available)"
             )
             messages.append(HumanMessage(content=task_prompt))
+            print("  📝 [LeadResearcher] Generating tasks based on selected approach...")
         else:
-            # Fallback to original initial prompt
+            # Fallback to original initial prompt (shouldn't happen in normal flow)
+            print(
+                "  ⚠️  [LeadResearcher] No selected approach found, "
+                "using fallback prompt"
+            )
             prompt_content = LEAD_RESEARCHER_INITIAL.format(
                 query=query,
                 complexity_info=complexity_info,
@@ -448,29 +364,28 @@ def lead_researcher_node(state: LeadResearcherState):
         else:
             messages.append(HumanMessage(content=retry_prompt))
 
-    # Get recommended model from complexity analysis (if not already done in Phase 1)
-    if not need_approach_evaluation:
-        from config import settings
+    # Get recommended model from complexity analysis
+    from config import settings
 
-        complexity_analysis = state.get("complexity_analysis")
-        recommended_model = "plus"  # Default
-        if complexity_analysis:
-            if hasattr(complexity_analysis, "recommended_model"):
-                model = complexity_analysis.recommended_model
-                if model in ["turbo", "plus", "max"]:
-                    # Downgrade max to plus if not enabled
-                    if model == "max" and not settings.ENABLE_MAX_MODEL:
-                        recommended_model = "plus"
-                    else:
-                        recommended_model = model
-            elif isinstance(complexity_analysis, dict):
-                model = complexity_analysis.get("recommended_model", "plus")
-                if model in ["turbo", "plus", "max"]:
-                    # Downgrade max to plus if not enabled
-                    if model == "max" and not settings.ENABLE_MAX_MODEL:
-                        recommended_model = "plus"
-                    else:
-                        recommended_model = model
+    complexity_analysis = state.get("complexity_analysis")
+    recommended_model = "plus"  # Default
+    if complexity_analysis:
+        if hasattr(complexity_analysis, "recommended_model"):
+            model = complexity_analysis.recommended_model
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    recommended_model = "plus"
+                else:
+                    recommended_model = model
+        elif isinstance(complexity_analysis, dict):
+            model = complexity_analysis.get("recommended_model", "plus")
+            if model in ["turbo", "plus", "max"]:
+                # Downgrade max to plus if not enabled
+                if model == "max" and not settings.ENABLE_MAX_MODEL:
+                    recommended_model = "plus"
+                else:
+                    recommended_model = model
 
     # Invoke LLM with conversation history for task generation
     llm = get_llm_by_model_choice(recommended_model)
@@ -505,8 +420,8 @@ def lead_researcher_node(state: LeadResearcherState):
     tasks = parsed_result.tasks
 
     plan = f"Research plan for: {query}\nTasks: {len(tasks)} sub-tasks"
-    if need_approach_evaluation:
-        print(f"\n  ✅ Created {len(tasks)} sub-tasks based on selected approach")
+    if selected_approach:
+        print(f"  ✅ Created {len(tasks)} sub-tasks based on selected approach")
     else:
         print(f"  ✅ Created {len(tasks)} sub-tasks")
     for i, task in enumerate(tasks, 1):

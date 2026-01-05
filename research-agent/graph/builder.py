@@ -6,10 +6,12 @@ from graph.utils import should_retry
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from memory.checkpointer_factory import get_checkpointer
+from nodes.approach_evaluator import approach_evaluator_node
 from nodes.citation_agent import citation_agent_node
 from nodes.complexity_analyzer import complexity_analyzer_node
 from nodes.decision import decision_node
 from nodes.filter_findings import filter_findings_node
+from nodes.human_approach_selector import human_approach_selector_node
 from nodes.lead_researcher import lead_researcher_node
 from nodes.subagent.subgraph import subagent_node
 from nodes.synthesizer import synthesizer_node
@@ -106,6 +108,8 @@ workflow = StateGraph(ResearchState)
 
 # Add nodes
 workflow.add_node("complexity_analyzer", complexity_analyzer_node)
+workflow.add_node("approach_evaluator", approach_evaluator_node)
+workflow.add_node("human_approach_selector", human_approach_selector_node)
 workflow.add_node("lead_researcher", lead_researcher_node)
 workflow.add_node("subagent", subagent_node)
 workflow.add_node("filter_findings", filter_findings_node)
@@ -116,7 +120,9 @@ workflow.add_node("citation_agent", citation_agent_node)
 
 # Add edges
 workflow.add_edge(START, "complexity_analyzer")
-workflow.add_edge("complexity_analyzer", "lead_researcher")
+workflow.add_edge("complexity_analyzer", "approach_evaluator")
+workflow.add_edge("approach_evaluator", "human_approach_selector")
+workflow.add_edge("human_approach_selector", "lead_researcher")
 workflow.add_conditional_edges(
     "lead_researcher",
     assign_subagents,
@@ -145,4 +151,7 @@ workflow.add_edge("citation_agent", END)
 # Supports: 'memory', 'sqlite' (default), 'postgres'
 # This enables "Short-Term Memory" (thread-scoped) with optional persistence
 checkpointer = get_checkpointer()
-app = workflow.compile(checkpointer=checkpointer)
+app = workflow.compile(
+    checkpointer=checkpointer,
+    interrupt_before=["human_approach_selector"]
+)
