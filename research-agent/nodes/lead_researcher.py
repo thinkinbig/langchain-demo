@@ -5,6 +5,11 @@ from typing import Optional
 
 import context_manager
 from citation_parser import format_citations_for_prompt
+from graph.node_interface import MessageAwareNode
+from graph.state_utils import (
+    get_new_findings_for_lead_researcher,
+    mark_item_processed,
+)
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_llm_by_model_choice
@@ -15,6 +20,9 @@ from prompts import (
     LEAD_RESEARCHER_RETRY,
     LEAD_RESEARCHER_SYSTEM,
     LEAD_RESEARCHER_TASK_GENERATION,
+    format_complexity_info,
+    format_decision_guidance,
+    format_rag_instructions,
 )
 from schemas import (
     LeadResearcherState,
@@ -121,12 +129,20 @@ def _get_new_findings(existing_findings: list, sent_finding_hashes: set) -> list
 
 def lead_researcher_node(state: LeadResearcherState):
     """LeadResearcher: Analyze query, create plan, generate subagent tasks"""
+    # Initialize message-aware node helper
+    message_helper = MessageAwareNode("lead_researcher")
+
     query = state["query"]
     iteration_count = state.get("iteration_count", 0)
     retry_count = state.get("retry_count", 0)
     last_error = state.get("error")
-    existing_messages = state.get("lead_researcher_messages", [])
+
+    # Get messages from unified message channel
+    existing_messages = message_helper.get_langchain_messages(state)
+
     rag_cache = state.get("rag_cache", {})
+
+    # Use state_utils helper for finding tracking
     sent_finding_hashes = set(state.get("sent_finding_hashes", []))
 
     print(f"\n🔍 [LeadResearcher] Analyzing query (iteration {iteration_count + 1})...")
@@ -162,53 +178,14 @@ def lead_researcher_node(state: LeadResearcherState):
     decision_key_factors = state.get("decision_key_factors", [])
     decision_guidance = ""
     if iteration_count > 0 and (decision_reasoning or decision_key_factors):
-        decision_parts = []
-        if decision_reasoning:
-            gaps_msg = f"Previous iteration identified gaps: {decision_reasoning[:300]}"
-            decision_parts.append(gaps_msg)
-        if decision_key_factors:
-            factors_text = ", ".join(decision_key_factors[:5])
-            decision_parts.append(f"Key areas needing more research: {factors_text}")
-        decision_guidance = "\n\n".join(decision_parts)
+        decision_guidance = format_decision_guidance(
+            decision_reasoning, decision_key_factors
+        )
         print("  📋 Using decision guidance from previous iteration")
 
     # Get complexity analysis for task creation guidance
     complexity_analysis = state.get("complexity_analysis")
-    complexity_info = ""
-    if complexity_analysis:
-        if hasattr(complexity_analysis, "complexity_level"):
-            # Pydantic model
-            recommended = complexity_analysis.recommended_workers
-            complexity_info = (
-                f"Complexity Level: {complexity_analysis.complexity_level}\n"
-                f"Recommended Workers: {recommended}\n"
-                f"Max Iterations: {complexity_analysis.max_iterations}\n"
-                f"Rationale: {complexity_analysis.rationale}\n\n"
-                f"Use this complexity assessment to guide task breakdown. "
-                f"Aim to create approximately {recommended} "
-                f"parallel research tasks that can be executed simultaneously."
-            )
-        elif isinstance(complexity_analysis, dict):
-            # Dict format
-            level = complexity_analysis.get('complexity_level', 'unknown')
-            workers = complexity_analysis.get('recommended_workers', 2)
-            iterations = complexity_analysis.get('max_iterations', 2)
-            rationale = complexity_analysis.get('rationale', '')
-            complexity_info = (
-                f"Complexity Level: {level}\n"
-                f"Recommended Workers: {workers}\n"
-                f"Max Iterations: {iterations}\n"
-                f"Rationale: {rationale}\n\n"
-                f"Use this complexity assessment to guide task breakdown. "
-                f"Aim to create approximately {workers} "
-                f"parallel research tasks that can be executed simultaneously."
-            )
-        else:
-            msg = (
-                "No complexity analysis available. "
-                "Use your judgment for task breakdown."
-            )
-            complexity_info = msg
+    complexity_info = format_complexity_info(complexity_analysis)
 
     # Get selected approach directly from state (set by human_approach_selector)
     # The human_approach_selector sets selected_approach, selection_reasoning, and
@@ -292,8 +269,8 @@ def lead_researcher_node(state: LeadResearcherState):
         # Subsequent iterations: Only send new information
         existing_findings = state.get("subagent_findings", [])
 
-        # Identify new findings (not yet sent)
-        new_findings = _get_new_findings(existing_findings, sent_finding_hashes)
+        # Identify new findings (not yet sent) - use state_utils helper
+        new_findings = get_new_findings_for_lead_researcher(state, existing_findings)
 
         # Build findings summary only for new findings
         if new_findings:
@@ -346,10 +323,7 @@ def lead_researcher_node(state: LeadResearcherState):
         )
 
         # Add RAG context (cached, so minimal cost)
-        rag_instructions = (
-            f"\n\n<internal_knowledge>\n{retrieved_context}\n</internal_knowledge>\n"
-            "Note: Use the above internal knowledge if relevant to the task breakdown."
-        )
+        rag_instructions = format_rag_instructions(retrieved_context)
         messages.append(HumanMessage(content=prompt_content + rag_instructions))
 
     # Add feedback if retrying - Standard Pattern
@@ -407,8 +381,11 @@ def lead_researcher_node(state: LeadResearcherState):
 
         # Include scratchpad, conversation history, and cache in retry state
         retry_state["scratchpad"] = preserved_scratchpad
-        retry_state["lead_researcher_messages"] = messages
         retry_state["rag_cache"] = rag_cache
+
+        # Use new message interface for retry
+        message_update = message_helper.add_langchain_messages(state, messages)
+        retry_state.update(message_update)
         # Preserve selected approach if we're in Phase 2
         if selected_approach:
             retry_state["selected_approach"] = selected_approach
@@ -465,12 +442,17 @@ def lead_researcher_node(state: LeadResearcherState):
     # The actual response is in parsed_result
     updated_messages = messages + [AIMessage(content="Tasks generated successfully")]
 
-    # Track which findings we've sent
+    # Use new message interface to store messages
+    message_update = message_helper.add_langchain_messages(state, updated_messages)
+
+    # Track which findings we've sent - use state_utils helper
     existing_findings = state.get("subagent_findings", [])
     new_sent_hashes = set(sent_finding_hashes)
     for f in existing_findings:
         f_hash = _compute_finding_hash(f)
         new_sent_hashes.add(f_hash)
+        # Mark as processed using helper
+        mark_item_processed(state, f_hash, "findings_sent")
 
     # Track citation count for next iteration
     all_citations = state.get("all_extracted_citations", [])
@@ -490,11 +472,18 @@ def lead_researcher_node(state: LeadResearcherState):
         "error": None,
         "retry_count": 0,
         "scratchpad": new_scratchpad,  # Simplified, history in memory
-        "lead_researcher_messages": updated_messages,
         "rag_cache": rag_cache,
         "sent_finding_hashes": list(new_sent_hashes),
         "previous_citation_count": new_citation_count
     }
+
+    # Merge message update
+    # Note: message_update doesn't include message_channel (not serializable)
+    result.update(message_update)
+
+    # Ensure message_channel is not in result (excluded from serialization)
+    if "message_channel" in result:
+        del result["message_channel"]
 
     # Preserve selected approach for future reference
     if selected_approach:

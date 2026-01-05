@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from graph import app  # noqa: E402
 from graph.error_handler import (  # noqa: E402
     is_recoverable_error,
 )
@@ -85,7 +86,6 @@ async def main():
         # Try to get existing state from checkpointer
         try:
             from config import settings
-            from graph import app
 
             # Check if checkpointer backend supports persistence
             if settings.CHECKPOINTER_BACKEND == "memory":
@@ -237,6 +237,8 @@ async def main():
     initial_state = None
     if not resume_mode:
         # Initialize state with Pydantic validation for new session
+        # Note: message_channel is NOT included in initial state as it's not serializable
+        # It will be created on-demand by nodes when needed
         initial_state = ResearchState(
             query=query,
             research_plan="",
@@ -247,6 +249,7 @@ async def main():
             synthesized_results="",
             citations=[],
             final_report="",
+            # message_channel is created on-demand, not stored in state
         )
     # If resuming, initial_state will be None and app will continue from checkpoint
 

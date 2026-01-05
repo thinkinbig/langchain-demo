@@ -9,6 +9,9 @@ from prompts import (
     DECISION_REFINE,
     DECISION_RETRY,
     DECISION_SYSTEM,
+    format_diminishing_returns_info,
+    format_partial_synthesis_note,
+    format_previous_comparison,
 )
 from schemas import DecisionResult, DecisionState
 
@@ -166,51 +169,28 @@ def decision_node(state: DecisionState):
             )
 
     # Build previous iteration comparison string
-    if iteration_count > 0:
-        previous_comparison = (
-            f"Previous Iteration (Iteration {iteration_count - 1}):\n"
-            f"  - Synthesis Length: {previous_synthesis_length} characters\n"
-            f"  - Findings Count: {previous_findings_count}\n"
-            f"  - Citations Count: {previous_citations_count}\n\n"
-            f"Current Iteration (Iteration {iteration_count}):\n"
-            f"  - Synthesis Length: {synthesized_length} characters "
-            f"({synthesis_growth:+.1f}% change)\n"
-            f"  - Findings Count: {findings_count} "
-            f"({findings_growth:+.1f}% change)\n"
-            f"  - Citations Count: {citations_count} "
-            f"({citations_growth:+.1f}% change)"
-        )
-    else:
-        previous_comparison = (
-            "This is the first iteration. No previous iteration to compare."
-        )
+    previous_comparison = format_previous_comparison(
+        iteration_count,
+        previous_synthesis_length,
+        previous_findings_count,
+        previous_citations_count,
+        synthesized_length,
+        findings_count,
+        citations_count,
+        synthesis_growth,
+        findings_growth,
+        citations_growth,
+    )
 
     # Build diminishing returns analysis string
-    if iteration_count > 0:
-        if diminishing_returns_detected:
-            diminishing_returns_info = (
-                f"# DIMINISHING RETURNS DETECTED\n"
-                f"Average growth across all metrics: {avg_growth:.1f}%\n"
-                f"This indicates that additional iterations are likely to add "
-                f"minimal new value. You should strongly consider STOPPING "
-                f"unless there are clear, specific gaps that need addressing.\n\n"
-                f"Growth breakdown:\n"
-                f"  - Synthesis: {synthesis_growth:+.1f}%\n"
-                f"  - Findings: {findings_growth:+.1f}%\n"
-                f"  - Citations: {citations_growth:+.1f}%"
-            )
-        else:
-            diminishing_returns_info = (
-                f"Growth indicators show meaningful progress:\n"
-                f"  - Synthesis: {synthesis_growth:+.1f}%\n"
-                f"  - Findings: {findings_growth:+.1f}%\n"
-                f"  - Citations: {citations_growth:+.1f}%\n"
-                f"Average growth: {avg_growth:.1f}%"
-            )
-    else:
-        diminishing_returns_info = (
-            "First iteration - no diminishing returns analysis available yet."
-        )
+    diminishing_returns_info = format_diminishing_returns_info(
+        iteration_count,
+        diminishing_returns_detected,
+        avg_growth,
+        synthesis_growth,
+        findings_growth,
+        citations_growth,
+    )
 
     # Extract optimized state information (metadata only)
     findings_summary = _extract_findings_summary(findings, max_items=5)
@@ -222,16 +202,7 @@ def decision_node(state: DecisionState):
     )
 
     # Add note about partial synthesis if applicable
-    partial_note = ""
-    if is_partial:
-        partial_note = (
-            "\n\n# IMPORTANT: This is a PARTIAL synthesis containing only "
-            "Situation and Complication sections. The Resolution section has not "
-            "been generated yet (early decision optimization). Please make your "
-            "decision based on the available Situation and Complication content. "
-            "If you decide to finish research, the Resolution section will be "
-            "generated in the next step."
-        )
+    partial_note = format_partial_synthesis_note() if is_partial else ""
 
     # Choose prompt template based on iteration count
     # MAIN for first iteration, REFINE for subsequent iterations

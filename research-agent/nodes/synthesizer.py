@@ -4,6 +4,8 @@ import hashlib
 from typing import Optional
 
 from config import settings
+from graph.node_interface import MessageAwareNode
+from graph.state_utils import get_new_findings, mark_item_processed
 from graph.utils import process_structured_response
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from llm.factory import get_llm_by_model_choice
@@ -26,6 +28,11 @@ from prompts import (
     SYNTHESIZER_SCR_STEP_3_RESOLUTION,
     SYNTHESIZER_SCR_SYSTEM,
     SYNTHESIZER_SYSTEM,
+    format_decision_context,
+    format_findings_metadata_context,
+    format_findings_text,
+    format_query_context,
+    format_reflection_analysis,
 )
 from schemas import (
     ComplicationResult,
@@ -400,22 +407,9 @@ def _generate_scr_chained_refine(
             initial_resolution = section.replace("Resolution\n\n", "").strip()
 
     # Format decision context if available
-    decision_context = ""
-    decision_task_guidance = ""
-    decision_guidance = ""
-    decision_improvements = ""
-
-    if decision_reasoning or decision_key_factors:
-        decision_parts = []
-        if decision_reasoning:
-            decision_parts.append(f"<decision_reasoning>\n{decision_reasoning}\n</decision_reasoning>")
-        if decision_key_factors:
-            factors_text = "\n".join([f"- {factor}" for factor in decision_key_factors])
-            decision_parts.append(f"<decision_key_factors>\n{factors_text}\n</decision_key_factors>")
-        decision_context = "\n\n".join(decision_parts)
-        decision_task_guidance = "Review the decision reasoning from the previous iteration to understand what gaps were identified."
-        decision_guidance = " and decision reasoning from previous iteration"
-        decision_improvements = "\n- Address specific gaps or areas identified in the decision reasoning."
+    decision_context, decision_guidance, decision_task_guidance, decision_improvements = (
+        format_decision_context(decision_reasoning, decision_key_factors)
+    )
 
     # Step 1: Refine Situation
     # Use LangMem retrieval if available
@@ -462,14 +456,14 @@ def _generate_scr_chained_refine(
     print("  📝 [Refine Step 2/3] Refining Complication section...")
     step2_findings = findings_text
     if findings_memory_manager and findings_memory_manager.is_available():
-        query_context_parts = [
-            f"{query}\n\nRefined Situation: {refined_situation}\n\n",
-            f"Initial Complication: {initial_complication}\n\n",
-            f"Reflection Analysis: {reflection_analysis[:300]}"
-        ]
+        query_context = format_query_context(
+            query=query,
+            situation=refined_situation,
+            complication=initial_complication,
+            new_findings=reflection_analysis[:300]
+        )
         if decision_reasoning:
-            query_context_parts.append(f"Decision Reasoning: {decision_reasoning[:200]}")
-        query_context = "\n".join(query_context_parts)
+            query_context += f"\nDecision Reasoning: {decision_reasoning[:200]}"
         retrieved = findings_memory_manager.retrieve_relevant_findings(
             query_context, top_k=6
         )
@@ -504,15 +498,14 @@ def _generate_scr_chained_refine(
     print("  📝 [Refine Step 3/3] Refining Resolution section...")
     step3_findings = findings_text
     if findings_memory_manager and findings_memory_manager.is_available():
-        query_context_parts = [
-            f"{query}\n\nRefined Situation: {refined_situation}\n\n",
-            f"Refined Complication: {refined_complication}\n\n",
-            f"Initial Resolution: {initial_resolution}\n\n",
-            f"Reflection Analysis: {reflection_analysis[:300]}"
-        ]
+        query_context = format_query_context(
+            query=query,
+            situation=refined_situation,
+            complication=refined_complication,
+            new_findings=f"{initial_resolution}\n\nReflection Analysis: {reflection_analysis[:300]}"
+        )
         if decision_reasoning:
-            query_context_parts.append(f"Decision Reasoning: {decision_reasoning[:200]}")
-        query_context = "\n".join(query_context_parts)
+            query_context += f"\nDecision Reasoning: {decision_reasoning[:200]}"
         retrieved = findings_memory_manager.retrieve_relevant_findings(
             query_context, top_k=6
         )
@@ -629,6 +622,9 @@ def _complete_partial_synthesis(
 
 def synthesizer_node(state: SynthesizerState):
     """Synthesizer: Aggregate and synthesize all findings"""
+    # Initialize message-aware node helper
+    message_helper = MessageAwareNode("synthesizer")
+
     # Prefer filtered findings if available (Guardrail active)
     findings = state.get("filtered_findings", [])
     if not findings:
@@ -638,8 +634,10 @@ def synthesizer_node(state: SynthesizerState):
     iteration_count = state.get("iteration_count", 0)
     retry_count = state.get("retry_count", 0)
     last_error = state.get("error")
-    existing_messages = state.get("synthesizer_messages", [])
-    processed_finding_ids = set(state.get("processed_findings_ids", []))
+
+    # Get messages from unified message channel
+    existing_messages = message_helper.get_langchain_messages(state)
+
     previous_synthesis = state.get("synthesized_results", "")
 
     # Get early decision settings from state or use defaults
@@ -650,12 +648,8 @@ def synthesizer_node(state: SynthesizerState):
     if not findings:
         return {"synthesized_results": "No findings to synthesize."}
 
-    # Identify new findings (not yet processed)
-    new_findings = []
-    for f in findings:
-        f_hash = _compute_finding_hash(f)
-        if f_hash not in processed_finding_ids:
-            new_findings.append(f)
+    # Identify new findings (not yet processed) - use state_utils helper
+    new_findings = get_new_findings(state, findings)
 
     if not new_findings and previous_synthesis:
         # No new findings, return existing synthesis
@@ -738,50 +732,14 @@ def synthesizer_node(state: SynthesizerState):
     findings_metadata = extract_findings_metadata(findings_to_process)
 
     # Format findings with sources and citations for detailed synthesis
-    findings_text_parts = []
-    for i, f in enumerate(findings_to_process, 1):
-        task = f.get('task', 'Unknown')
-        summary = f.get('summary', 'No summary')
-        sources = f.get('sources', [])
-        citations = f.get('extracted_citations', [])
-
-        finding_text = f"{i}. Task: {task}\n   Summary: {summary}"
-
-        # Include sources for context
-        if sources:
-            source_list = ", ".join([
-                s.get('title', 'Unknown')[:60]
-                for s in sources[:5]  # Limit to 5 sources per finding
-            ])
-            if len(sources) > 5:
-                source_list += f" (+{len(sources) - 5} more)"
-            finding_text += f"\n   Sources: {source_list}"
-
-        # Include extracted citations if available
-        if citations:
-            citation_titles = [
-                c.get('title', 'Unknown')[:60]
-                for c in citations[:3]  # Limit to 3 citations per finding
-            ]
-            if citation_titles:
-                finding_text += (
-                    f"\n   Mentioned Papers: {', '.join(citation_titles)}"
-                )
-                if len(citations) > 3:
-                    finding_text += f" (+{len(citations) - 3} more)"
-
-        findings_text_parts.append(finding_text)
-
-    findings_text = "\n\n".join(findings_text_parts)
+    findings_text = format_findings_text(findings_to_process)
 
     # Add metadata context to prompt (helps LLM understand scope)
     count = findings_metadata['count']
     total_sources = findings_metadata['total_sources']
     avg_length = findings_metadata['avg_summary_length']
-    metadata_context = (
-        f"\n\n[Metadata: {count} findings, "
-        f"{total_sources} sources, "
-        f"avg length: {avg_length} chars]"
+    metadata_context = format_findings_metadata_context(
+        count, total_sources, avg_length
     )
 
     # Select model based on complexity analysis recommendation
@@ -861,11 +819,14 @@ def synthesizer_node(state: SynthesizerState):
             except Exception as e:
                 error_msg = str(e)
                 print(f"  ⚠️  Chained incremental synthesis failed: {error_msg}")
-                return {
+                retry_state = {
                     "error": error_msg,
                     "retry_count": retry_count + 1,
-                    "synthesizer_messages": messages
                 }
+                # Use new message interface
+                message_update = message_helper.add_langchain_messages(state, messages)
+                retry_state.update(message_update)
+                return retry_state
         else:
             # Use non-SCR incremental update
             prompt_content = (
@@ -893,7 +854,9 @@ def synthesizer_node(state: SynthesizerState):
 
             retry_state = process_structured_response(response, state)
             if retry_state:
-                retry_state["synthesizer_messages"] = messages
+                # Use new message interface
+                message_update = message_helper.add_langchain_messages(state, messages)
+                retry_state.update(message_update)
                 return retry_state
 
             result = response["parsed"]
@@ -919,11 +882,14 @@ def synthesizer_node(state: SynthesizerState):
         except Exception as e:
             error_msg = str(e)
             print(f"  ⚠️  Partial synthesis completion failed: {error_msg}")
-            return {
+            retry_state = {
                 "error": error_msg,
                 "retry_count": retry_count + 1,
-                "synthesizer_messages": messages
             }
+            # Use new message interface
+            message_update = message_helper.add_langchain_messages(state, messages)
+            retry_state.update(message_update)
+            return retry_state
     else:
         # First-time synthesis
         if use_scr:
@@ -963,11 +929,14 @@ def synthesizer_node(state: SynthesizerState):
             except Exception as e:
                 error_msg = str(e)
                 print(f"  ⚠️  Chained synthesis failed: {error_msg}")
-                return {
+                retry_state = {
                     "error": error_msg,
                     "retry_count": retry_count + 1,
-                    "synthesizer_messages": messages
                 }
+                # Use new message interface
+                message_update = message_helper.add_langchain_messages(state, messages)
+                retry_state.update(message_update)
+                return retry_state
         else:
             prompt_content = SYNTHESIZER_MAIN.format(
                 query=query,
@@ -987,7 +956,9 @@ def synthesizer_node(state: SynthesizerState):
 
             retry_state = process_structured_response(response, state)
             if retry_state:
-                retry_state["synthesizer_messages"] = messages
+                # Use new message interface
+                message_update = message_helper.add_langchain_messages(state, messages)
+                retry_state.update(message_update)
                 return retry_state
 
             result = response["parsed"]
@@ -1055,51 +1026,8 @@ def synthesizer_node(state: SynthesizerState):
                         "reflection..."
                     )
 
-                    # Format reflection analysis for prompt
-                    quality = reflection_result.overall_quality
-                    depth = reflection_result.depth_assessment
-
-                    missing_insights = (
-                        chr(10).join(
-                            '- ' + insight
-                            for insight in reflection_result.missing_core_insights
-                        )
-                        if reflection_result.missing_core_insights
-                        else 'None identified'
-                    )
-
-                    logic_issues_text = (
-                        chr(10).join(
-                            '- ' + issue
-                            for issue in reflection_result.logic_issues
-                        )
-                        if reflection_result.logic_issues
-                        else 'None identified'
-                    )
-
-                    suggestions = (
-                        chr(10).join(
-                            '- ' + suggestion
-                            for suggestion in reflection_result.improvement_suggestions
-                        )
-                        if reflection_result.improvement_suggestions
-                        else 'None provided'
-                    )
-
-                    reflection_text = f"""Quality Assessment: {quality}
-
-Depth Assessment:
-{depth}
-
-Missing Core Insights:
-{missing_insights}
-
-Logic Issues:
-{logic_issues_text}
-
-Improvement Suggestions:
-{suggestions}
-"""
+                    # Format reflection analysis for prompt using centralized formatter
+                    reflection_text = format_reflection_analysis(reflection_result)
 
                     # Use appropriate schema and prompt for refinement
                     if use_scr:
@@ -1171,7 +1099,11 @@ Improvement Suggestions:
                         if refine_retry_state:
                             # Retry needed, use initial synthesis
                             print("  ⚠️  Refinement failed, using initial synthesis")
-                            refine_retry_state["synthesizer_messages"] = messages
+                            # Use new message interface
+                            message_update = message_helper.add_langchain_messages(
+                                state, messages
+                            )
+                            refine_retry_state.update(message_update)
                             return refine_retry_state
 
                         refined_result = refine_response["parsed"]
@@ -1193,12 +1125,16 @@ Improvement Suggestions:
     # Update conversation history with final synthesis
     updated_messages = messages + [AIMessage(content=final_synthesis)]
 
-    # Track processed findings
-    new_processed_ids = list(processed_finding_ids)
+    # Use new message interface to store messages
+    message_update = message_helper.add_langchain_messages(state, updated_messages)
+
+    # Track processed findings - use state_utils helper
+    new_processed_ids = []
     for f in findings_to_process:
         f_hash = _compute_finding_hash(f)
-        if f_hash not in new_processed_ids:
-            new_processed_ids.append(f_hash)
+        new_processed_ids.append(f_hash)
+        # Mark as processed using helper
+        mark_item_processed(state, f_hash, "findings")
 
     print(f"  ✅ Final synthesis complete ({len(final_synthesis)} chars)")
 
@@ -1264,7 +1200,6 @@ Improvement Suggestions:
         "reflection_analysis": reflection_result,
         "error": None,
         "retry_count": 0,
-        "synthesizer_messages": updated_messages,
         "processed_findings_ids": new_processed_ids,
         "has_partial_synthesis": is_partial,
         "partial_synthesis_done": is_partial,  # Mark that partial synthesis is complete
@@ -1273,6 +1208,14 @@ Improvement Suggestions:
         "early_decision_enabled": early_decision_enabled,
         "early_decision_after": early_decision_after,
     }
+
+    # Merge message update
+    # Note: message_update doesn't include message_channel (not serializable)
+    return_state.update(message_update)
+
+    # Ensure message_channel is not in result (excluded from serialization)
+    if "message_channel" in return_state:
+        del return_state["message_channel"]
 
     # Save findings_memory_manager to state for reuse in next iteration
     # Use underscore prefix as this is an internal implementation detail

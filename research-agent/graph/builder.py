@@ -1,8 +1,10 @@
 """Graph builder: Main graph building logic and routing functions"""
 
-from typing import Literal
-
-from graph.utils import should_retry
+from graph.message_router import (
+    MessageRouter,
+    route_decision,
+    route_synthesizer,
+)
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
 from memory.checkpointer_factory import get_checkpointer
@@ -18,6 +20,18 @@ from nodes.synthesizer import synthesizer_node
 from nodes.verifier import verifier_node
 from schemas import ResearchState
 
+
+def wrap_node_for_serialization(node_func):
+    """Wrap a node function to ensure message_channel is excluded from state updates"""
+    def wrapped_node(state):
+        result = node_func(state)
+        if result and isinstance(result, dict):
+            # Remove message_channel from state update
+            if "message_channel" in result:
+                del result["message_channel"]
+        return result
+    return wrapped_node
+
 # ============================================================================
 # Routing Functions
 # ============================================================================
@@ -25,9 +39,9 @@ from schemas import ResearchState
 
 def assign_subagents(state: ResearchState):
     """Fan-out: Assign each task to a subagent OR retry"""
-    # Check for retry condition
-    if should_retry(state):
-        print("  ↺ Routing back to lead_researcher for retry...")
+    # Use message router for routing decision
+    route = MessageRouter.route_after_lead_researcher(state)
+    if route == "lead_researcher":
         return "lead_researcher"
 
     tasks = state.get("subagent_tasks", [])
@@ -45,10 +59,19 @@ def assign_subagents(state: ResearchState):
     tasks_to_distribute = tasks
     if recommended_workers is not None and len(tasks) > recommended_workers:
         tasks_to_distribute = tasks[:recommended_workers]
-        print(f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} of {len(tasks)} tasks to subagents...")
-        print(f"   ⚠️  Limited to {recommended_workers} workers based on complexity analysis")
+        print(
+            f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} "
+            f"of {len(tasks)} tasks to subagents..."
+        )
+        print(
+            f"   ⚠️  Limited to {recommended_workers} workers "
+            f"based on complexity analysis"
+        )
     else:
-        print(f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} tasks to subagents...")
+        print(
+            f"\n🔀 [Fan-out] Distributing {len(tasks_to_distribute)} "
+            f"tasks to subagents..."
+        )
 
     # Send task objects directly
     # CONTEXT ISOLATION: We create a minimal state for the subagent
@@ -71,32 +94,7 @@ def assign_subagents(state: ResearchState):
     ]
 
 
-def route_decision(
-    state: ResearchState,
-) -> Literal["lead_researcher", "citation_agent"]:
-    """Route based on decision node result"""
-    if state.get("needs_more_research", False):
-        return "lead_researcher"
-    return "citation_agent"
-
-
-def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"]:
-    """Route synthesizer retry, partial synthesis (early decision), or success"""
-    if should_retry(state):
-        print("  ↺ Routing back to synthesizer for retry...")
-        return "synthesizer"
-
-    # Early decision optimization: if partial synthesis is done, route to decision
-    # This allows decision to be made after S+C without waiting for Resolution
-    partial_synthesis_done = state.get("partial_synthesis_done", False)
-    early_decision_enabled = state.get("early_decision_enabled", True)
-
-    if early_decision_enabled and partial_synthesis_done:
-        print("  ⚡ Early decision: routing to decision after partial synthesis (S+C)")
-        return "decision"
-
-    # Normal flow: complete synthesis, route to decision
-    return "decision"
+# Routing functions use MessageRouter for consistency
 
 
 # ============================================================================
@@ -107,13 +105,14 @@ def route_synthesizer(state: ResearchState) -> Literal["synthesizer", "decision"
 workflow = StateGraph(ResearchState)
 
 # Add nodes
+# Wrap nodes that may return message_channel to exclude it from serialization
 workflow.add_node("complexity_analyzer", complexity_analyzer_node)
 workflow.add_node("approach_evaluator", approach_evaluator_node)
 workflow.add_node("human_approach_selector", human_approach_selector_node)
-workflow.add_node("lead_researcher", lead_researcher_node)
+workflow.add_node("lead_researcher", wrap_node_for_serialization(lead_researcher_node))
 workflow.add_node("subagent", subagent_node)
 workflow.add_node("filter_findings", filter_findings_node)
-workflow.add_node("synthesizer", synthesizer_node)
+workflow.add_node("synthesizer", wrap_node_for_serialization(synthesizer_node))
 workflow.add_node("decision", decision_node)
 workflow.add_node("verifier", verifier_node)
 workflow.add_node("citation_agent", citation_agent_node)
@@ -132,12 +131,12 @@ workflow.add_edge("subagent", "filter_findings")
 workflow.add_edge("filter_findings", "synthesizer")
 workflow.add_conditional_edges(
     "synthesizer",
-    route_synthesizer,
+    route_synthesizer,  # Uses MessageRouter internally
     ["synthesizer", "decision"],
 )
 workflow.add_conditional_edges(
     "decision",
-    route_decision,
+    route_decision,  # Uses MessageRouter internally
     {
         "lead_researcher": "lead_researcher",
         "citation_agent": "verifier",

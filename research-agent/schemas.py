@@ -8,7 +8,6 @@ from datetime import datetime
 # Forward reference for RetrievalResult (defined in retrieval.py)
 from typing import TYPE_CHECKING, Annotated, Any, Dict, List, Optional
 
-from langchain_core.messages import BaseMessage
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
@@ -264,6 +263,15 @@ class VerificationResult(DictCompatibleModel):
     )
     corrections: List[str] = Field(
         default_factory=list, description="List of corrections made"
+    )
+    citation_issues: List[str] = Field(
+        default_factory=list, description="List of citation-related issues found"
+    )
+    bibliography_found: bool = Field(
+        default=False, description="Whether a bibliography/reference section was found"
+    )
+    citation_format_valid: bool = Field(
+        default=True, description="Whether citation formats are valid"
     )
 
 
@@ -622,27 +630,23 @@ class ResearchState(DictCompatibleModel):
     error: str | None = Field(default=None, description="Error message from validation")
     retry_count: int = Field(default=0, description="Retry attempt count")
 
-    # Conversation history for cost optimization
-    lead_researcher_messages: Annotated[
-        List[BaseMessage],
-        operator.add
-    ] = Field(
-        default_factory=list,
-        description="Conversation history for lead researcher (incremental updates)"
-    )
-
-    synthesizer_messages: Annotated[
-        List[BaseMessage],
-        operator.add
-    ] = Field(
-        default_factory=list,
-        description="Conversation history for synthesizer (incremental updates)"
+    # Unified message channel
+    # Note: This field is excluded from serialization (checkpointer) as MessageChannel
+    # is a runtime object that cannot be serialized. It will be recreated when needed.
+    message_channel: Optional[Any] = Field(
+        default=None,
+        description="Unified message channel for node communication (MessageChannel instance)",
+        exclude=True,  # Exclude from serialization - runtime object, recreated as needed
     )
 
     # Tracking for incremental processing
+    # These tracking fields are simplified - use state_utils helpers for access
     processed_findings_ids: List[str] = Field(
         default_factory=list,
-        description="Hash IDs of findings already processed by synthesizer"
+        description=(
+            "Hash IDs of findings already processed by synthesizer. "
+            "Use state_utils.get_processed_items() for access."
+        )
     )
 
     rag_cache: Dict[str, str] = Field(
@@ -653,7 +657,10 @@ class ResearchState(DictCompatibleModel):
     # Tracking for incremental lead researcher updates
     sent_finding_hashes: List[str] = Field(
         default_factory=list,
-        description="Hash IDs of findings already sent to lead researcher"
+        description=(
+            "Hash IDs of findings already sent to lead researcher. "
+            "Use state_utils.get_processed_items(item_type='findings_sent') for access."
+        )
     )
 
     previous_citation_count: int = Field(
@@ -735,6 +742,15 @@ class ResearchState(DictCompatibleModel):
         # Allow extra fields (for LangGraph compatibility)
         extra="allow"
     )
+
+    def model_dump(self, **kwargs):
+        """Override model_dump to exclude message_channel from serialization"""
+        data = super().model_dump(**kwargs)
+        # Remove message_channel as it's not serializable
+        if "message_channel" in data:
+            del data["message_channel"]
+        return data
+
 
     @staticmethod
     def get_visited_identifiers(

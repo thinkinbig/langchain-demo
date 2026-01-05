@@ -1184,6 +1184,425 @@ with clear core viewpoints and logical coherence, not just a summary of findings
 """
 )
 
+
+def format_reflection_analysis(reflection_result) -> str:
+    """
+    Format reflection analysis result into a structured text for use in prompts.
+
+    Args:
+        reflection_result: ReflectionResult object from reflection analysis
+
+    Returns:
+        Formatted reflection analysis text
+    """
+    quality = reflection_result.overall_quality
+    depth = reflection_result.depth_assessment
+
+    missing_insights = (
+        "\n".join(
+            "- " + insight
+            for insight in reflection_result.missing_core_insights
+        )
+        if reflection_result.missing_core_insights
+        else "None identified"
+    )
+
+    logic_issues_text = (
+        "\n".join(
+            "- " + issue
+            for issue in reflection_result.logic_issues
+        )
+        if reflection_result.logic_issues
+        else "None identified"
+    )
+
+    suggestions = (
+        "\n".join(
+            "- " + suggestion
+            for suggestion in reflection_result.improvement_suggestions
+        )
+        if reflection_result.improvement_suggestions
+        else "None provided"
+    )
+
+    return f"""Quality Assessment: {quality}
+
+Depth Assessment:
+{depth}
+
+Missing Core Insights:
+{missing_insights}
+
+Logic Issues:
+{logic_issues_text}
+
+Improvement Suggestions:
+{suggestions}
+"""
+
+
+# =============================================================================
+# Prompt Formatting Utilities
+# =============================================================================
+
+def format_decision_guidance(
+    decision_reasoning: str | None = None,
+    decision_key_factors: list[str] | None = None,
+) -> str:
+    """
+    Format decision guidance from previous iteration for lead researcher prompts.
+
+    Args:
+        decision_reasoning: Reasoning from previous decision
+        decision_key_factors: Key factors identified in previous decision
+
+    Returns:
+        Formatted decision guidance text
+    """
+    if not decision_reasoning and not decision_key_factors:
+        return ""
+
+    decision_parts = []
+    if decision_reasoning:
+        gaps_msg = f"Previous iteration identified gaps: {decision_reasoning[:300]}"
+        decision_parts.append(gaps_msg)
+    if decision_key_factors:
+        factors_text = ", ".join(decision_key_factors[:5])
+        decision_parts.append(f"Key areas needing more research: {factors_text}")
+
+    return "\n\n".join(decision_parts)
+
+
+def format_complexity_info(complexity_analysis) -> str:
+    """
+    Format complexity analysis information for prompts.
+
+    Args:
+        complexity_analysis: ComplexityAnalysis object or dict
+
+    Returns:
+        Formatted complexity information text
+    """
+    if not complexity_analysis:
+        return (
+            "No complexity analysis available. "
+            "Use your judgment for task breakdown."
+        )
+
+    if hasattr(complexity_analysis, "complexity_level"):
+        # Pydantic model
+        recommended = complexity_analysis.recommended_workers
+        return (
+            f"Complexity Level: {complexity_analysis.complexity_level}\n"
+            f"Recommended Workers: {recommended}\n"
+            f"Max Iterations: {complexity_analysis.max_iterations}\n"
+            f"Rationale: {complexity_analysis.rationale}\n\n"
+            f"Use this complexity assessment to guide task breakdown. "
+            f"Aim to create approximately {recommended} "
+            f"parallel research tasks that can be executed simultaneously."
+        )
+    elif isinstance(complexity_analysis, dict):
+        # Dict format
+        level = complexity_analysis.get("complexity_level", "unknown")
+        workers = complexity_analysis.get("recommended_workers", 2)
+        iterations = complexity_analysis.get("max_iterations", 2)
+        rationale = complexity_analysis.get("rationale", "")
+        return (
+            f"Complexity Level: {level}\n"
+            f"Recommended Workers: {workers}\n"
+            f"Max Iterations: {iterations}\n"
+            f"Rationale: {rationale}\n\n"
+            f"Use this complexity assessment to guide task breakdown. "
+            f"Aim to create approximately {workers} "
+            f"parallel research tasks that can be executed simultaneously."
+        )
+    else:
+        return (
+            "No complexity analysis available. "
+            "Use your judgment for task breakdown."
+        )
+
+
+def format_previous_comparison(
+    iteration_count: int,
+    previous_synthesis_length: int,
+    previous_findings_count: int,
+    previous_citations_count: int,
+    synthesized_length: int,
+    findings_count: int,
+    citations_count: int,
+    synthesis_growth: float,
+    findings_growth: float,
+    citations_growth: float,
+) -> str:
+    """
+    Format previous iteration comparison for decision prompts.
+
+    Args:
+        iteration_count: Current iteration number
+        previous_synthesis_length: Previous synthesis length
+        previous_findings_count: Previous findings count
+        previous_citations_count: Previous citations count
+        synthesized_length: Current synthesis length
+        findings_count: Current findings count
+        citations_count: Current citations count
+        synthesis_growth: Synthesis growth percentage
+        findings_growth: Findings growth percentage
+        citations_growth: Citations growth percentage
+
+    Returns:
+        Formatted comparison text
+    """
+    if iteration_count > 0:
+        return (
+            f"Previous Iteration (Iteration {iteration_count - 1}):\n"
+            f"  - Synthesis Length: {previous_synthesis_length} characters\n"
+            f"  - Findings Count: {previous_findings_count}\n"
+            f"  - Citations Count: {previous_citations_count}\n\n"
+            f"Current Iteration (Iteration {iteration_count}):\n"
+            f"  - Synthesis Length: {synthesized_length} characters "
+            f"({synthesis_growth:+.1f}% change)\n"
+            f"  - Findings Count: {findings_count} "
+            f"({findings_growth:+.1f}% change)\n"
+            f"  - Citations Count: {citations_count} "
+            f"({citations_growth:+.1f}% change)"
+        )
+    else:
+        return "This is the first iteration. No previous iteration to compare."
+
+
+def format_diminishing_returns_info(
+    iteration_count: int,
+    diminishing_returns_detected: bool,
+    avg_growth: float,
+    synthesis_growth: float,
+    findings_growth: float,
+    citations_growth: float,
+) -> str:
+    """
+    Format diminishing returns analysis for decision prompts.
+
+    Args:
+        iteration_count: Current iteration number
+        diminishing_returns_detected: Whether diminishing returns detected
+        avg_growth: Average growth percentage
+        synthesis_growth: Synthesis growth percentage
+        findings_growth: Findings growth percentage
+        citations_growth: Citations growth percentage
+
+    Returns:
+        Formatted diminishing returns info text
+    """
+    if iteration_count == 0:
+        return "First iteration - no diminishing returns analysis available yet."
+
+    if diminishing_returns_detected:
+        return (
+            f"# DIMINISHING RETURNS DETECTED\n"
+            f"Average growth across all metrics: {avg_growth:.1f}%\n"
+            f"This indicates that additional iterations are likely to add "
+            f"minimal new value. You should strongly consider STOPPING "
+            f"unless there are clear, specific gaps that need addressing.\n\n"
+            f"Growth breakdown:\n"
+            f"  - Synthesis: {synthesis_growth:+.1f}%\n"
+            f"  - Findings: {findings_growth:+.1f}%\n"
+            f"  - Citations: {citations_growth:+.1f}%"
+        )
+    else:
+        return (
+            f"Growth indicators show meaningful progress:\n"
+            f"  - Synthesis: {synthesis_growth:+.1f}%\n"
+            f"  - Findings: {findings_growth:+.1f}%\n"
+            f"  - Citations: {citations_growth:+.1f}%\n"
+            f"Average growth: {avg_growth:.1f}%"
+        )
+
+
+def format_partial_synthesis_note() -> str:
+    """
+    Format note about partial synthesis for decision prompts.
+
+    Returns:
+        Formatted partial synthesis note
+    """
+    return (
+        "\n\n# IMPORTANT: This is a PARTIAL synthesis containing only "
+        "Situation and Complication sections. The Resolution section has not "
+        "been generated yet (early decision optimization). Please make your "
+        "decision based on the available Situation and Complication content. "
+        "If you decide to finish research, the Resolution section will be "
+        "generated in the next step."
+    )
+
+
+def format_findings_text(findings: list[dict]) -> str:
+    """
+    Format findings list into structured text for prompts.
+
+    Args:
+        findings: List of finding dictionaries
+
+    Returns:
+        Formatted findings text
+    """
+    findings_text_parts = []
+    for i, f in enumerate(findings, 1):
+        task = f.get("task", "Unknown")
+        summary = f.get("summary", "No summary")
+        sources = f.get("sources", [])
+        citations = f.get("extracted_citations", [])
+
+        finding_text = f"{i}. Task: {task}\n   Summary: {summary}"
+
+        # Include sources for context
+        if sources:
+            source_list = ", ".join([
+                s.get("title", "Unknown")[:60]
+                for s in sources[:5]  # Limit to 5 sources per finding
+            ])
+            if len(sources) > 5:
+                source_list += f" (+{len(sources) - 5} more)"
+            finding_text += f"\n   Sources: {source_list}"
+
+        # Include extracted citations if available
+        if citations:
+            citation_titles = [
+                c.get("title", "Unknown")[:60]
+                for c in citations[:3]  # Limit to 3 citations per finding
+            ]
+            if citation_titles:
+                finding_text += (
+                    f"\n   Mentioned Papers: {', '.join(citation_titles)}"
+                )
+                if len(citations) > 3:
+                    finding_text += f" (+{len(citations) - 3} more)"
+
+        findings_text_parts.append(finding_text)
+
+    return "\n\n".join(findings_text_parts)
+
+
+def format_findings_metadata_context(
+    count: int,
+    total_sources: int,
+    avg_summary_length: int,
+) -> str:
+    """
+    Format findings metadata context for prompts.
+
+    Args:
+        count: Number of findings
+        total_sources: Total number of sources
+        avg_summary_length: Average summary length
+
+    Returns:
+        Formatted metadata context
+    """
+    return (
+        f"\n\n[Metadata: {count} findings, "
+        f"{total_sources} sources, "
+        f"avg length: {avg_summary_length} chars]"
+    )
+
+
+def format_decision_context(
+    decision_reasoning: str | None = None,
+    decision_key_factors: list[str] | None = None,
+) -> tuple[str, str, str]:
+    """
+    Format decision context for synthesizer refinement prompts.
+
+    Args:
+        decision_reasoning: Reasoning from decision node
+        decision_key_factors: Key factors from decision node
+
+    Returns:
+        Tuple of (decision_context, decision_guidance, decision_task_guidance,
+                  decision_improvements)
+    """
+    decision_parts = []
+    decision_guidance = ""
+    decision_task_guidance = ""
+    decision_improvements = ""
+
+    if decision_reasoning:
+        decision_parts.append(f"Decision Reasoning: {decision_reasoning[:300]}")
+        decision_guidance = f"\n\n<decision_reasoning>\n{decision_reasoning[:300]}\n</decision_reasoning>"
+        decision_task_guidance = (
+            "Consider the decision reasoning above when refining this section."
+        )
+        decision_improvements = (
+            "- Incorporate insights from decision reasoning if relevant.\n"
+        )
+
+    if decision_key_factors:
+        factors_text = "\n".join([f"- {factor}" for factor in decision_key_factors])
+        decision_parts.append(f"Key Factors:\n{factors_text}")
+        if not decision_guidance:
+            decision_guidance = f"\n\n<key_factors>\n{factors_text}\n</key_factors>"
+        decision_improvements += (
+            "- Address key factors identified in decision analysis.\n"
+        )
+
+    decision_context = "\n\n".join(decision_parts) if decision_parts else ""
+
+    return decision_context, decision_guidance, decision_task_guidance, decision_improvements
+
+
+def format_query_context(
+    query: str,
+    situation: str | None = None,
+    complication: str | None = None,
+    previous_situation: str | None = None,
+    previous_complication: str | None = None,
+    new_findings: str | None = None,
+) -> str:
+    """
+    Format query context for synthesizer prompts.
+
+    Args:
+        query: User query
+        situation: Current situation section
+        complication: Current complication section
+        previous_situation: Previous situation section
+        previous_complication: Previous complication section
+        new_findings: New findings text
+
+    Returns:
+        Formatted query context
+    """
+    query_context_parts = [query]
+
+    if situation:
+        query_context_parts.append(f"Situation: {situation}")
+    if complication:
+        query_context_parts.append(f"Complication: {complication}")
+    if previous_situation:
+        query_context_parts.append(f"Previous Situation: {previous_situation}")
+    if previous_complication:
+        query_context_parts.append(f"Previous Complication: {previous_complication}")
+    if new_findings:
+        query_context_parts.append(f"New findings: {new_findings[:200]}")
+
+    return "\n".join(query_context_parts)
+
+
+def format_rag_instructions(retrieved_context: str) -> str:
+    """
+    Format RAG context instructions for prompts.
+
+    Args:
+        retrieved_context: Retrieved context from RAG
+
+    Returns:
+        Formatted RAG instructions
+    """
+    return (
+        f"\n\n<internal_knowledge>\n{retrieved_context}\n</internal_knowledge>\n"
+        "Note: Use the above internal knowledge if relevant to the task breakdown."
+    )
+
+
 # =============================================================================
 # Verifier Prompts
 # =============================================================================
@@ -1208,6 +1627,23 @@ source evidence using a "Chain of Verification" process.
    return it unchanged.
 6. **Hallucination Removal:** If a claim is not in the evidence, REMOVE it or
    qualify it (e.g., "According to some sources...").
+
+**CITATION VERIFICATION:**
+7. **Check Citation Sources:** Verify that citations mentioned in the report
+   are present in the provided <bibliography> section. If a citation is mentioned
+   in the report but not found in the bibliography, mark it as [Unverified].
+8. **Validate Citation Format:** Ensure citations have proper format with:
+   - Complete title
+   - Author names (if available)
+   - Publication year (if available)
+   - Venue/journal name (if available)
+9. **Citation Compliance:** Prioritize citations that are extracted from the
+   formal bibliography/reference section. Citations not found in bibliography
+   should be flagged in citation_issues.
+10. **Report Citation Issues:** List any citation problems in citation_issues:
+    - Missing citations in bibliography
+    - Incomplete citation information
+    - Format inconsistencies
 </instructions>
 """
 
@@ -1219,6 +1655,14 @@ VERIFIER_MAIN = ChatPromptTemplate.from_template(
 <evidence>
 {evidence}
 </evidence>
+
+<bibliography>
+{bibliography}
+</bibliography>
+
+<extracted_citations>
+{extracted_citations}
+</extracted_citations>
 """
 )
 
